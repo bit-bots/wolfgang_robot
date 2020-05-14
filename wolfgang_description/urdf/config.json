@@ -1,5 +1,6 @@
 {  
     "documentId": "8c6aa9a8917f764cb7039c2d",
+    "versionId": "33214c7fc218647eca2a449a",
     "assemblyName": "WolfgangV3",
     "outputFormat": "urdf",
     "drawFrames": false,
@@ -7,11 +8,9 @@
     "useScads": true,
     "simplifySTLs": true,
     "mergeSTLs": true,
-    "maxSTLSize": 3,
+    "maxSTLSize": 1,
     "addDummyBaseLink": true,
-    "packageName": "wolfgang_description/urdf/",
     "robotName": "wolfgang",
-    "additionalUrdfFile": "/additionalURDF.txt",
 
     "jointMaxEffort": {
         "default": 0.0,

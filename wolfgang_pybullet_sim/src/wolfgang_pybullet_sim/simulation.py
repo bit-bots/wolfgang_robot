@@ -44,7 +44,9 @@ class Simulation:
         # Loading robot
         rospack = rospkg.RosPack()
         path = rospack.get_path("wolfgang_description")
-        flags = p.URDF_USE_INERTIA_FROM_FILE
+        flags = self.pybullet_client.URDF_USE_SELF_COLLISION + \
+                self.pybullet_client.URDF_USE_INERTIA_FROM_FILE + \
+                self.pybullet_client.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
         self.robot_index = p.loadURDF(path + "/urdf/robot.urdf",
                                       self.start_position, self.start_orientation, flags=flags)
 

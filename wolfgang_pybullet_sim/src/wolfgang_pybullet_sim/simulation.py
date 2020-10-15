@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-import math
 import sys
+import math
 import time
+import yaml
+import rospkg
+import cv2
 import pybullet as p
+import pybullet_data
+import numpy as np
 from time import sleep
 from scipy import signal
-import pybullet_data
-import rospkg
+from profilehooks import profile
 
 
 class Simulation:
@@ -76,11 +80,14 @@ class Simulation:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
 
+        self.camera = Camera("camera_optical_frame", self.robot_index, self.links)
+
         # set friction for feet
         self.set_foot_dynamics(0.0, 0.0, 0.0)
 
         # reset robot to initial position
         self.reset()
+
 
     def set_foot_dynamics(self, contact_damping, contact_stiffness, joint_damping, lateral_friction=1,
                           spinning_friction=0, rolling_friction=0):
@@ -120,6 +127,7 @@ class Simulation:
     def step(self):
         # get keyboard events if gui is active
         single_step = False
+
         if self.gui:
             # rest if R-key was pressed
             rKey = ord('r')
@@ -140,10 +148,12 @@ class Simulation:
                 self.real_time = not self.real_time
                 p.setRealTimeSimulation(self.real_time)
 
+
         # check if simulation should continue currently
         if not self.paused or single_step:
             self.time += self.timestep
             p.stepSimulation()
+            self.camera.getImage()
             for name, ps in self.pressure_sensors.items():
                 ps.filter_step()
 
@@ -218,6 +228,67 @@ class Joint:
         position, velocity, forces, applied_torque = self.get_state()
         return applied_torque
 
+
+class Camera:
+    def __init__(self, frame, robot_index, link_dict):
+        self.robot_index = robot_index
+        self.frame = frame
+        self.link_dict = link_dict
+        self.counter = 0
+
+        # Load default camera calibration
+        rospack = rospkg.RosPack()
+        binning = 2
+        with open(rospack.get_path("pylon_camera") + "/config/camera_calibration_default.yaml", "r") as f:
+            self.camera_calib = yaml.load(f)
+
+    @profile
+    def getImage(self):
+        self.counter += 1
+        if self.counter % 10:
+            com_p, com_o, _, _, _, _ = p.getLinkState(1, self.link_dict[self.frame])
+            rot_matrix = p.getMatrixFromQuaternion(com_o)
+            rot_matrix = np.array(rot_matrix).reshape(3, 3)
+            # Initial vectors
+            init_camera_vector = (0, 0, 1) # z-axis
+            init_up_vector = (0, -1, 0) # y-axis
+            # Rotated vectors
+            camera_vector = rot_matrix.dot(init_camera_vector)
+            up_vector = rot_matrix.dot(init_up_vector)
+            # Compute view matrix
+            view_matrix = p.computeViewMatrix(com_p, com_p + 0.1 * camera_vector, up_vector)
+
+            # Convert 3x4 projection matrix to 4x4 projection matrix
+            fov, aspect, nearplane, farplane = 80, 1.0, 0.01, 100 # TODO realictic vals
+            projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
+
+            img = self.extract_frame(p.getCameraImage(
+                500,
+                500,
+                view_matrix,
+                projection_matrix,
+                renderer = p.ER_TINY_RENDERER),
+                500,500)
+
+    def extract_frame(self, camera_image, height, width):
+        bgr_image = np.zeros((height, width, 3), dtype=np.uint8)
+
+        camera_image = np.reshape(camera_image[2], (camera_image[1], camera_image[0], 4))
+
+        bgr_image[:, :, 0] =\
+            (1 - camera_image[:, :, 3]) * camera_image[:, :, 2] +\
+            camera_image[:, :, 3] * camera_image[:, :, 2]
+
+        bgr_image[:, :, 1] =\
+            (1 - camera_image[:, :, 3]) * camera_image[:, :, 1] +\
+            camera_image[:, :, 3] * camera_image[:, :, 1]
+
+        bgr_image[:, :, 2] =\
+            (1 - camera_image[:, :, 3]) * camera_image[:, :, 0] +\
+            camera_image[:, :, 3] * camera_image[:, :, 0]
+
+        # return frame
+        return bgr_image.astype(np.uint8)
 
 class PressureSensor:
     def __init__(self, name, joint_index, body_index, cutoff, order):

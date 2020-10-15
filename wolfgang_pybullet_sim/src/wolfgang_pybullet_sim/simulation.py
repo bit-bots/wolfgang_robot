@@ -266,8 +266,7 @@ class Camera:
                 500,
                 500,
                 view_matrix,
-                projection_matrix,
-                renderer = p.ER_TINY_RENDERER),
+                projection_matrix),
                 500,500)
 
     def extract_frame(self, camera_image, height, width):

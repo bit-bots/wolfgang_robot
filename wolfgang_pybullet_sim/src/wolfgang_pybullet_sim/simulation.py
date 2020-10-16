@@ -7,6 +7,8 @@ import rospkg
 import cv2
 import pybullet as p
 import pybullet_data
+from pybullet_rendering import RenderingPlugin
+from pybullet_rendering.render.pyrender import Renderer
 import numpy as np
 from time import sleep
 from scipy import signal
@@ -80,7 +82,7 @@ class Simulation:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
 
-        self.camera = Camera("camera_optical_frame", self.robot_index, self.links)
+        self.camera = Camera("camera_optical_frame", self.robot_index, self.links, self.client_id)
 
         # set friction for feet
         self.set_foot_dynamics(0.0, 0.0, 0.0)
@@ -230,11 +232,17 @@ class Joint:
 
 
 class Camera:
-    def __init__(self, frame, robot_index, link_dict):
+    def __init__(self, frame, robot_index, link_dict, client_id):
         self.robot_index = robot_index
         self.frame = frame
         self.link_dict = link_dict
+        self.client_id = client_id
         self.counter = 0
+
+        self.frame_rate = 1
+
+        renderer = Renderer()
+        plugin = RenderingPlugin(client_id, renderer)
 
         # Load default camera calibration
         rospack = rospkg.RosPack()
@@ -244,30 +252,27 @@ class Camera:
 
     @profile
     def getImage(self):
-        self.counter += 1
-        if self.counter % 10:
-            com_p, com_o, _, _, _, _ = p.getLinkState(1, self.link_dict[self.frame])
-            rot_matrix = p.getMatrixFromQuaternion(com_o)
-            rot_matrix = np.array(rot_matrix).reshape(3, 3)
-            # Initial vectors
-            init_camera_vector = (0, 0, 1) # z-axis
-            init_up_vector = (0, -1, 0) # y-axis
-            # Rotated vectors
-            camera_vector = rot_matrix.dot(init_camera_vector)
-            up_vector = rot_matrix.dot(init_up_vector)
-            # Compute view matrix
-            view_matrix = p.computeViewMatrix(com_p, com_p + 0.1 * camera_vector, up_vector)
+        com_p, com_o, _, _, _, _ = p.getLinkState(1, self.link_dict[self.frame])
+        rot_matrix = p.getMatrixFromQuaternion(com_o)
+        rot_matrix = np.array(rot_matrix).reshape(3, 3)
+        # Initial vectors
+        init_camera_vector = (0, 0, 1) # z-axis
+        init_up_vector = (0, -1, 0) # y-axis
+        # Rotated vectors
+        camera_vector = rot_matrix.dot(init_camera_vector)
+        up_vector = rot_matrix.dot(init_up_vector)
+        # Compute view matrix
+        view_matrix = p.computeViewMatrix(com_p, com_p + 0.1 * camera_vector, up_vector)
 
-            # Convert 3x4 projection matrix to 4x4 projection matrix
-            fov, aspect, nearplane, farplane = 80, 1.0, 0.01, 100 # TODO realictic vals
-            projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
-
-            img = self.extract_frame(p.getCameraImage(
-                500,
-                500,
-                view_matrix,
-                projection_matrix),
-                500,500)
+        # Convert 3x4 projection matrix to 4x4 projection matrix
+        fov, aspect, nearplane, farplane = 80, 1.0, 0.1, 100 # TODO realictic vals
+        projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
+        print(p.getCameraImage(
+            500,
+            500,
+            view_matrix,
+            projection_matrix),
+            500,500)
 
     def extract_frame(self, camera_image, height, width):
         bgr_image = np.zeros((height, width, 3), dtype=np.uint8)

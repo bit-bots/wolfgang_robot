@@ -103,8 +103,8 @@ class WebotsController:
             camera_name = "CameraTop"
             self.rot_ros_to_webots = rot_ros_to_webots_switched
             self.rot_webots_to_ros = rot_webots_to_ros_switched
-            self.initial_joint_values = [("RShoulderPitch", math.pi / 2), ("RShoulderRoll", -1 * math.pi/4),
-                                         ("LShoulderPitch", math.pi / 2), ("LShoulderRoll", math.pi/4)]
+            self.initial_joint_values = [("RShoulderPitch", math.pi / 2), ("RShoulderRoll", -1 * math.pi / 4),
+                                         ("LShoulderPitch", math.pi / 2), ("LShoulderRoll", math.pi / 4)]
 
         elif robot == 'op3':
             self.robot_node_name = "Robot"
@@ -121,7 +121,22 @@ class WebotsController:
             camera_name = "Camera"
             self.rot_ros_to_webots = rot_ros_to_webots_switched
             self.rot_webots_to_ros = rot_webots_to_ros_switched
-            self.initial_joint_values = [("ArmUpperR", -1 * math.pi/4), ("ArmUpperL", math.pi/4)]
+            self.initial_joint_values = [("ArmUpperR", -1 * math.pi / 4), ("ArmUpperL", math.pi / 4)]
+        elif robot == 'atlas':
+            self.robot_node_name = "Robot"
+            self.motor_names = ["BackLbz", "BackMby", "BackUbx", "LArmElx", "LArmEly", "LArmMwx",
+                                "LArmShx", "LArmUsy", "LArmUwy", "LLegKny", "LLegLax", "LLegLhy",
+                                "LLegMhx", "LLegUay", "LLegUhz", "NeckAy", "RArmElx", "RArmEly", "RArmMwx",
+                                "RArmShx", "RArmUsy", "RArmUwy", "RLegKny", "RLegLax", "RLegLhy",
+                                "RLegMhx", "RLegUay", "RLegUhz"]
+            self.external_motor_names = self.motor_names
+            sensor_postfix = "S"
+            accel_name = "Accelerometer"
+            gyro_name = "Gyro"
+            camera_name = "Camera"
+            self.rot_ros_to_webots = rot_ros_to_webots_switched
+            self.rot_webots_to_ros = rot_webots_to_ros_switched
+            self.initial_joint_values = [("ArmUpperR", -1 * math.pi / 4), ("ArmUpperL", math.pi / 4)]
 
         self.robot_node = self.supervisor.getFromDef(self.robot_node_name)
         for motor_name in self.motor_names:

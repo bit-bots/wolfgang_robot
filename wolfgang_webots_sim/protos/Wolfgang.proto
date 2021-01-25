@@ -26,22 +26,26 @@ PROTO Wolfgang [
     synchronization IS synchronization
     selfCollision IS selfCollision
     children [
+      Gyro {
+        translation -0.036975 -0.047461 0.224000
+        rotation 0.000000 1.000000 0.000000 0.000000
+        name "imu gyro"
+      }
+      Accelerometer {
+        translation -0.036975 -0.047461 0.224000
+        rotation 0.000000 1.000000 0.000000 0.000000
+        name "imu accelerometer"
+      }
+      Compass {
+        translation -0.036975 -0.047461 0.224000
+        rotation 0.000000 1.000000 0.000000 0.000000
+        name "imu compass"
+      }
       Wolfgang_torsoMesh {
       }
       Solid {
         translation -0.036975 -0.047461 0.224000
         rotation 0.000000 1.000000 0.000000 0.000000
-        children [
-          Accelerometer {
-            name "imu accelerometer"
-          }
-          Gyro {
-            name "imu gyro"
-          }
-          Compass {
-            name "imu compass"
-          }
-        ]
         name "imu_frame"
       }
       HingeJoint {
@@ -1228,6 +1232,21 @@ PROTO Wolfgang [
                 translation 0.036000 0.023500 -0.024000
                 rotation -1.000000 0.000000 -0.000000 1.570800
                 children [
+                  Gyro {
+                    translation -0.025450 0.053500 -0.023500
+                    rotation -1.000000 -0.000000 -0.000000 1.570800
+                    name "imu_head gyro"
+                  }
+                  Accelerometer {
+                    translation -0.025450 0.053500 -0.023500
+                    rotation -1.000000 -0.000000 -0.000000 1.570800
+                    name "imu_head accelerometer"
+                  }
+                  Compass {
+                    translation -0.025450 0.053500 -0.023500
+                    rotation -1.000000 -0.000000 -0.000000 1.570800
+                    name "imu_head compass"
+                  }
                   Wolfgang_headMesh {
                   }
                   Solid {
@@ -1252,22 +1271,6 @@ PROTO Wolfgang [
                   Solid {
                     translation -0.025450 0.053500 -0.023500
                     rotation -1.000000 -0.000000 -0.000000 1.570800
-                    children [
-                      Accelerometer {
-                        name "imu_head accelerometer"
-                      }
-                      Gyro {
-                        name "imu_head gyro"
-                      }
-                      Compass {
-                        name "imu_head compass"
-                      }
-                      Solid {
-                        translation -0.050000 0.020000 -0.030000
-                        rotation -1.000000 0.000000 0.000000 1.570800
-                        name "imu_frame_2_2"
-                      }
-                    ]
                     name "imu_frame_2"
                   }
                 ]

@@ -21,7 +21,7 @@ G = 9.81
 
 
 class WebotsController:
-    def __init__(self, namespace='', ros_active=False, mode='normal', robot='wolfgang'):
+    def __init__(self, namespace='', ros_active=False, mode='normal', robot='wolfgang', node=True):
         self.ros_active = ros_active
         self.time = 0
         self.clock_msg = Clock()
@@ -46,9 +46,15 @@ class WebotsController:
             self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_REAL_TIME)
 
         self.robot_name = robot
-        self.switch_coordinate_system = True
+        # functions to correct different transformation systems
+        self.pos_ros_to_webots = pos_ros_to_webots
+        self.pos_webots_to_ros = pos_webots_to_ros
+        self.rot_ros_to_webots = rot_ros_to_webots
+        self.rot_webots_to_ros = rot_webots_to_ros
+
         self.is_wolfgang = False
         self.pressure_sensors = None
+        self.initial_joint_values = []
         if robot == 'wolfgang':
             self.is_wolfgang = True
             self.robot_node_name = "Robot"
@@ -67,7 +73,8 @@ class WebotsController:
                 sensor = self.supervisor.getTouchSensor(name)
                 sensor.enable(30)
                 self.pressure_sensors.append(sensor)
-
+            self.rot_ros_to_webots = rot_ros_to_webots_switched
+            self.rot_webots_to_ros = rot_webots_to_ros_switched
         elif robot == 'darwin':
             self.robot_node_name = "Darwin"
             self.motor_names = ["ShoulderR", "ShoulderL", "ArmUpperR", "ArmUpperL", "ArmLowerR", "ArmLowerL",
@@ -94,7 +101,11 @@ class WebotsController:
             accel_name = "accelerometer"
             gyro_name = "gyro"
             camera_name = "CameraTop"
-            self.switch_coordinate_system = False
+            self.rot_ros_to_webots = rot_ros_to_webots_switched
+            self.rot_webots_to_ros = rot_webots_to_ros_switched
+            self.initial_joint_values = [("RShoulderPitch", math.pi / 2), ("RShoulderRoll", -1 * math.pi/4),
+                                         ("LShoulderPitch", math.pi / 2), ("LShoulderRoll", math.pi/4)]
+
         elif robot == 'op3':
             self.robot_node_name = "Robot"
             self.motor_names = ["ShoulderR", "ShoulderL", "ArmUpperR", "ArmUpperL", "ArmLowerR", "ArmLowerL",
@@ -108,7 +119,9 @@ class WebotsController:
             accel_name = "Accelerometer"
             gyro_name = "Gyro"
             camera_name = "Camera"
-            self.switch_coordinate_system = False
+            self.rot_ros_to_webots = rot_ros_to_webots_switched
+            self.rot_webots_to_ros = rot_webots_to_ros_switched
+            self.initial_joint_values = [("ArmUpperR", -1 * math.pi/4), ("ArmUpperL", math.pi/4)]
 
         self.robot_node = self.supervisor.getFromDef(self.robot_node_name)
         for motor_name in self.motor_names:
@@ -117,19 +130,24 @@ class WebotsController:
             self.sensors.append(self.supervisor.getPositionSensor(motor_name + sensor_postfix))
             self.sensors[-1].enable(self.timestep)
 
+        # put joints in intial pose
+        for name, pos in self.initial_joint_values:
+            motor_index = self.motor_names.index(name)
+            self.motors[motor_index].setPosition(pos)
+
         self.accel = self.supervisor.getAccelerometer(accel_name)
         self.accel.enable(self.timestep)
         self.gyro = self.supervisor.getGyro(gyro_name)
         self.gyro.enable(self.timestep)
         if self.is_wolfgang:
-            self.accel_head = self.supervisor.getAccelerometer(accel_name+" 2")
+            self.accel_head = self.supervisor.getAccelerometer(accel_name + " 2")
             self.accel_head.enable(self.timestep)
-            self.gyro_head = self.supervisor.getGyro(gyro_name+" 2")
+            self.gyro_head = self.supervisor.getGyro(gyro_name + " 2")
             self.gyro_head.enable(self.timestep)
         self.camera = self.supervisor.getCamera(camera_name)
         self.camera.enable(self.timestep)
 
-        if self.ros_active:
+        if node:
             rospy.init_node("webots_ros_interface", anonymous=True,
                             argv=['clock:=/' + self.namespace + '/clock'])
         self.pub_js = rospy.Publisher(self.namespace + "/joint_states", JointState, queue_size=1)
@@ -161,19 +179,19 @@ class WebotsController:
         cam_info.height = self.camera.getHeight()
         cam_info.width = self.camera.getWidth()
         f_y = self.mat_from_fov_and_resolution(
-            self.h_fov_to_v_fov(self.camera.getFov(), cam_info.height, cam_info.width), 
+            self.h_fov_to_v_fov(self.camera.getFov(), cam_info.height, cam_info.width),
             cam_info.height)
         f_x = self.mat_from_fov_and_resolution(self.camera.getFov(), cam_info.width)
-        cam_info.K = [f_x, 0  , cam_info.width / 2,
-                      0  , f_x, cam_info.height / 2,
-                      0  , 0  , 1]
-        cam_info.P = [f_x, 0  , cam_info.width / 2  , 0,
-                      0  , f_x, cam_info.height / 2 , 0,
-                      0  , 0  , 1                   , 0]
+        cam_info.K = [f_x, 0, cam_info.width / 2,
+                      0, f_x, cam_info.height / 2,
+                      0, 0, 1]
+        cam_info.P = [f_x, 0, cam_info.width / 2, 0,
+                      0, f_x, cam_info.height / 2, 0,
+                      0, 0, 1, 0]
         self.pub_cam_info.publish(cam_info)
 
     def mat_from_fov_and_resolution(self, fov, res):
-        return 0.5 * res * ( math.cos((fov/2)) / math.sin((fov/2)))
+        return 0.5 * res * (math.cos((fov / 2)) / math.sin((fov / 2)))
 
     def h_fov_to_v_fov(self, h_fov, height, width):
         return 2 * math.atan(math.tan(h_fov * 0.5) * (height / width))
@@ -266,7 +284,8 @@ class WebotsController:
 
     def publish_imu(self):
         self.pub_imu.publish(self.get_imu_msg(head=False))
-        self.pub_imu_head.publish(self.get_imu_msg(head=True))
+        if self.is_wolfgang:
+            self.pub_imu_head.publish(self.get_imu_msg(head=True))
 
     def publish_camera(self):
         img_msg = Image()
@@ -339,11 +358,12 @@ class WebotsController:
         return left_pressure, right_pressure, cop_l, cop_r
 
     def publish_pressure(self):
-        left, right, cop_l, cop_r = self.get_pressure_message()
-        self.pub_pres_left.publish(left)
-        self.pub_pres_right.publish(right)
-        self.cop_l_pub_.publish(cop_l)
-        self.cop_r_pub_.publish(cop_r)
+        if self.is_wolfgang:
+            left, right, cop_l, cop_r = self.get_pressure_message()
+            self.pub_pres_left.publish(left)
+            self.pub_pres_right.publish(right)
+            self.cop_l_pub_.publish(cop_l)
+            self.cop_r_pub_.publish(cop_r)
 
     def set_gravity(self, active):
         if active:
@@ -372,30 +392,32 @@ class WebotsController:
             print(f"id: {s.getId()}, type: {s.getType()}, def: {s.getDef()}")
 
     def set_robot_pose_rpy(self, pos, rpy):
-        if self.switch_coordinate_system:
-            self.translation_field.setSFVec3f(pos_ros_to_webots(pos))
-            self.rotation_field.setSFRotation(rpy_to_axis(*rpy))
-        else:
-            self.translation_field.setSFVec3f([pos[0], pos[1], pos[2]])
-            self.rotation_field.setSFRotation(rpy_to_axis(rpy[1], rpy[2], rpy[0]))
+        # if self.switch_coordinate_system:
+        self.translation_field.setSFVec3f(self.pos_ros_to_webots(pos))
+        self.rotation_field.setSFRotation(self.rot_ros_to_webots(rpy))
+        # else:
+        #    self.translation_field.setSFVec3f([pos[0], pos[1], pos[2]])
+        #    self.rotation_field.setSFRotation(rpy_to_axis(rpy[1], rpy[2], rpy[0]))
 
     def set_robot_rpy(self, rpy):
-        if self.switch_coordinate_system:
-            self.rotation_field.setSFRotation(rpy_to_axis(*rpy))
-        else:
-            self.rotation_field.setSFRotation(rpy_to_axis(rpy[1], rpy[2], rpy[0]))
+        # if self.switch_coordinate_system:
+        self.rotation_field.setSFRotation(self.rot_ros_to_webots(rpy))
+        # else:
+        #    self.rotation_field.setSFRotation(rpy_to_axis(rpy[1], rpy[2], rpy[0]))
 
     def get_robot_pose_rpy(self):
         pos = self.translation_field.getSFVec3f()
         rot = self.rotation_field.getSFRotation()
-        rpy = axis_to_rpy(*rot)
+        pos = self.pos_webots_to_ros(pos)
+        rpy = self.rot_webots_to_ros(rot)
         # webots cordinate system is left-handed and depends on the robot. these values were found experimentally
-        if self.is_wolfgang:
-            rpy = (rpy[0] + math.pi / 2, -rpy[1], rpy[2])
-        if self.switch_coordinate_system:
-            return pos_webots_to_ros(pos), rpy
-        else:
-            return pos, (rpy[2], rpy[0], rpy[1])
+        # if self.is_wolfgang:
+        #    rpy = (rpy[0] + math.pi / 2, -rpy[1], rpy[2])
+        # if self.switch_coordinate_system:
+        #    return pos_webots_to_ros(pos), rpy
+        # else:
+        #    return pos, (rpy[2], rpy[0], rpy[1])
+        return pos, rpy
 
 
 def pos_webots_to_ros(pos):
@@ -410,6 +432,28 @@ def pos_ros_to_webots(pos):
     x = pos[1]
     y = pos[2]
     return [x, y, z]
+
+
+def rot_ros_to_webots(rpy):
+    return rpy_to_axis(*rpy)
+
+
+def rot_webots_to_ros(rot):
+    return axis_to_rpy(rot[0], rot[1], rot[2], rot[3])
+
+
+def rot_ros_to_webots_switched(rpy):
+    # change ordering
+    rpy = [rpy[0], rpy[2] * -1, rpy[1]]
+    # change 0 point
+    rpy_r = [rpy[0] - math.pi / 2, rpy[1], rpy[2] - math.pi / 2]
+    return rpy_to_axis(*rpy_r)
+
+
+def rot_webots_to_ros_switched(rot):
+    rpy = axis_to_rpy(rot[0], rot[1], rot[2], rot[3])
+    rpy = [rpy[0] + math.pi / 2, rpy[1] * -1, rpy[2] + math.pi / 2]
+    return rpy
 
 
 def rpy_to_axis(z_e, x_e, y_e, normalize=True):

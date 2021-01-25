@@ -19,7 +19,7 @@ class ROSInterface:
             if namespace == '':
                 rospy.init_node("pybullet_sim")
             else:
-                rospy.init_node('pybullet_sim', anonymous=True, argv=['clock:=/' + self.namespace + '/clock'])
+                rospy.init_node('pybullet_sim', anonymous=True, argv=['clock:=/' + namespace + '/clock'])
 
         self.simulation = simulation
         self.namespace = namespace

@@ -16,7 +16,7 @@ from wolfgang_pybullet_sim.terrain import Terrain
 
 
 class Simulation:
-    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False):
+    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False, field=True):
         self.gui = gui
         self.paused = False
         self.gravity = True
@@ -51,13 +51,14 @@ class Simulation:
             p.setAdditionalSearchPath(pybullet_data.getDataPath())  # needed for plane.urdf
             self.plane_index = p.loadURDF('plane.urdf')
 
-        # Load field
-        rospack = rospkg.RosPack()
-        path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
-        p.setAdditionalSearchPath(path)  # needed to find field model
-        self.field_index = p.loadURDF('field/field.urdf')
-        p.changeDynamics(self.field_index, -1, lateralFriction=1, spinningFriction=-1,
-                         rollingFriction=-1, restitution=0.9)
+        if field:
+            # Load field
+            rospack = rospkg.RosPack()
+            path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
+            p.setAdditionalSearchPath(path)  # needed to find field model
+            self.field_index = p.loadURDF('field/field.urdf')
+            p.changeDynamics(self.field_index, -1, lateralFriction=1, spinningFriction=-1,
+                             rollingFriction=-1, restitution=0.9)
 
         # Load robot
         flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION + p.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS

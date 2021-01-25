@@ -2,11 +2,11 @@
 # license: Apache License 2.0
 # license url: http://www.apache.org/licenses/LICENSE-2.0
 # This is a proto file for Webots for the Wolfgang
-# Extracted from: /home/jasper/ws/src/bitbots_meta/wolfgang_robot/wolfgang_description/urdf/robot.urdf
+# Extracted from: wolfgang.urdf
 
 PROTO Wolfgang [
   field  SFVec3f     translation     0 0 0
-  field  SFRotation  rotation        1 0 0 -1.5708
+  field  SFRotation  rotation        0 1 0 0
   field  SFString    name            "Wolfgang"  # Is `Robot.name`.
   field  SFString    controller      "void"      # Is `Robot.controller`.
   field  MFString    controllerArgs  []          # Is `Robot.controllerArgs`.
@@ -14,7 +14,6 @@ PROTO Wolfgang [
   field  SFBool      supervisor      FALSE       # Is `Robot.supervisor`.
   field  SFBool      synchronization TRUE        # Is `Robot.synchronization`.
   field  SFBool      selfCollision   FALSE       # Is `Robot.selfCollision`.
-  field  SFFloat     cameraFOV       1.04
 ]
 {
   Robot {
@@ -29,22 +28,27 @@ PROTO Wolfgang [
     children [
       Wolfgang_torsoMesh {
       }
-      Accelerometer {
-        name "imu accelerometer"
-      }
-      Gyro {
-        name "imu gyro"
-      }
       Solid {
         translation -0.036975 -0.047461 0.224000
         rotation 0.000000 1.000000 0.000000 0.000000
+        children [
+          Accelerometer {
+            name "imu accelerometer"
+          }
+          Gyro {
+            name "imu gyro"
+          }
+          Compass {
+            name "imu compass"
+          }
+        ]
         name "imu_frame"
       }
       HingeJoint {
         jointParameters HingeJointParameters {
           axis 0.000003 -1.000000 -0.000000
           anchor -0.001500 -0.076500 0.203500
-          dampingConstant 0.0
+          dampingConstant 0.53
           staticFriction 0.0
         }
         device [
@@ -69,7 +73,7 @@ PROTO Wolfgang [
               jointParameters HingeJointParameters {
                 axis 1.000000 -0.000004 0.000004
                 anchor -0.016950 0.042000 0.000000
-                dampingConstant 0.0
+                dampingConstant 0.53
                 staticFriction 0.0
               }
               device [
@@ -93,7 +97,7 @@ PROTO Wolfgang [
                     jointParameters HingeJointParameters {
                       axis 1.000000 -0.000004 -0.000004
                       anchor 0.024000 -0.144000 -0.023500
-                      dampingConstant 0.0
+                      dampingConstant 0.53
                       staticFriction 0.0
                     }
                     device [
@@ -121,43 +125,12 @@ PROTO Wolfgang [
                         }
                       ]
                       name "r_lower_arm"
-                      boundingObject Group {
+                      boundingObject Transform {
+                        translation 0.000000 -0.106327 -0.022450
+                        rotation 0.000000 1.000000 0.000000 0.000000
                         children [
-                          Transform {
-                            translation 0.000000 -0.108326 -0.005500
-                            rotation -0.000001 0.707108 -0.707105 3.141591
-                            children [
-                              Box {
-                                size 0.078998 0.002000 0.234653
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000000 -0.017550 -0.022450
-                            rotation -1.000000 0.000000 0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.040200 0.046100 0.061100
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000000 -0.180702 -0.023500
-                            rotation 1.000000 0.000000 -0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.078998 0.034000 0.089902
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000000 -0.108326 -0.041500
-                            rotation -0.000001 0.707108 -0.707105 3.141591
-                            children [
-                              Box {
-                                size 0.078998 0.002000 0.234653
-                              }
-                            ]
+                          Box {
+                            size 0.078999 0.238653 0.046100
                           }
                         ]
                       }
@@ -174,61 +147,12 @@ PROTO Wolfgang [
                   }
                 ]
                 name "r_upper_arm"
-                boundingObject Group {
+                boundingObject Transform {
+                  translation 0.000000 -0.075500 -0.022450
+                  rotation 0.000000 1.000000 0.000000 0.000000
                   children [
-                    Transform {
-                      translation -0.000000 -0.017550 -0.022450
-                      rotation -1.000000 0.000000 -0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.040200 0.046100 0.061100
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.025125 -0.079000 -0.023500
-                      rotation -0.577350 -0.577350 -0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040000 0.002250 0.170000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.019350 -0.010500 -0.023500
-                      rotation -0.577350 -0.577352 0.577350 2.094399
-                      children [
-                        Box {
-                          size 0.036000 0.040000 0.009300
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.025125 -0.079000 -0.023500
-                      rotation -0.577350 0.577350 0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040000 0.002250 0.170000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.019350 -0.010500 -0.023500
-                      rotation 0.577350 0.577352 0.577350 2.094399
-                      children [
-                        Box {
-                          size 0.036000 0.040000 0.009300
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.001000 -0.071500 -0.023499
-                      rotation -0.000000 -1.000000 -0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.037600 0.023000 0.046000
-                        }
-                      ]
+                    Box {
+                      size 0.052500 0.177000 0.046100
                     }
                   ]
                 }
@@ -245,34 +169,12 @@ PROTO Wolfgang [
             }
           ]
           name "r_shoulder"
-          boundingObject Group {
+          boundingObject Transform {
+            translation 0.000000 0.033500 0.000000
+            rotation 0.000000 1.000000 0.000000 0.000000
             children [
-              Transform {
-                translation -0.028200 0.042000 -0.000000
-                rotation -0.577350 -0.577352 0.577350 2.094399
-                children [
-                  Box {
-                    size 0.050000 0.050000 0.004500
-                  }
-                ]
-              }
-              Transform {
-                translation -0.021450 0.042000 -0.000000
-                rotation -0.577350 -0.577352 0.577350 2.094399
-                children [
-                  Box {
-                    size 0.050000 0.050000 0.009000
-                  }
-                ]
-              }
-              Transform {
-                translation 0.000000 0.022500 0.000000
-                rotation 0.000000 1.000000 0.000000 0.000000
-                children [
-                  Box {
-                    size 0.063900 0.045000 0.034000
-                  }
-                ]
+              Box {
+                size 0.063900 0.067000 0.050000
               }
             ]
           }
@@ -291,7 +193,7 @@ PROTO Wolfgang [
         jointParameters HingeJointParameters {
           axis 0.000003 1.000000 -0.000003
           anchor -0.001500 0.076500 0.203500
-          dampingConstant 0.0
+          dampingConstant 0.53
           staticFriction 0.0
         }
         device [
@@ -316,7 +218,7 @@ PROTO Wolfgang [
               jointParameters HingeJointParameters {
                 axis 1.000000 0.000004 0.000004
                 anchor -0.016950 0.042000 -0.000000
-                dampingConstant 0.0
+                dampingConstant 0.53
                 staticFriction 0.0
               }
               device [
@@ -340,7 +242,7 @@ PROTO Wolfgang [
                     jointParameters HingeJointParameters {
                       axis -1.000000 -0.000004 -0.000004
                       anchor -0.024000 -0.144000 -0.023500
-                      dampingConstant 0.0
+                      dampingConstant 0.53
                       staticFriction 0.0
                     }
                     device [
@@ -368,43 +270,12 @@ PROTO Wolfgang [
                         }
                       ]
                       name "l_lower_arm"
-                      boundingObject Group {
+                      boundingObject Transform {
+                        translation -0.000000 -0.106327 -0.022450
+                        rotation 0.000000 1.000000 0.000000 0.000000
                         children [
-                          Transform {
-                            translation 0.000000 -0.017550 -0.022450
-                            rotation -1.000000 -0.000000 0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.040200 0.046100 0.061100
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.000001 -0.108326 -0.041500
-                            rotation 1.000000 0.000000 0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.078998 0.002000 0.234653
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000000 -0.180702 -0.023500
-                            rotation -0.000001 0.707108 -0.707105 3.141591
-                            children [
-                              Box {
-                                size 0.078998 0.034000 0.089902
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.000001 -0.108326 -0.005500
-                            rotation 1.000000 0.000000 0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.078998 0.002000 0.234653
-                              }
-                            ]
+                          Box {
+                            size 0.078999 0.238653 0.046100
                           }
                         ]
                       }
@@ -421,61 +292,12 @@ PROTO Wolfgang [
                   }
                 ]
                 name "l_upper_arm"
-                boundingObject Group {
+                boundingObject Transform {
+                  translation 0.000000 -0.075500 -0.022450
+                  rotation 0.000000 1.000000 0.000000 0.000000
                   children [
-                    Transform {
-                      translation -0.000000 -0.017550 -0.022450
-                      rotation -1.000000 -0.000000 -0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.040200 0.046100 0.061100
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.019350 -0.010500 -0.023500
-                      rotation -0.577350 -0.577352 0.577350 2.094399
-                      children [
-                        Box {
-                          size 0.036000 0.040000 0.009300
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.019350 -0.010500 -0.023500
-                      rotation 0.577350 0.577352 0.577350 2.094399
-                      children [
-                        Box {
-                          size 0.036000 0.040000 0.009300
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.001000 -0.071500 -0.023499
-                      rotation 0.000000 -1.000000 0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.037600 0.023000 0.046000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.025125 -0.079000 -0.023500
-                      rotation -0.577350 0.577350 0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040000 0.002250 0.170000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.025125 -0.079000 -0.023500
-                      rotation -0.577350 -0.577350 -0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040000 0.002250 0.170000
-                        }
-                      ]
+                    Box {
+                      size 0.052500 0.177000 0.046100
                     }
                   ]
                 }
@@ -492,34 +314,12 @@ PROTO Wolfgang [
             }
           ]
           name "l_shoulder"
-          boundingObject Group {
+          boundingObject Transform {
+            translation 0.000000 0.033500 0.000000
+            rotation 0.000000 1.000000 0.000000 0.000000
             children [
-              Transform {
-                translation -0.028200 0.042000 -0.000000
-                rotation 0.577350 -0.577352 -0.577350 2.094399
-                children [
-                  Box {
-                    size 0.050000 0.050000 0.004500
-                  }
-                ]
-              }
-              Transform {
-                translation 0.000000 0.022500 -0.000000
-                rotation 0.000000 1.000000 0.000000 0.000000
-                children [
-                  Box {
-                    size 0.063900 0.045000 0.034000
-                  }
-                ]
-              }
-              Transform {
-                translation -0.021450 0.042000 -0.000000
-                rotation 0.577350 -0.577352 -0.577350 2.094399
-                children [
-                  Box {
-                    size 0.050000 0.050000 0.009000
-                  }
-                ]
+              Box {
+                size 0.063900 0.067000 0.050000
               }
             ]
           }
@@ -538,7 +338,7 @@ PROTO Wolfgang [
         jointParameters HingeJointParameters {
           axis 0.000000 -0.000004 -1.000000
           anchor 0.000000 -0.055000 0.000000
-          dampingConstant 0.0
+          dampingConstant 0.92
           staticFriction 0.0
         }
         device [
@@ -563,7 +363,7 @@ PROTO Wolfgang [
               jointParameters HingeJointParameters {
                 axis 1.000000 -0.000003 -0.000004
                 anchor -0.046000 0.041400 0.000000
-                dampingConstant 0.0
+                dampingConstant 0.92
                 staticFriction 0.0
               }
               device [
@@ -588,7 +388,7 @@ PROTO Wolfgang [
                     jointParameters HingeJointParameters {
                       axis -1.000000 -0.000004 0.000004
                       anchor -0.026500 -0.000000 -0.069100
-                      dampingConstant 0.0
+                      dampingConstant 0.92
                       staticFriction 0.0
                     }
                     device [
@@ -613,7 +413,7 @@ PROTO Wolfgang [
                           jointParameters HingeJointParameters {
                             axis -0.000000 -1.000000 -0.000000
                             anchor -0.003923 -0.051000 -0.169043
-                            dampingConstant 0.0
+                            dampingConstant 1.0
                             staticFriction 0.0
                           }
                           device [
@@ -637,7 +437,7 @@ PROTO Wolfgang [
                                 jointParameters HingeJointParameters {
                                   axis 0.000000 -1.000000 0.000004
                                   anchor -0.000000 0.050500 -0.170000
-                                  dampingConstant 0.0
+                                  dampingConstant 0.92
                                   staticFriction 0.0
                                 }
                                 device [
@@ -662,7 +462,7 @@ PROTO Wolfgang [
                                       jointParameters HingeJointParameters {
                                         axis -1.000000 0.000004 -0.000000
                                         anchor -0.069100 -0.000000 -0.026000
-                                        dampingConstant 0.0
+                                        dampingConstant 0.92
                                         staticFriction 0.0
                                       }
                                       device [
@@ -684,11 +484,17 @@ PROTO Wolfgang [
                                           Wolfgang_r_footMesh {
                                           }
                                           Solid {
-                                            translation 0.015201 0.090843 -0.052900
+                                            translation 0.015222 0.090768 -0.052900
                                             rotation -0.000000 0.000000 1.000000 1.570800
                                             name "r_sole"
                                           }
+                                          Solid {
+                                            translation 0.015000 0.184500 -0.037750
+                                            rotation -0.000000 0.000000 1.000000 1.570800
+                                            name "r_toe"
+                                          }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation -0.030000 -0.007000 -0.034000
                                             rotation -0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -700,9 +506,7 @@ PROTO Wolfgang [
                                                 name "r_cleat_l_back"
                                               }
                                             ]
-                                            name "RLB"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "rlb"
                                             boundingObject Transform {
                                               translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
@@ -723,6 +527,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation -0.030000 0.177000 -0.034000
                                             rotation -0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -734,9 +539,7 @@ PROTO Wolfgang [
                                                 name "r_cleat_l_front"
                                               }
                                             ]
-                                            name "RLF"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "rlf"
                                             boundingObject Transform {
                                               translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
@@ -757,6 +560,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation 0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -768,9 +572,7 @@ PROTO Wolfgang [
                                                 name "r_cleat_r_front"
                                               }
                                             ]
-                                            name "RRF"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "rrf"
                                             boundingObject Transform {
                                               translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
@@ -791,6 +593,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation 0.060000 -0.007000 -0.034000
                                             rotation 0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -802,9 +605,7 @@ PROTO Wolfgang [
                                                 name "r_cleat_r_back"
                                               }
                                             ]
-                                            name "RRB"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "rrb"
                                             boundingObject Transform {
                                               translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
@@ -826,141 +627,34 @@ PROTO Wolfgang [
                                           }
                                         ]
                                         name "r_foot"
-                                        boundingObject Group {
+                                        boundingObject Transform {
+                                          translation 0.015000 0.085750 -0.012750
+                                          rotation 0.000000 1.000000 0.000000 0.000000
                                           children [
-                                            Transform {
-                                              translation -0.030000 0.006500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.000000 0.046000 -0.011000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.048000 0.100000 0.050000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.060000 0.163500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.008000 0.130000 -0.033200
-                                              rotation 1.000000 0.000000 -0.000000 3.141590
-                                              children [
-                                                Box {
-                                                  size 0.060000 0.060000 0.001600
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation -0.030000 0.163500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.015000 0.090499 -0.034250
-                                              rotation -0.000000 -0.000000 -1.000000 1.570800
-                                              children [
-                                                Box {
-                                                  size 0.189000 0.106000 0.010500
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.060000 0.006500 -0.032000
-                                              rotation -0.000000 -0.000000 1.000000 3.141590
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.015000 0.142500 -0.023000
-                                              rotation -0.000000 -0.000000 -1.000000 1.570800
-                                              children [
-                                                Box {
-                                                  size 0.085000 0.106000 0.026000
-                                                }
-                                              ]
+                                            Box {
+                                              size 0.106000 0.198500 0.053500
                                             }
                                           ]
                                         }
                                         physics Physics {
                                           density -1
-                                          mass 0.267613
-                                          centerOfMass [ 0.011968 0.091187 -0.029853 ]
+                                          mass 0.268240
+                                          centerOfMass [ 0.011970 0.091109 -0.029858 ]
                                           inertiaMatrix [
-                                            8.833800e-04 3.169400e-04 1.152060e-03
-                                            -3.295740e-05 5.104820e-06 -1.757980e-05
+                                            8.841070e-04 3.178300e-04 1.153640e-03
+                                            -3.293450e-05 5.014360e-06 -1.776930e-05
                                           ]
                                         }
                                       }
                                     }
                                   ]
                                   name "r_ankle"
-                                  boundingObject Group {
+                                  boundingObject Transform {
+                                    translation -0.023250 -0.018050 -0.026500
+                                    rotation 0.000000 1.000000 0.000000 0.000000
                                     children [
-                                      Transform {
-                                        translation -0.020300 -0.007000 -0.043500
-                                        rotation 0.577350 0.577352 0.577350 2.094399
-                                        children [
-                                          Box {
-                                            size 0.028000 0.006000 0.011600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation -0.042600 -0.018050 -0.026000
-                                        rotation -0.577350 -0.577350 -0.577352 2.094399
-                                        children [
-                                          Box {
-                                            size 0.040200 0.048000 0.065100
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation -0.020300 -0.007000 -0.008500
-                                        rotation -0.577350 0.577352 -0.577350 2.094399
-                                        children [
-                                          Box {
-                                            size 0.028000 0.006000 0.011600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation 0.017300 -0.005000 -0.025900
-                                        rotation 0.707105 0.000001 -0.707108 3.141591
-                                        children [
-                                          Box {
-                                            size 0.030000 0.031000 0.005600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation 0.000000 -0.018050 -0.026500
-                                        rotation -1.000000 -0.000000 0.000000 1.570800
-                                        children [
-                                          Box {
-                                            size 0.040200 0.048000 0.065100
-                                          }
-                                        ]
+                                      Box {
+                                        size 0.086700 0.065100 0.048000
                                       }
                                     ]
                                   }
@@ -977,186 +671,34 @@ PROTO Wolfgang [
                               }
                             ]
                             name "r_lower_leg"
-                            boundingObject Group {
+                            boundingObject Transform {
+                              translation 0.000074 0.013500 -0.085000
+                              rotation 0.000000 1.000000 0.000000 0.000000
                               children [
-                                Transform {
-                                  translation -0.000653 -0.012942 -0.007508
-                                  rotation 0.998099 0.043578 -0.043578 1.572703
-                                  children [
-                                    Box {
-                                      size 0.031700 0.092800 0.016153
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000005 0.049750 -0.000003
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.035991 0.001500 0.035994
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000074 0.051500 -0.085000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.048040 0.002000 0.206000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000074 -0.002500 -0.085000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.048040 0.002000 0.206000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.002535 0.024000 -0.056915
-                                  rotation -0.543774 0.593428 0.593425 2.145487
-                                  children [
-                                    Box {
-                                      size 0.064485 0.033500 0.051000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000000 -0.015850 0.000000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.033000 0.019300 0.033000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.014017 -0.008051 -0.041776
-                                  rotation 0.000001 1.000000 0.000001 3.316126
-                                  children [
-                                    Box {
-                                      size 0.015970 0.009102 0.030901
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000005 -0.000750 -0.000003
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.035991 0.001500 0.035994
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000000 -0.004850 0.000000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.030000 0.002700 0.030000
-                                    }
-                                  ]
+                                Box {
+                                  size 0.048040 0.078000 0.206000
                                 }
                               ]
                             }
                             physics Physics {
                               density -1
-                              mass 0.112618
-                              centerOfMass [ 0.001623 0.011571 -0.048584 ]
+                              mass 0.088064
+                              centerOfMass [ 0.001424 0.018357 -0.061708 ]
                               inertiaMatrix [
-                                3.784820e-04 3.167150e-04 9.771080e-05
-                                1.202140e-06 -1.033130e-05 6.383090e-05
+                                2.844560e-04 2.389080e-04 7.569320e-05
+                                8.111860e-07 -8.859630e-06 2.735930e-05
                               ]
                             }
                           }
                         }
                       ]
                       name "r_upper_leg"
-                      boundingObject Group {
+                      boundingObject Transform {
+                        translation 0.003592 -0.037500 -0.085165
+                        rotation 0.000000 1.000000 0.000000 0.000000
                         children [
-                          Transform {
-                            translation 0.013735 -0.040750 -0.137958
-                            rotation 0.186156 -0.694748 0.694745 2.773490
-                            children [
-                              Box {
-                                size 0.042000 0.026000 0.024500
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.002085 0.001000 -0.067502
-                            rotation 0.000000 1.000000 0.000000 0.000000
-                            children [
-                              Box {
-                                size 0.065511 0.002000 0.170996
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.000002 -0.052001 0.000001
-                            rotation 0.186156 -0.694748 0.694745 2.773490
-                            children [
-                              Box {
-                                size 0.035996 0.035995 0.002000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.003827 -0.029150 -0.155620
-                            rotation 0.186156 -0.694748 0.694745 2.773490
-                            children [
-                              Box {
-                                size 0.033500 0.058500 0.054300
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.012910 -0.066000 -0.139444
-                            rotation 1.000000 -0.000000 0.000000 1.570800
-                            children [
-                              Box {
-                                size 0.030181 0.030888 0.022000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.000002 -0.001001 0.000001
-                            rotation 0.186156 -0.694748 0.694745 2.773490
-                            children [
-                              Box {
-                                size 0.035996 0.035995 0.002000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.002085 -0.054000 -0.067502
-                            rotation 0.000000 1.000000 0.000000 0.000000
-                            children [
-                              Box {
-                                size 0.065511 0.002000 0.170996
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.014169 -0.012250 -0.138208
-                            rotation -0.935113 0.250562 0.250563 1.637837
-                            children [
-                              Box {
-                                size 0.042000 0.026000 0.024500
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.002811 -0.026500 -0.083611
-                            rotation -0.092690 0.704064 0.704061 2.956736
-                            children [
-                              Box {
-                                size 0.035150 0.038000 0.053000
-                              }
-                            ]
+                          Box {
+                            size 0.068526 0.079000 0.206322
                           }
                         ]
                       }
@@ -1173,52 +715,12 @@ PROTO Wolfgang [
                   }
                 ]
                 name "r_hip_2"
-                boundingObject Group {
+                boundingObject Transform {
+                  translation 0.000500 -0.018050 -0.045850
+                  rotation 0.000000 1.000000 0.000000 0.000000
                   children [
-                    Transform {
-                      translation -0.000000 -0.018050 -0.026500
-                      rotation -1.000000 0.000000 -0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.040200 0.048000 0.065100
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.017500 -0.007000 -0.048800
-                      rotation -0.707105 -0.707108 0.000001 3.141591
-                      children [
-                        Box {
-                          size 0.028000 0.006000 0.011600
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.001000 -0.005000 -0.086400
-                      rotation 0.000000 -0.000000 -1.000000 3.141590
-                      children [
-                        Box {
-                          size 0.030000 0.031000 0.005600
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.017500 -0.007000 -0.048800
-                      rotation -0.707105 0.707108 -0.000001 3.141591
-                      children [
-                        Box {
-                          size 0.028000 0.006000 0.011600
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.000500 -0.018050 -0.069100
-                      rotation -0.577350 -0.577350 -0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040200 0.048000 0.065100
-                        }
-                      ]
+                    Box {
+                      size 0.048000 0.065100 0.086700
                     }
                   ]
                 }
@@ -1259,7 +761,7 @@ PROTO Wolfgang [
         jointParameters HingeJointParameters {
           axis 0.000000 -0.000004 -1.000000
           anchor 0.000000 0.055000 -0.000000
-          dampingConstant 0.0
+          dampingConstant 0.92
           staticFriction 0.0
         }
         device [
@@ -1284,7 +786,7 @@ PROTO Wolfgang [
               jointParameters HingeJointParameters {
                 axis 1.000000 0.000003 -0.000004
                 anchor -0.046000 0.041400 0.000000
-                dampingConstant 0.0
+                dampingConstant 0.92
                 staticFriction 0.0
               }
               device [
@@ -1309,7 +811,7 @@ PROTO Wolfgang [
                     jointParameters HingeJointParameters {
                       axis 1.000000 -0.000000 0.000004
                       anchor 0.026000 0.000000 -0.069100
-                      dampingConstant 0.0
+                      dampingConstant 0.92
                       staticFriction 0.0
                     }
                     device [
@@ -1334,7 +836,7 @@ PROTO Wolfgang [
                           jointParameters HingeJointParameters {
                             axis 0.000001 0.000004 1.000000
                             anchor 0.004356 -0.168793 0.049000
-                            dampingConstant 0.0
+                            dampingConstant 1.0
                             staticFriction 0.0
                           }
                           device [
@@ -1358,7 +860,7 @@ PROTO Wolfgang [
                                 jointParameters HingeJointParameters {
                                   axis 0.000003 1.000000 0.000004
                                   anchor 0.000000 -0.050500 -0.170000
-                                  dampingConstant 0.0
+                                  dampingConstant 0.92
                                   staticFriction 0.0
                                 }
                                 device [
@@ -1383,7 +885,7 @@ PROTO Wolfgang [
                                       jointParameters HingeJointParameters {
                                         axis 1.000000 0.000004 0.000004
                                         anchor 0.069100 0.000000 -0.026000
-                                        dampingConstant 0.0
+                                        dampingConstant 0.92
                                         staticFriction 0.0
                                       }
                                       device [
@@ -1405,11 +907,17 @@ PROTO Wolfgang [
                                           Wolfgang_l_footMesh {
                                           }
                                           Solid {
-                                            translation -0.015201 0.090843 -0.052900
+                                            translation -0.015222 0.090768 -0.052900
                                             rotation 0.000000 -0.000000 1.000000 1.570800
                                             name "l_sole"
                                           }
+                                          Solid {
+                                            translation -0.015000 0.184500 -0.037750
+                                            rotation 0.000000 -0.000000 1.000000 1.570800
+                                            name "l_toe"
+                                          }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation -0.060000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1421,14 +929,12 @@ PROTO Wolfgang [
                                                 name "l_cleat_l_back"
                                               }
                                             ]
-                                            name "LLB"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "llb"
                                             boundingObject Transform {
-                                              translation 0.000000 -0.000000 -0.008000
+                                              translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
                                               children [
-                                                Box{
+                                                Box {
                                                   size 0.012000 0.012000 0.016000
                                                 }
                                               ]
@@ -1444,6 +950,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation -0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1455,11 +962,9 @@ PROTO Wolfgang [
                                                 name "l_cleat_l_front"
                                               }
                                             ]
-                                            name "LLF"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "llf"
                                             boundingObject Transform {
-                                              translation -0.000000 0.000000 -0.008000
+                                              translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
                                               children [
                                                 Box {
@@ -1478,6 +983,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation 0.030000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1489,11 +995,9 @@ PROTO Wolfgang [
                                                 name "l_cleat_r_front"
                                               }
                                             ]
-                                            name "LRF"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "lrf"
                                             boundingObject Transform {
-                                              translation 0.000000 -0.000000 -0.008000
+                                              translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
                                               children [
                                                 Box {
@@ -1512,6 +1016,7 @@ PROTO Wolfgang [
                                             }
                                           }
                                           TouchSensor {
+                                            type "force-3d"
                                             translation 0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1523,11 +1028,9 @@ PROTO Wolfgang [
                                                 name "l_cleat_r_back"
                                               }
                                             ]
-                                            name "LRB"
-                                            type        "force-3d"
-                                            resolution  -1
+                                            name "lrb"
                                             boundingObject Transform {
-                                              translation -0.000000 0.000000 -0.008000
+                                              translation 0.000000 0.000000 -0.008000
                                               rotation 0.000000 1.000000 0.000000 0.000000
                                               children [
                                                 Box {
@@ -1547,141 +1050,34 @@ PROTO Wolfgang [
                                           }
                                         ]
                                         name "l_foot"
-                                        boundingObject Group {
+                                        boundingObject Transform {
+                                          translation -0.015000 0.085750 -0.012750
+                                          rotation 0.000000 1.000000 0.000000 0.000000
                                           children [
-                                            Transform {
-                                              translation -0.060000 0.163500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.030000 0.006500 -0.032000
-                                              rotation -0.000000 0.000000 1.000000 3.141590
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation -0.015000 0.090500 -0.034250
-                                              rotation 0.000000 0.000000 -1.000000 1.570800
-                                              children [
-                                                Box {
-                                                  size 0.189000 0.106000 0.010500
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation -0.008000 0.130000 -0.033200
-                                              rotation 1.000000 -0.000000 0.000000 3.141590
-                                              children [
-                                                Box {
-                                                  size 0.060000 0.060000 0.001600
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation -0.015000 0.142500 -0.023000
-                                              rotation -0.000000 -0.000000 -1.000000 1.570800
-                                              children [
-                                                Box {
-                                                  size 0.085000 0.106000 0.026000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.000000 0.046000 -0.011000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.048000 0.100000 0.050000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation 0.030000 0.163500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
-                                            }
-                                            Transform {
-                                              translation -0.060000 0.006500 -0.032000
-                                              rotation 0.000000 1.000000 0.000000 0.000000
-                                              children [
-                                                Box {
-                                                  size 0.008000 0.040000 0.004000
-                                                }
-                                              ]
+                                            Box {
+                                              size 0.106000 0.198500 0.053500
                                             }
                                           ]
                                         }
                                         physics Physics {
                                           density -1
-                                          mass 0.267613
-                                          centerOfMass [ -0.012039 0.091187 -0.029853 ]
+                                          mass 0.268240
+                                          centerOfMass [ -0.012040 0.091109 -0.029858 ]
                                           inertiaMatrix [
-                                            8.833800e-04 3.164880e-04 1.151600e-03
-                                            3.213180e-05 -5.182810e-06 -1.757980e-05
+                                            8.841070e-04 3.173780e-04 1.153190e-03
+                                            3.211040e-05 -5.092230e-06 -1.776930e-05
                                           ]
                                         }
                                       }
                                     }
                                   ]
                                   name "l_ankle"
-                                  boundingObject Group {
+                                  boundingObject Transform {
+                                    translation 0.023250 -0.018050 -0.026500
+                                    rotation 0.000000 1.000000 0.000000 0.000000
                                     children [
-                                      Transform {
-                                        translation 0.020300 -0.007000 -0.043500
-                                        rotation 0.577350 -0.577352 -0.577350 2.094399
-                                        children [
-                                          Box {
-                                            size 0.028000 0.006000 0.011600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation -0.017300 -0.005000 -0.025000
-                                        rotation -0.707105 -0.000001 -0.707108 3.141591
-                                        children [
-                                          Box {
-                                            size 0.030000 0.031000 0.005600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation 0.020300 -0.007000 -0.008500
-                                        rotation -0.577350 -0.577352 0.577350 2.094399
-                                        children [
-                                          Box {
-                                            size 0.028000 0.006000 0.011600
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation 0.000000 -0.018050 -0.026500
-                                        rotation -1.000000 -0.000000 -0.000000 1.570800
-                                        children [
-                                          Box {
-                                            size 0.040200 0.048000 0.065100
-                                          }
-                                        ]
-                                      }
-                                      Transform {
-                                        translation 0.042600 -0.018050 -0.026000
-                                        rotation -0.577350 0.577350 0.577352 2.094399
-                                        children [
-                                          Box {
-                                            size 0.040200 0.048000 0.065100
-                                          }
-                                        ]
+                                      Box {
+                                        size 0.086700 0.065100 0.048000
                                       }
                                     ]
                                   }
@@ -1698,186 +1094,34 @@ PROTO Wolfgang [
                               }
                             ]
                             name "l_lower_leg"
-                            boundingObject Group {
+                            boundingObject Transform {
+                              translation 0.000074 -0.013500 -0.085000
+                              rotation 0.000000 1.000000 0.000000 0.000000
                               children [
-                                Transform {
-                                  translation 0.000000 0.015850 -0.000000
-                                  rotation 1.000000 -0.000000 0.000000 3.141590
-                                  children [
-                                    Box {
-                                      size 0.033000 0.019300 0.033000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.013958 0.008051 -0.042453
-                                  rotation 0.000000 -0.000000 -1.000000 3.141590
-                                  children [
-                                    Box {
-                                      size 0.015970 0.009102 0.030901
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000000 0.004850 0.000000
-                                  rotation -1.000000 0.000000 0.000000 3.141590
-                                  children [
-                                    Box {
-                                      size 0.030000 0.002700 0.030000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation -0.000653 0.012942 -0.007472
-                                  rotation -0.998099 0.043578 0.043578 1.572703
-                                  children [
-                                    Box {
-                                      size 0.031700 0.092800 0.016153
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000005 -0.049750 -0.000003
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.035991 0.001500 0.035994
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.002535 -0.024000 -0.056915
-                                  rotation -0.543774 0.593428 0.593425 2.145487
-                                  children [
-                                    Box {
-                                      size 0.064485 0.033500 0.051000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000005 0.000750 -0.000003
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.035991 0.001500 0.035994
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000074 -0.051500 -0.085000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.048040 0.002000 0.206000
-                                    }
-                                  ]
-                                }
-                                Transform {
-                                  translation 0.000074 0.002500 -0.085000
-                                  rotation 0.000000 1.000000 0.000000 0.000000
-                                  children [
-                                    Box {
-                                      size 0.048040 0.002000 0.206000
-                                    }
-                                  ]
+                                Box {
+                                  size 0.048040 0.078000 0.206000
                                 }
                               ]
                             }
                             physics Physics {
                               density -1
-                              mass 0.112624
-                              centerOfMass [ 0.001622 -0.011970 -0.048572 ]
+                              mass 0.088064
+                              centerOfMass [ 0.001424 -0.018870 -0.061707 ]
                               inertiaMatrix [
-                                3.797130e-04 3.168290e-04 9.881080e-05
-                                -1.516120e-06 -1.038290e-05 -6.254240e-05
+                                2.849660e-04 2.389230e-04 7.617060e-05
+                                -1.116610e-06 -8.911270e-06 -2.544810e-05
                               ]
                             }
                           }
                         }
                       ]
                       name "l_upper_leg"
-                      boundingObject Group {
+                      boundingObject Transform {
+                        translation -0.003376 -0.085039 0.035500
+                        rotation 0.000000 1.000000 0.000000 0.000000
                         children [
-                          Transform {
-                            translation -0.013735 -0.137958 0.010250
-                            rotation 0.965926 0.258819 0.000000 3.141590
-                            children [
-                              Box {
-                                size 0.042000 0.026000 0.024500
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000002 -0.000000 0.050000
-                            rotation -1.000000 0.000000 -0.000000 3.141590
-                            children [
-                              Box {
-                                size 0.035996 0.035995 0.002000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.013302 -0.137708 0.038750
-                            rotation 0.000000 -0.000000 -1.000000 2.617990
-                            children [
-                              Box {
-                                size 0.042000 0.026000 0.024500
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.003394 -0.155370 0.027150
-                            rotation -0.000000 -0.000000 -1.000000 2.617990
-                            children [
-                              Box {
-                                size 0.033500 0.058500 0.054300
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.012334 -0.137295 0.064000
-                            rotation -0.000000 -0.000000 1.000000 2.617990
-                            children [
-                              Box {
-                                size 0.030181 0.030888 0.022000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation 0.000002 0.000000 -0.001000
-                            rotation 0.000000 1.000000 0.000000 0.000000
-                            children [
-                              Box {
-                                size 0.035996 0.035995 0.002000
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.002085 -0.067502 -0.003000
-                            rotation 0.000001 -0.707108 -0.707105 3.141591
-                            children [
-                              Box {
-                                size 0.065511 0.002000 0.170996
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.002085 -0.067502 0.052000
-                            rotation 0.000001 0.707108 0.707105 3.141591
-                            children [
-                              Box {
-                                size 0.065511 0.002000 0.170996
-                              }
-                            ]
-                          }
-                          Transform {
-                            translation -0.002811 -0.083611 0.024500
-                            rotation -0.000000 -0.000000 -1.000000 0.261799
-                            children [
-                              Box {
-                                size 0.035150 0.038000 0.053000
-                              }
-                            ]
+                          Box {
+                            size 0.068093 0.206075 0.079000
                           }
                         ]
                       }
@@ -1894,52 +1138,12 @@ PROTO Wolfgang [
                   }
                 ]
                 name "l_hip_2"
-                boundingObject Group {
+                boundingObject Transform {
+                  translation -0.000500 -0.018050 -0.045850
+                  rotation 0.000000 1.000000 0.000000 0.000000
                   children [
-                    Transform {
-                      translation 0.017500 -0.007000 -0.048800
-                      rotation -0.707105 0.707108 -0.000001 3.141591
-                      children [
-                        Box {
-                          size 0.028000 0.006000 0.011600
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.000000 -0.018050 -0.026500
-                      rotation -1.000000 -0.000000 0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.040200 0.048000 0.065100
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.000500 -0.018050 -0.069100
-                      rotation -0.577350 0.577350 0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.040200 0.048000 0.065100
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.017500 -0.007000 -0.048800
-                      rotation 0.707105 0.707108 0.000001 3.141591
-                      children [
-                        Box {
-                          size 0.028000 0.006000 0.011600
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.000100 -0.005000 -0.086400
-                      rotation 0.000000 0.000000 -1.000000 3.141590
-                      children [
-                        Box {
-                          size 0.030000 0.031000 0.005600
-                        }
-                      ]
+                    Box {
+                      size 0.048000 0.065100 0.086700
                     }
                   ]
                 }
@@ -1980,16 +1184,16 @@ PROTO Wolfgang [
         jointParameters HingeJointParameters {
           axis 0.000000 -0.000003 1.000000
           anchor -0.009500 0.000000 0.234500
-          dampingConstant 0.0
+          dampingConstant 0.53
           staticFriction 0.0
         }
         device [
           RotationalMotor {
             name "HeadPan"
-            maxVelocity 2.5
+            maxVelocity 10.33
             minPosition -2.0944
             maxPosition 2.0944
-            maxTorque 3.0
+            maxTorque 5.43
           }
           PositionSensor {
             name "HeadPan_sensor"
@@ -2005,16 +1209,16 @@ PROTO Wolfgang [
               jointParameters HingeJointParameters {
                 axis 0.000000 1.000000 -0.000004
                 anchor 0.036000 0.023500 -0.024000
-                dampingConstant 0.0
+                dampingConstant 0.53
                 staticFriction 0.0
               }
               device [
                 RotationalMotor {
                   name "HeadTilt"
-                  maxVelocity 2.5
+                  maxVelocity 10.33
                   minPosition -1.5708
                   maxPosition 0.523599
-                  maxTorque 3.0
+                  maxTorque 5.43
                 }
                 PositionSensor {
                   name "HeadTilt_sensor"
@@ -2032,110 +1236,48 @@ PROTO Wolfgang [
                     name "camera"
                   }
                   Solid {
-                    translation 0.025 0.080000 -0.023500
+                    translation 0.043200 0.080000 -0.023500
                     rotation 0.707105 -0.000001 0.707108 3.141591
                     children [
-                      Accelerometer {
-                        name "imu accelerometer 2"
-                      }
-                      Gyro {
-                        name "imu gyro 2"
-                      }
-                      Transform {
-                        translation 0.00 0.00 0.00
-                        rotation 1 0 0 3.14
-                        children [
-                          Camera {
-                            name "camera"
-                            fieldOfView IS cameraFOV
-                            width 512
-                            height 384
-                          }
-                        ]
+                      Camera {
+                        rotation 1.0 0.0 0.0 3.141591
+                        name "camera"
+                        fieldOfView 0.570000
+                        width 620
+                        height 480
                       }
                     ]
                     name "camera_optical_frame"
-                    physics Physics {
-                      density -1
-                      mass 0.0001
-                      centerOfMass [ 0.0 0.0 0.0 ]
-                      inertiaMatrix [
-                        3.442650e-04 3.337130e-04 4.218980e-04
-                        -2.072630e-05 1.058260e-06 5.117220e-05
-                      ]
-                    }
                   }
                   Solid {
                     translation -0.025450 0.053500 -0.023500
                     rotation -1.000000 -0.000000 -0.000000 1.570800
+                    children [
+                      Accelerometer {
+                        name "imu_head accelerometer"
+                      }
+                      Gyro {
+                        name "imu_head gyro"
+                      }
+                      Compass {
+                        name "imu_head compass"
+                      }
+                      Solid {
+                        translation -0.050000 0.020000 -0.030000
+                        rotation -1.000000 0.000000 0.000000 1.570800
+                        name "imu_frame_2_2"
+                      }
+                    ]
                     name "imu_frame_2"
                   }
                 ]
                 name "head"
-                boundingObject Group {
+                boundingObject Transform {
+                  translation 0.001500 0.040000 -0.017000
+                  rotation 0.000000 1.000000 0.000000 0.000000
                   children [
-                    Transform {
-                      translation 0.029100 0.079500 -0.023500
-                      rotation -0.577350 -0.577350 -0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.043000 0.028200 0.043000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.000000 0.000000 0.004500
-                      rotation 0.000000 1.000000 0.000000 0.000000
-                      children [
-                        Box {
-                          size 0.050000 0.050000 0.009000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.000000 -0.000000 0.011250
-                      rotation 0.000000 -0.000000 1.000000 3.141590
-                      children [
-                        Box {
-                          size 0.050000 0.050000 0.004500
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.001500 0.077500 0.002547
-                      rotation 0.000000 1.000000 0.000000 0.000000
-                      children [
-                        Box {
-                          size 0.127000 0.055000 0.007095
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation 0.001500 0.077500 -0.049547
-                      rotation 0.000000 1.000000 0.000000 0.000000
-                      children [
-                        Box {
-                          size 0.127000 0.055000 0.007095
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.015150 0.079500 -0.023500
-                      rotation -0.577350 -0.577350 -0.577352 2.094399
-                      children [
-                        Box {
-                          size 0.029000 0.060300 0.029000
-                        }
-                      ]
-                    }
-                    Transform {
-                      translation -0.016500 0.036500 -0.017000
-                      rotation 0.000000 -1.000000 0.000000 1.570800
-                      children [
-                        Box {
-                          size 0.073000 0.087000 0.063000
-                        }
-                      ]
+                    Box {
+                      size 0.127000 0.130000 0.073000
                     }
                   ]
                 }
@@ -2152,25 +1294,12 @@ PROTO Wolfgang [
             }
           ]
           name "neck"
-          boundingObject Group {
+          boundingObject Transform {
+            translation 0.017250 0.001050 -0.022050
+            rotation 0.000000 1.000000 0.000000 0.000000
             children [
-              Transform {
-                translation 0.003500 0.000000 -0.004650
-                rotation 0.000000 1.000000 0.000000 0.000000
-                children [
-                  Box {
-                    size 0.036000 0.040000 0.009300
-                  }
-                ]
-              }
-              Transform {
-                translation 0.018450 0.001050 -0.024000
-                rotation 0.707105 -0.000001 0.707108 3.141591
-                children [
-                  Box {
-                    size 0.040200 0.046100 0.061100
-                  }
-                ]
+              Box {
+                size 0.063500 0.046100 0.044100
               }
             ]
           }
@@ -2186,288 +1315,23 @@ PROTO Wolfgang [
         }
       }
     ]
-    name IS name
-    boundingObject Group {
+    name IS name 
+    boundingObject Transform {
+      translation -0.002000 0.000000 0.117750
+      rotation 0.000000 1.000000 0.000000 0.000000
       children [
-        Transform {
-          translation 0.016050 0.054050 0.203500
-          rotation -0.707105 0.000001 0.707108 3.141591
-          children [
-            Box {
-              size 0.040200 0.046100 0.061100
-            }
-          ]
-        }
-        Transform {
-          translation 0.016050 -0.054050 0.203500
-          rotation -0.000000 -1.000000 -0.000000 1.570800
-          children [
-            Box {
-              size 0.040200 0.046100 0.061100
-            }
-          ]
-        }
-        Transform {
-          translation 0.049008 -0.062500 0.140750
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.015000 0.019716 0.022500
-            }
-          ]
-        }
-        Transform {
-          translation 0.022500 0.067550 0.061250
-          rotation -0.577350 -0.577352 0.577350 2.094399
-          children [
-            Box {
-              size 0.015500 0.036500 0.063000
-            }
-          ]
-        }
-        Transform {
-          translation -0.077028 0.067500 0.177415
-          rotation -0.577350 -0.577352 0.577350 2.094399
-          children [
-            Box {
-              size 0.019000 0.073000 0.040056
-            }
-          ]
-        }
-        Transform {
-          translation 0.002500 0.000400 0.026500
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.080200 0.041000 0.037000
-            }
-          ]
-        }
-        Transform {
-          translation -0.036750 -0.000500 0.029000
-          rotation 0.000000 0.000000 -1.000000 1.570800
-          children [
-            Box {
-              size 0.141000 0.044500 0.046000
-            }
-          ]
-        }
-        Transform {
-          translation -0.010000 0.001000 0.119000
-          rotation -0.000000 0.000000 -1.000000 1.570800
-          children [
-            Box {
-              size 0.132000 0.066000 0.002000
-            }
-          ]
-        }
-        Transform {
-          translation -0.038500 0.000000 0.029000
-          rotation 0.000000 0.000000 -1.000000 1.570800
-          children [
-            Box {
-              size 0.140000 0.040000 0.044000
-            }
-          ]
-        }
-        Transform {
-          translation 0.018050 -0.055000 0.026500
-          rotation 0.577350 -0.577352 -0.577350 2.094399
-          children [
-            Box {
-              size 0.040200 0.048000 0.065100
-            }
-          ]
-        }
-        Transform {
-          translation 0.073028 0.067500 0.177415
-          rotation -0.577350 0.577352 -0.577350 2.094399
-          children [
-            Box {
-              size 0.019000 0.073000 0.040056
-            }
-          ]
-        }
-        Transform {
-          translation -0.053008 -0.062400 0.140750
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.015000 0.019716 0.022500
-            }
-          ]
-        }
-        Transform {
-          translation 0.018050 0.055000 0.026500
-          rotation 0.577350 -0.577352 -0.577350 2.094399
-          children [
-            Box {
-              size 0.040200 0.048000 0.065100
-            }
-          ]
-        }
-        Transform {
-          translation -0.053008 0.050900 0.142250
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.038000 0.019716 0.019500
-            }
-          ]
-        }
-        Transform {
-          translation -0.002000 -0.011500 0.151500
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.111000 0.107000 0.005000
-            }
-          ]
-        }
-        Transform {
-          translation -0.018750 -0.048900 0.218000
-          rotation -0.707105 0.000001 0.707108 3.141591
-          children [
-            Box {
-              size 0.016000 0.042200 0.080500
-            }
-          ]
-        }
-        Transform {
-          translation 0.052500 -0.011500 0.167000
-          rotation 0.000000 -0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.084000 0.002000 0.019000
-            }
-          ]
-        }
-        Transform {
-          translation -0.002000 -0.000000 0.043000
-          rotation 0.000000 1.000000 0.000000 0.000000
-          children [
-            Box {
-              size 0.120000 0.150000 0.080000
-            }
-          ]
-        }
-        Transform {
-          translation -0.037000 -0.047800 0.215800
-          rotation 0.707105 -0.707108 -0.000001 3.141591
-          children [
-            Box {
-              size 0.030000 0.040000 0.005400
-            }
-          ]
-        }
-        Transform {
-          translation 0.008050 0.000000 0.212050
-          rotation -0.577350 -0.577352 0.577350 2.094399
-          children [
-            Box {
-              size 0.040200 0.046100 0.061100
-            }
-          ]
-        }
-        Transform {
-          translation 0.022500 -0.067550 0.061250
-          rotation -0.577350 -0.577352 0.577350 2.094399
-          children [
-            Box {
-              size 0.015500 0.036500 0.063000
-            }
-          ]
-        }
-        Transform {
-          translation -0.077028 -0.067500 0.177415
-          rotation -0.577350 -0.577352 0.577350 2.094399
-          children [
-            Box {
-              size 0.019000 0.073000 0.040056
-            }
-          ]
-        }
-        Transform {
-          translation 0.021500 0.000000 0.011000
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.036500 0.026500 0.010000
-            }
-          ]
-        }
-        Transform {
-          translation 0.001750 -0.000000 0.102000
-          rotation -0.000000 0.000000 -1.000000 1.570800
-          children [
-            Box {
-              size 0.139000 0.111500 0.028000
-            }
-          ]
-        }
-        Transform {
-          translation 0.016000 -0.000050 0.065000
-          rotation -0.577350 0.577352 -0.577350 2.094399
-          children [
-            Box {
-              size 0.125500 0.012000 0.078000
-            }
-          ]
-        }
-        Transform {
-          translation -0.002000 -0.011500 0.167000
-          rotation -0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.115000 0.111000 0.030000
-            }
-          ]
-        }
-        Transform {
-          translation 0.073028 -0.067500 0.177415
-          rotation -0.577350 0.577352 -0.577350 2.094399
-          children [
-            Box {
-              size 0.019000 0.073000 0.040056
-            }
-          ]
-        }
-        Transform {
-          translation -0.005000 0.000000 0.158000
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.150000 0.136000 0.150000
-            }
-          ]
-        }
-        Transform {
-          translation 0.022770 0.000000 0.027000
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.032000 0.023000 0.032000
-            }
-          ]
-        }
-        Transform {
-          translation 0.049008 0.051000 0.142250
-          rotation 0.000000 0.000000 1.000000 1.570800
-          children [
-            Box {
-              size 0.038000 0.019716 0.019500
-            }
-          ]
+        Box {
+          size 0.190111 0.154000 0.230500
         }
       ]
     }
     physics Physics {
       density -1
-      mass 2.203600
-      centerOfMass [ -0.005173 -0.001700 0.106296 ]
+      mass 2.083900
+      centerOfMass [ -0.005644 -0.002630 0.109553 ]
       inertiaMatrix [
-        1.925800e-02 1.649360e-02 8.303530e-03
-        -1.621350e-05 -1.415190e-03 2.553440e-04
+        1.838960e-02 1.587720e-02 7.803170e-03
+        -6.801730e-05 -1.408270e-03 1.040740e-04
       ]
     }
   }

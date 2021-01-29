@@ -209,6 +209,9 @@ class Simulation:
         (roll, pitch, yaw) = p.getEulerFromQuaternion((qx, qy, qz, qw))
         return (x, y, z), (roll, pitch, yaw)
 
+    def get_link_pose(self, link_name):
+        return p.getLinkState(self.robot_index, self.links[link_name])[0]
+
     def get_robot_velocity(self):
         (vx, vy, vz), (vr, vp, vy) = p.getBaseVelocity(self.robot_index)
         return (vx, vy, vz), (vr, vp, vy)

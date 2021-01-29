@@ -14,6 +14,9 @@ from dynamic_reconfigure.server import Server
 
 class ROSInterface:
     def __init__(self, simulation, namespace='', node=True):
+
+        self.namespace = namespace
+
         # give possibility to use the interface directly as class with setting node=False
         if node:
             if namespace == '':
@@ -22,7 +25,7 @@ class ROSInterface:
                 rospy.init_node('pybullet_sim', anonymous=True, argv=['clock:=/' + self.namespace + '/clock'])
 
         self.simulation = simulation
-        self.namespace = namespace
+
         self.last_time = time.time()
         self.last_linear_vel = (0, 0, 0)
 

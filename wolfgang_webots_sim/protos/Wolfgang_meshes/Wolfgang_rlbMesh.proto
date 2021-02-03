@@ -2,7 +2,7 @@
 # license: Apache License 2.0
 # license url: http://www.apache.org/licenses/LICENSE-2.0
 # tags: hidden
-# Extracted from: /home/jasper/ws/src/bitbots_meta/wolfgang_robot/wolfgang_description/urdf/robot.urdf
+# Extracted from: wolfgang.urdf
 
 PROTO Wolfgang_rlbMesh [
 ]

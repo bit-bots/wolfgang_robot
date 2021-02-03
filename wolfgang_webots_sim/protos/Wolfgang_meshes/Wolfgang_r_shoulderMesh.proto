@@ -2,14 +2,14 @@
 # license: Apache License 2.0
 # license url: http://www.apache.org/licenses/LICENSE-2.0
 # tags: hidden
-# Extracted from: /home/jasper/ws/src/bitbots_meta/wolfgang_robot/wolfgang_description/urdf/robot.urdf
+# Extracted from: wolfgang.urdf
 
 PROTO Wolfgang_r_shoulderMesh [
 ]
 {
   Shape {
     appearance DEF r_shoulder_material PBRAppearance {
-      baseColor 0.557143 0.318926 0.636303
+      baseColor 0.841824 0.573478 0.437567
       transparency 0.000000
       roughness 1.000000
       metalness 0

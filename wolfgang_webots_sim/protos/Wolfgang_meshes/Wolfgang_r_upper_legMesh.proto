@@ -2,14 +2,14 @@
 # license: Apache License 2.0
 # license url: http://www.apache.org/licenses/LICENSE-2.0
 # tags: hidden
-# Extracted from: /home/jasper/ws/src/bitbots_meta/wolfgang_robot/wolfgang_description/urdf/robot.urdf
+# Extracted from: wolfgang.urdf
 
 PROTO Wolfgang_r_upper_legMesh [
 ]
 {
   Shape {
     appearance DEF r_upper_leg_material PBRAppearance {
-      baseColor 0.512220 0.474860 0.474860
+      baseColor 0.512220 0.500646 0.474860
       transparency 0.000000
       roughness 1.000000
       metalness 0

@@ -11,12 +11,11 @@ from scipy import signal
 import pybullet_data
 import rospkg
 
-
 from wolfgang_pybullet_sim.terrain import Terrain
 
 
 class Simulation:
-    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False):
+    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False, field=True):
         self.gui = gui
         self.paused = False
         self.gravity = True
@@ -25,7 +24,7 @@ class Simulation:
         # config values
         self.start_position = [0, 0, 0.43]
         self.start_orientation = p.getQuaternionFromEuler((0, 0.25, 0))
-        self.initial_joints_positions ={"LAnklePitch": -30, "LAnkleRoll": 0, "LHipPitch": 30, "LHipRoll": 0,
+        self.initial_joints_positions = {"LAnklePitch": -30, "LAnkleRoll": 0, "LHipPitch": 30, "LHipRoll": 0,
                                          "LHipYaw": 0, "LKnee": 60, "RAnklePitch": 30, "RAnkleRoll": 0,
                                          "RHipPitch": -30, "RHipRoll": 0, "RHipYaw": 0, "RKnee": -60,
                                          "LShoulderPitch": 0, "LShoulderRoll": 0, "LElbow": 45, "RShoulderPitch": 0,
@@ -43,6 +42,8 @@ class Simulation:
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, False)
 
         # Load floor
+        self.terrain_index = None
+        self.plane_index = None
         if terrain:
             self.max_terrain_height = 0.04
             self.terrain = Terrain(self.max_terrain_height)
@@ -50,14 +51,15 @@ class Simulation:
         else:
             p.setAdditionalSearchPath(pybullet_data.getDataPath())  # needed for plane.urdf
             self.plane_index = p.loadURDF('plane.urdf')
+            print(p.getDynamicsInfo(self.plane_index, -1))
 
-        # Load field
-        rospack = rospkg.RosPack()
-        path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
-        p.setAdditionalSearchPath(path)  # needed to find field model
-        self.field_index = p.loadURDF('field/field.urdf')
-        p.changeDynamics(self.field_index, -1, lateralFriction=1, spinningFriction=-1,
-                         rollingFriction=-1, restitution=0.9)
+        self.field_index = None
+        if field:
+            # Load field
+            rospack = rospkg.RosPack()
+            path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
+            p.setAdditionalSearchPath(path)  # needed to find field model
+            self.field_index = p.loadURDF('field/field.urdf')
 
         # Load robot
         flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION + p.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
@@ -104,7 +106,8 @@ class Simulation:
         self.reset()
 
     def set_foot_dynamics(self, contact_damping, contact_stiffness, joint_damping, lateral_friction=1,
-                          spinning_friction=1, rolling_friction=1):
+                          spinning_friction=1, rolling_friction=1, restitution=0):
+        # set dynamic values for all links and ground
         for link_name in self.links.keys():
             if link_name in ["llb", "llf", "lrf", "lrb", "rlb", "rlf", "rrf",
                              "rrb"] or link_name in self.foot_link_names:
@@ -115,10 +118,21 @@ class Simulation:
                                  rollingFriction=rolling_friction,
                                  contactDamping=contact_damping,
                                  contactStiffness=contact_stiffness,
-                                 jointDamping=joint_damping)
-                p.changeDynamics(self.plane_index, -1, lateralFriction=lateral_friction,
-                                 spinningFriction=spinning_friction,
-                                 rollingFriction=rolling_friction, restitution=0.9)
+                                 jointDamping=joint_damping,
+                                 restitution=restitution)
+        if self.plane_index:
+            p.changeDynamics(self.plane_index, -1, lateralFriction=lateral_friction, spinningFriction=spinning_friction,
+                             rollingFriction=rolling_friction, restitution=restitution, contactDamping=contact_damping,
+                             contactStiffness=contact_stiffness, jointDamping=joint_damping)
+        if self.field_index:
+            p.changeDynamics(self.field_index, -1, lateralFriction=lateral_friction, spinningFriction=spinning_friction,
+                             rollingFriction=rolling_friction, restitution=restitution, contactDamping=contact_damping,
+                             contactStiffness=contact_stiffness, jointDamping=joint_damping)
+        if self.terrain_index:
+            p.changeDynamics(self.terrain_index, -1, lateralFriction=lateral_friction,
+                             spinningFriction=spinning_friction,
+                             rollingFriction=rolling_friction, restitution=restitution, contactDamping=contact_damping,
+                             contactStiffness=contact_stiffness, jointDamping=joint_damping)
 
     def set_filter_params(self, cutoff, order):
         for i in range(p.getNumJoints(self.robot_index)):
@@ -225,6 +239,7 @@ class Simulation:
 
     def get_joint_position(self, name):
         return self.joints[name].get_position()
+
 
 class Joint:
     def __init__(self, joint_index, body_index):

@@ -223,6 +223,8 @@ class Simulation:
             names.append(joint.name)
         return names
 
+    def get_joint_position(self, name):
+        return self.joints[name].get_position()
 
 class Joint:
     def __init__(self, joint_index, body_index):

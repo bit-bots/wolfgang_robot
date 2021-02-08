@@ -7,11 +7,14 @@ import pybullet as p
 from time import sleep
 
 import rospy
+import tf
 from scipy import signal
 import pybullet_data
 import rospkg
+from transforms3d.quaternions import quat2mat
 
 from wolfgang_pybullet_sim.terrain import Terrain
+import numpy as np
 
 
 class Simulation:
@@ -165,19 +168,28 @@ class Simulation:
             # gravity
             nKey = ord('n')
             # single step
-            sKey = ord('s')
+            xKey = ord('x')
             # real time
             tKey = ord('t')
             # randomize terrain
             fKey = ord('f')
             # pause
             spaceKey = p.B3G_SPACE
+            # rotate robot for testing
+            jKey = ord('j')
+            kKey = ord('k')
+            lKey = ord('l')
+            # move robot for testing
+            qKey = ord('q')
+            aKey = ord('a')
+            sKey = ord('s')
+            dKey = ord('d')
             keys = p.getKeyboardEvents()
             if rKey in keys and keys[rKey] & p.KEY_WAS_TRIGGERED:
                 self.reset()
             if spaceKey in keys and keys[spaceKey] & p.KEY_WAS_TRIGGERED:
                 self.paused = not self.paused
-            if sKey in keys and keys[sKey] & p.KEY_IS_DOWN:
+            if xKey in keys and keys[xKey] & p.KEY_IS_DOWN:
                 single_step = True
             if nKey in keys and keys[nKey] & p.KEY_WAS_TRIGGERED:
                 self.set_gravity(not self.gravity)
@@ -187,6 +199,27 @@ class Simulation:
             if fKey in keys and keys[fKey] & p.KEY_WAS_TRIGGERED:
                 # generate new terain
                 self.terrain.randomize()
+            if jKey in keys and keys[jKey] & p.KEY_WAS_TRIGGERED:
+                pos, rpy = self.get_robot_pose_rpy()
+                self.reset_robot_pose_rpy(pos, (rpy[0] + math.radians(30), rpy[1], rpy[2]))
+            if kKey in keys and keys[kKey] & p.KEY_WAS_TRIGGERED:
+                pos, rpy = self.get_robot_pose_rpy()
+                self.reset_robot_pose_rpy(pos, (rpy[0], rpy[1] + math.radians(30), rpy[2]))
+            if lKey in keys and keys[lKey] & p.KEY_WAS_TRIGGERED:
+                pos, rpy = self.get_robot_pose_rpy()
+                self.reset_robot_pose_rpy(pos, (rpy[0], rpy[1], rpy[2] + math.radians(30)))
+            if qKey in keys and keys[qKey] & p.KEY_WAS_TRIGGERED:
+                pos, quat = self.get_robot_pose()
+                self.reset_robot_pose((pos[0] + 0.1, pos[1], pos[2]), quat)
+            if aKey in keys and keys[aKey] & p.KEY_WAS_TRIGGERED:
+                pos, quat = self.get_robot_pose()
+                self.reset_robot_pose((pos[0], pos[1] + 0.1, pos[2]), quat)
+            if sKey in keys and keys[sKey] & p.KEY_WAS_TRIGGERED:
+                pos, quat = self.get_robot_pose()
+                self.reset_robot_pose((pos[0] - 0.1, pos[1], pos[2]), quat)
+            if dKey in keys and keys[dKey] & p.KEY_WAS_TRIGGERED:
+                pos, quat = self.get_robot_pose()
+                self.reset_robot_pose((pos[0], pos[1] - 0.1, pos[2]), quat)
             # block until pause is over
             while self.paused and not single_step:
                 keys = p.getKeyboardEvents()
@@ -214,6 +247,10 @@ class Simulation:
         p.resetBasePositionAndOrientation(self.robot_index, position, orientation)
         p.resetBaseVelocity(self.robot_index, [0, 0, 0], [0, 0, 0])
 
+    def reset_robot_pose_rpy(self, position, rpy):
+        quat = tf.transformations.quaternion_from_euler(*rpy)
+        self.reset_robot_pose(position, quat)
+
     def get_robot_pose(self):
         (x, y, z), (qx, qy, qz, qw) = p.getBasePositionAndOrientation(self.robot_index)
         return (x, y, z), (qx, qy, qz, qw)
@@ -227,8 +264,16 @@ class Simulation:
         return p.getLinkState(self.robot_index, self.links[link_name])[0]
 
     def get_robot_velocity(self):
+        # these are in world coordinate frame
         (vx, vy, vz), (vr, vp, vy) = p.getBaseVelocity(self.robot_index)
-        return (vx, vy, vz), (vr, vp, vy)
+        # rotate to robot frame
+        _, (x, y, z, w) = self.get_robot_pose()
+        # rotation matrix
+        M = quat2mat((w, x, y, z))
+        # velocities as vector
+        v = np.array([vr, vp, vy]).T
+        angular_vel_robot_frame = np.matmul(M.T, v)
+        return (vx, vy, vz), angular_vel_robot_frame
 
     def get_joint_names(self):
         names = []

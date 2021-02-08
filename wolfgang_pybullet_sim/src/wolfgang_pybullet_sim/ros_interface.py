@@ -209,7 +209,7 @@ class ROSInterface:
         # center position on foot
         pos_x = 0.085
         pos_y = 0.045
-        threshold = 0.1
+        threshold = 0.0
 
         cop_l = PointStamped()
         cop_l.header.frame_id = "l_sole"

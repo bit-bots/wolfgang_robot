@@ -108,6 +108,16 @@ class Simulation:
         # reset robot to initial position
         self.reset()
 
+    def apply_force(self, link_id, force, position):
+        """
+        Applies an external force to a position on a link.
+
+        :param link_id: link index or -1 for base link (int)
+        :param force: direction and amount of applied force (vec3)
+        :param position: where on the link the force should be applied (vec3)
+        """
+        p.applyExternalForce(self.robot_index, link_id, force, position, flags=p.WORLD_FRAME)
+
     def set_foot_dynamics(self, contact_damping, contact_stiffness, joint_damping, lateral_friction=1,
                           spinning_friction=1, rolling_friction=1, restitution=0):
         # set dynamic values for all links and ground

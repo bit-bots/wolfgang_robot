@@ -1,9 +1,9 @@
 contact_stiffness: -1.0
 contact_damping: -1.0
 joint_damping: 1.0
-lateral_friction: 0.5
-spinning_friction: -1
-rolling_friction: -1
-resistution: 0
+lateral_friction: 0.8
+spinning_friction: 0.001
+rolling_friction: 0.001
+resistution: 0.5
 order: 5
 cutoff: 10

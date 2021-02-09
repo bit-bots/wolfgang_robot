@@ -54,7 +54,6 @@ class Simulation:
         else:
             p.setAdditionalSearchPath(pybullet_data.getDataPath())  # needed for plane.urdf
             self.plane_index = p.loadURDF('plane.urdf')
-            print(p.getDynamicsInfo(self.plane_index, -1))
 
         self.field_index = None
         if field:
@@ -102,8 +101,6 @@ class Simulation:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
 
-        # this can be used to test different ground / foot frictions. default should be fine for robocup field
-        # self.set_foot_dynamics(0.0, 0.0, 0.0)
 
         # reset robot to initial position
         self.reset()

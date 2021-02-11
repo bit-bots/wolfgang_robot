@@ -64,8 +64,8 @@ class Simulation:
             p.setAdditionalSearchPath(path)  # needed to find field model
             self.field_index = p.loadURDF('field/field.urdf')
 
-        # Load robot
-        flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION + p.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
+        # Load robot, deactivate all self collisions
+        flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION
         if urdf_path is None:
             # use wolfgang as standard
             rospack = rospkg.RosPack()
@@ -95,6 +95,7 @@ class Simulation:
             # we can get the links by seeing where the joint is attached
             self.links[joint_info[12].decode('utf-8')] = link_index
             link_index += 1
+            # see if it is a joint
             if type == 0:
                 if self.joints_ft:
                     p.enableJointForceTorqueSensor(self.robot_index, i)
@@ -104,6 +105,17 @@ class Simulation:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
 
+        print(self.links)
+        for linkA in self.links.keys():
+            for linkB in self.links.keys():
+                p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[linkA],
+                                         self.links[linkB], 0)
+        # set collisions for hip and ankle towards each other, otherwise stand up is not realistic
+        hip_group = ["torso", "r_hip_1", "r_hip_2", "l_hip_1", "l_hip_2"]
+        foot_group = ["r_ankle", "r_foot", "l_ankle", "l_foot"]
+        for hip_link_index in hip_group:
+            for foot_link_index in foot_group:
+                p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[hip_link_index], self.links[foot_link_index], 1)
 
         # reset robot to initial position
         self.reset()

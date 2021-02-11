@@ -18,11 +18,12 @@ import numpy as np
 
 
 class Simulation:
-    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False, field=True):
+    def __init__(self, gui, urdf_path=None, foot_link_names=[], terrain=False, field=True, joints_ft=False):
         self.gui = gui
         self.paused = False
         self.gravity = True
         self.foot_link_names = foot_link_names
+        self.joints_ft = joints_ft
 
         # config values
         self.start_position = [0, 0, 0.43]
@@ -95,8 +96,10 @@ class Simulation:
             self.links[joint_info[12].decode('utf-8')] = link_index
             link_index += 1
             if type == 0:
+                if self.joints_ft:
+                    p.enableJointForceTorqueSensor(self.robot_index, i)
                 # remember joint if its revolute (0) and not fixed (4)
-                self.joints[name] = Joint(i, self.robot_index)
+                self.joints[name] = Joint(i, self.robot_index, ft=self.joints_ft)
             elif name in ["LLB", "LLF", "LRF", "LRB", "RLB", "RLF", "RRF", "RRB"]:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
@@ -294,7 +297,7 @@ class Simulation:
 
 
 class Joint:
-    def __init__(self, joint_index, body_index):
+    def __init__(self, joint_index, body_index, ft =False):
         self.joint_index = joint_index
         self.body_index = body_index
         joint_info = p.getJointInfo(self.body_index, self.joint_index)
@@ -306,6 +309,7 @@ class Joint:
         self.upperLimit = joint_info[9]
         self.damping = joint_info[6]
         self.friction = joint_info[7]
+        self.ft = ft
 
     def reset_position(self, position, velocity):
         p.resetJointState(self.body_index, self.joint_index, targetValue=position, targetVelocity=velocity)
@@ -334,9 +338,18 @@ class Joint:
         position, velocity, forces, applied_torque = self.get_state()
         return velocity
 
-    def get_torque(self):
+    def get_applied_torque(self):
         position, velocity, forces, applied_torque = self.get_state()
         return applied_torque
+
+    def get_torque(self):
+        if self.ft:
+            position, velocity, forces, applied_torque = self.get_state()
+            #todo this guesses z is the correct axis, but we dont know
+            return forces[5]
+        else:
+            print("Force Torque sensor not activated!")
+            return None
 
 
 class PressureSensor:

@@ -115,7 +115,8 @@ class Simulation:
         foot_group = ["r_ankle", "r_foot", "l_ankle", "l_foot"]
         for hip_link_index in hip_group:
             for foot_link_index in foot_group:
-                p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[hip_link_index], self.links[foot_link_index], 1)
+                p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[hip_link_index],
+                                         self.links[foot_link_index], 1)
 
         # reset robot to initial position
         self.reset()
@@ -264,10 +265,17 @@ class Simulation:
             p.setGravity(0, 0, 0)
         self.gravity = active
 
+    def set_robot_pose(self, position, orientation):
+        p.resetBasePositionAndOrientation(self.robot_index, position, orientation)
+
     def reset_robot_pose(self, position, orientation):
         # reset body pose and velocity
         p.resetBasePositionAndOrientation(self.robot_index, position, orientation)
         p.resetBaseVelocity(self.robot_index, [0, 0, 0], [0, 0, 0])
+        # we need to reset all joints to, otherwise they still have velocity
+        for name in self.joints:
+            joint = self.joints[name]
+            p.resetJointState(joint.body_index, joint.joint_index, 0, 0)
 
     def reset_robot_pose_rpy(self, position, rpy):
         quat = tf.transformations.quaternion_from_euler(*rpy)
@@ -309,7 +317,7 @@ class Simulation:
 
 
 class Joint:
-    def __init__(self, joint_index, body_index, ft =False):
+    def __init__(self, joint_index, body_index, ft=False):
         self.joint_index = joint_index
         self.body_index = body_index
         joint_info = p.getJointInfo(self.body_index, self.joint_index)
@@ -357,7 +365,7 @@ class Joint:
     def get_torque(self):
         if self.ft:
             position, velocity, forces, applied_torque = self.get_state()
-            #todo this guesses z is the correct axis, but we dont know
+            # todo this guesses z is the correct axis, but we dont know
             return forces[5]
         else:
             print("Force Torque sensor not activated!")

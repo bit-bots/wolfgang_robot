@@ -73,14 +73,13 @@ class ROSInterface:
 
     def step(self):
         self.simulation.step()
-        if not self.simulation.paused:
-            self.publish_joints()
-            self.publish_imu()
-            self.publish_foot_pressure()
-            self.publish_true_odom()
-            self.clock_msg.clock = rospy.Time.from_seconds(self.simulation.time)
-            self.clock_publisher.publish(self.clock_msg)
-            self.compute_real_time_factor()
+        self.publish_joints()
+        self.publish_imu()
+        self.publish_foot_pressure()
+        self.publish_true_odom()
+        self.clock_msg.clock = rospy.Time.from_seconds(self.simulation.time)
+        self.clock_publisher.publish(self.clock_msg)
+        self.compute_real_time_factor()
 
     def run_simulation(self, duration=None, sleep=0):
         start_time = rospy.get_time()

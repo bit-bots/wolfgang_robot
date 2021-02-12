@@ -22,6 +22,9 @@ class Simulation:
         self.gui = gui
         self.paused = False
         self.gravity = True
+        self.terrain_on = terrain
+        self.field_on = field
+        self.urdf_path = urdf_path
         self.foot_link_names = foot_link_names
         self.joints_ft = joints_ft
 
@@ -45,33 +48,6 @@ class Simulation:
         # disable debug interface, only show robot
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, False)
 
-        # Load floor
-        self.terrain_index = None
-        self.plane_index = None
-        if terrain:
-            self.max_terrain_height = 0.04
-            self.terrain = Terrain(self.max_terrain_height)
-            self.plane_index = self.terrain.id
-        else:
-            p.setAdditionalSearchPath(pybullet_data.getDataPath())  # needed for plane.urdf
-            self.plane_index = p.loadURDF('plane.urdf')
-
-        self.field_index = None
-        if field:
-            # Load field
-            rospack = rospkg.RosPack()
-            path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
-            p.setAdditionalSearchPath(path)  # needed to find field model
-            self.field_index = p.loadURDF('field/field.urdf')
-
-        # Load robot, deactivate all self collisions
-        flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION
-        if urdf_path is None:
-            # use wolfgang as standard
-            rospack = rospkg.RosPack()
-            urdf_path = rospack.get_path("wolfgang_description") + "/urdf/robot.urdf"
-        self.robot_index = p.loadURDF(urdf_path, self.start_position, self.start_orientation, flags=flags)
-
         # Engine parameters
         # time step should be at 240Hz (due to pyBullet documentation)
         self.timestep = 1 / 240
@@ -80,6 +56,36 @@ class Simulation:
         # no real time, as we will publish own clock
         self.real_time = False
         p.setRealTimeSimulation(0)
+
+        self.load_models()
+
+    def load_models(self):
+        # Load floor
+        self.terrain_index = None
+        self.plane_index = None
+        if self.terrain_on:
+            self.max_terrain_height = 0.04
+            self.terrain = Terrain(self.max_terrain_height)
+            self.plane_index = self.terrain.id
+        else:
+            p.setAdditionalSearchPath(pybullet_data.getDataPath())  # needed for plane.urdf
+            self.plane_index = p.loadURDF('plane.urdf')
+
+        self.field_index = None
+        if self.field_on:
+            # Load field
+            rospack = rospkg.RosPack()
+            path = os.path.join(rospack.get_path('wolfgang_pybullet_sim'), 'models')
+            p.setAdditionalSearchPath(path)  # needed to find field model
+            self.field_index = p.loadURDF('field/field.urdf')
+
+        # Load robot, deactivate all self collisions
+        flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION
+        if self.urdf_path is None:
+            # use wolfgang as standard
+            rospack = rospkg.RosPack()
+            self.urdf_path = rospack.get_path("wolfgang_description") + "/urdf/robot.urdf"
+        self.robot_index = p.loadURDF(self.urdf_path, self.start_position, self.start_orientation, flags=flags)
 
         # Retrieving joints and foot pressure sensors
         self.joints = {}
@@ -105,7 +111,6 @@ class Simulation:
                 p.enableJointForceTorqueSensor(self.robot_index, i)
                 self.pressure_sensors[name] = PressureSensor(name, i, self.robot_index, 10, 5)
 
-        print(self.links)
         for linkA in self.links.keys():
             for linkB in self.links.keys():
                 p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[linkA],
@@ -184,7 +189,6 @@ class Simulation:
 
     def step(self):
         # get keyboard events if gui is active
-        single_step = False
         if self.gui:
             # reset if R-key was pressed
             rKey = ord('r')
@@ -212,8 +216,6 @@ class Simulation:
                 self.reset()
             if spaceKey in keys and keys[spaceKey] & p.KEY_WAS_TRIGGERED:
                 self.paused = not self.paused
-            if xKey in keys and keys[xKey] & p.KEY_IS_DOWN:
-                single_step = True
             if nKey in keys and keys[nKey] & p.KEY_WAS_TRIGGERED:
                 self.set_gravity(not self.gravity)
             if tKey in keys and keys[tKey] & p.KEY_WAS_TRIGGERED:
@@ -244,14 +246,14 @@ class Simulation:
                 pos, quat = self.get_robot_pose()
                 self.reset_robot_pose((pos[0], pos[1] - 0.1, pos[2]), quat)
             # block until pause is over
-            while self.paused and not single_step:
+            while self.paused:
+                # sleep a bit to not block a whole CPU core while waiting
+                sleep(0.1)
                 keys = p.getKeyboardEvents()
                 if spaceKey in keys and keys[spaceKey] & p.KEY_WAS_TRIGGERED:
                     self.paused = not self.paused
-                if sKey in keys and keys[sKey] & p.KEY_IS_DOWN:
-                    single_step = True
-                # sleep a bit to not block a whole CPU core while waiting
-                sleep(0.01)
+                if xKey in keys and keys[xKey] & p.KEY_IS_DOWN:
+                    break
 
         self.time += self.timestep
         p.stepSimulation()
@@ -267,6 +269,10 @@ class Simulation:
 
     def set_robot_pose(self, position, orientation):
         p.resetBasePositionAndOrientation(self.robot_index, position, orientation)
+
+    def reset_simulation(self):
+        p.resetSimulation()
+        self.load_models()
 
     def reset_robot_pose(self, position, orientation):
         # reset body pose and velocity

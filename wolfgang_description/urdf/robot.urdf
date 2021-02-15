@@ -131,7 +131,7 @@
 </inertial>
 </link>
 <joint name="r_wrist_frame" type="fixed">
-<origin xyz="3.1225e-16 -0.226182 -0.0235" rpy="-1.5708 7.31053e-15 -1.5708" />
+<origin xyz="3.1225e-16 -0.226182 -0.0235" rpy="1.5708 7.31053e-15 -1.5708" />
 <parent link="r_lower_arm" />
 <child link="r_wrist" />
 <axis xyz="0 0 0"/>

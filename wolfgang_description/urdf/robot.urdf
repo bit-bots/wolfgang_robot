@@ -636,7 +636,7 @@
 <inertial>
 <origin xyz="1.38328e-17 0.000155519 -0.00775879" rpy="0 0 0"/>
 <mass value="0.00165976" />
-<inertia ixx="4.3352e-08" ixy="-1.23284e-27"  ixz="-2.07604e-24" iyy="4.44049e-08" iyz="-1.0993e-09" izz="3.04397e-08" />
+<inertia ixx="4.3352e-08" ixy="3.72822e-26"  ixz="-2.077e-24" iyy="4.44049e-08" iyz="-1.0993e-09" izz="3.04397e-08" />
 </inertial>
 </link>
 
@@ -673,7 +673,7 @@
 </joint>
 
 <joint name="RAnklePitch" type="revolute">
-<origin xyz="-2.08167e-17 0.0505 -0.17" rpy="-1.5708 0.0364674 1.18307e-15" />
+<origin xyz="-1.38778e-17 0.0505 -0.17" rpy="-1.5708 0.0364674 1.18307e-15" />
 <parent link="r_lower_leg" />
 <child link="r_ankle" />
 <axis xyz="-0 -0 -1"/>
@@ -695,7 +695,7 @@
 <parent link="r_hip_2" />
 <child link="r_upper_leg" />
 <axis xyz="-0 1 -0"/>
-<limit effort="7.57" velocity="8.22" lower="-1.5708" upper="0.785398"/>
+<limit effort="7.57" velocity="8.22" lower="-2.0944" upper="1.91986"/>
 <dynamics friction="0" damping="0.92"/>
 </joint>
 
@@ -1129,7 +1129,7 @@
 <parent link="l_hip_2" />
 <child link="l_upper_leg" />
 <axis xyz="7.95491e-17 -3.00167e-16 -1"/>
-<limit effort="7.57" velocity="8.22" lower="-0.785398" upper="1.5708"/>
+<limit effort="7.57" velocity="8.22" lower="-1.91986" upper="2.0944"/>
 <dynamics friction="0" damping="0.92"/>
 </joint>
 

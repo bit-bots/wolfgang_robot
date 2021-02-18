@@ -677,7 +677,7 @@
 <parent link="r_lower_leg" />
 <child link="r_ankle" />
 <axis xyz="-0 -0 -1"/>
-<limit effort="7.57" velocity="8.22" lower="-1.5708" upper="1.22173"/>
+<limit effort="7.57" velocity="8.22" lower="-1.74533" upper="1.22173"/>
 <dynamics friction="0" damping="0.92"/>
 </joint>
 
@@ -1111,7 +1111,7 @@
 <parent link="l_lower_leg" />
 <child link="l_ankle" />
 <axis xyz="-0 -0 -1"/>
-<limit effort="7.57" velocity="8.22" lower="-1.22173" upper="1.5708"/>
+<limit effort="7.57" velocity="8.22" lower="-1.22173" upper="1.74533"/>
 <dynamics friction="0" damping="0.92"/>
 </joint>
 

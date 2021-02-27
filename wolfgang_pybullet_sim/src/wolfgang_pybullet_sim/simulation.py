@@ -40,22 +40,22 @@ class Simulation:
                                              "RHipPitch": -30, "RHipRoll": 0, "RHipYaw": 0, "RKnee": -60,
                                              "LShoulderPitch": 0, "LShoulderRoll": 0, "LElbow": 45, "RShoulderPitch": 0,
                                              "RShoulderRoll": 0, "RElbow": -45, "HeadPan": 0, "HeadTilt": 0}
-        elif self.robot == "darwin":
+        elif self.robot == "robotis_op2":
             self.initial_joints_positions = {"l_ankle_pitch": 0, "l_ankle_roll": 0, "l_hip_pitch": 0, "l_hip_roll": 0,
                                              "l_hip_yaw": 0, "l_knee": 0, "r_ankle_pitch": 0, "r_ankle_roll": 0,
                                              "r_hip_pitch": 0, "r_hip_roll": 0, "r_hip_yaw": 0, "r_knee": 0,
                                              "l_sho_pitch": 0, "l_sho_roll": 0, "LElbow": 0, "r_sho_pitch": 0,
                                              "r_sho_roll": 0, "RElbow": 0, "head_pan": 0, "head_tilt": 0}
+            self.foot_link_names = ["l_foot", "r_foot"]
         elif self.robot == "sigmaban":
+            self.start_orientation = p.getQuaternionFromEuler((0, 0.0, 0))
             self.initial_joints_positions = {"left_ankle_pitch": 0, "left_ankle_roll": 0, "left_hip_pitch": 0,
-                                             "left_hip_roll": 0,
-                                             "left_hip_yaw": 0, "left_knee": 0, "right_ankle_pitch": 0,
-                                             "right_ankle_roll": 0,
-                                             "right_hip_pitch": 0, "right_hip_roll": 0, "right_hip_yaw": 0,
-                                             "right_knee": 0,
+                                             "left_hip_roll": 0, "left_hip_yaw": 0, "left_knee": 0,
+                                             "right_ankle_pitch": 0, "right_ankle_roll": 0, "right_hip_pitch": 0,
+                                             "right_hip_roll": 0, "right_hip_yaw": 0, "right_knee": 0,
                                              "left_shoulder_pitch": 0, "left_shoulder_roll": 0, "LElbow": 0,
-                                             "right_shoulder_pitch": 0,
-                                             "right_shoulder_roll": 0, "RElbow": 0, "head_yaw": 0, "head_pitch": 0}
+                                             "right_shoulder_pitch": 0, "right_shoulder_roll": 0, "RElbow": 0,
+                                             "head_yaw": 0, "head_pitch": 0}
         else:
             print(f"robot {self.robot} not known")
             quit(0)

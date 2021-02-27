@@ -33,21 +33,31 @@ class Simulation:
         # config values
         self.start_position = [0, 0, 0.43]
         self.start_orientation = p.getQuaternionFromEuler((0, 0.25, 0))
-        # Wolfgang:
         if self.robot == "wolfgang":
             self.initial_joints_positions = {"LAnklePitch": -30, "LAnkleRoll": 0, "LHipPitch": 30, "LHipRoll": 0,
                                              "LHipYaw": 0, "LKnee": 60, "RAnklePitch": 30, "RAnkleRoll": 0,
                                              "RHipPitch": -30, "RHipRoll": 0, "RHipYaw": 0, "RKnee": -60,
                                              "LShoulderPitch": 0, "LShoulderRoll": 0, "LElbow": 45, "RShoulderPitch": 0,
                                              "RShoulderRoll": 0, "RElbow": -45, "HeadPan": 0, "HeadTilt": 0}
-        else:
-            # Darwin:
+        elif self.robot == "darwin":
             self.initial_joints_positions = {"l_ankle_pitch": 0, "l_ankle_roll": 0, "l_hip_pitch": 0, "l_hip_roll": 0,
                                              "l_hip_yaw": 0, "l_knee": 0, "r_ankle_pitch": 0, "r_ankle_roll": 0,
                                              "r_hip_pitch": 0, "r_hip_roll": 0, "r_hip_yaw": 0, "r_knee": 0,
-                                             "l_sho_pitch": 0, "l_sho_roll": 0, "LElbow": 45, "r_sho_pitch": 0,
-                                             "r_sho_roll": 0, "RElbow": -45, "head_pan": 0, "head_tilt": 0}
-
+                                             "l_sho_pitch": 0, "l_sho_roll": 0, "LElbow": 0, "r_sho_pitch": 0,
+                                             "r_sho_roll": 0, "RElbow": 0, "head_pan": 0, "head_tilt": 0}
+        elif self.robot == "sigmaban":
+            self.initial_joints_positions = {"left_ankle_pitch": 0, "left_ankle_roll": 0, "left_hip_pitch": 0,
+                                             "left_hip_roll": 0,
+                                             "left_hip_yaw": 0, "left_knee": 0, "right_ankle_pitch": 0,
+                                             "right_ankle_roll": 0,
+                                             "right_hip_pitch": 0, "right_hip_roll": 0, "right_hip_yaw": 0,
+                                             "right_knee": 0,
+                                             "left_shoulder_pitch": 0, "left_shoulder_roll": 0, "LElbow": 0,
+                                             "right_shoulder_pitch": 0,
+                                             "right_shoulder_roll": 0, "RElbow": 0, "head_yaw": 0, "head_pitch": 0}
+        else:
+            print(f"robot {self.robot} not known")
+            quit(0)
         # Instantiating Bullet
         if self.gui:
             self.client_id = p.connect(p.GUI)
@@ -76,7 +86,7 @@ class Simulation:
         self.terrain_index = None
         self.plane_index = None
         if self.terrain_on:
-            self.max_terrain_height = 0.04
+            self.max_terrain_height = 0.01
             self.terrain = Terrain(self.max_terrain_height)
             self.terrain_index = self.terrain.id
         else:
@@ -92,12 +102,20 @@ class Simulation:
             self.field_index = p.loadURDF('field/field.urdf')
 
         # Load robot, deactivate all self collisions
-        flags = p.URDF_USE_INERTIA_FROM_FILE + p.URDF_USE_SELF_COLLISION
+        if self.robot in ["wolfgang", "sigmaban"]:
+            # we have a better inertia estimation from onshape in our model
+            flags = p.URDF_USE_SELF_COLLISION + p.URDF_USE_INERTIA_FROM_FILE
+        else:
+            # most other URDFs from the internet have issues with their inertia values
+            flags = p.URDF_USE_SELF_COLLISION
+
         if self.urdf_path is None:
             # use wolfgang as standard
             rospack = rospkg.RosPack()
             if self.robot == "op2":
                 self.urdf_path = rospack.get_path("robotis_op2_description") + "/urdf/robot.urdf"
+            elif self.robot == "sigmaban":
+                self.urdf_path = rospack.get_path("sigmaban_description") + "/urdf/robot.urdf"
             else:
                 self.urdf_path = rospack.get_path("wolfgang_description") + "/urdf/robot.urdf"
         self.robot_index = p.loadURDF(self.urdf_path, self.start_position, self.start_orientation, flags=flags)
@@ -130,15 +148,20 @@ class Simulation:
             for linkB in self.links.keys():
                 p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[linkA],
                                          self.links[linkB], 0)
-        if self.robot == "wolfgang":
+        hip_group = []
+        foot_group = []
+        if self.robot in ("wolfgang", "op2", "robotis_op2"):
             # set collisions for hip and ankle towards each other, otherwise stand up is not realistic
             hip_group = ["torso", "r_hip_1", "r_hip_2", "l_hip_1", "l_hip_2"]
             foot_group = ["r_ankle", "r_foot", "l_ankle", "l_foot"]
-            for hip_link_index in hip_group:
-                for foot_link_index in foot_group:
-                    p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[hip_link_index],
-                                             self.links[foot_link_index], 1)
-
+        elif self.robot in ("sigmaban"):
+            hip_group = ["mx106_block_mir_1", "u_block_1", "right_knee_1", "left_knee_1", "mx106_block_2", "u_block_2"]
+            foot_group = ["tibia_1", "mx106_block_1", "right_foot_cleat_back_left", "mx106_block_mir_2",
+                          "left_foot_cleat_front_right", "tibia_2"]
+        for hip_link_index in hip_group:
+            for foot_link_index in foot_group:
+                p.setCollisionFilterPair(self.robot_index, self.robot_index, self.links[hip_link_index],
+                                         self.links[foot_link_index], 1)
         # reset robot to initial position
         self.reset()
 

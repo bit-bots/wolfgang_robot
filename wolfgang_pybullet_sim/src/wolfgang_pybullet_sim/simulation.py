@@ -5,6 +5,7 @@ import os
 import time
 import pybullet as p
 from time import sleep
+import time
 
 import rospy
 import tf
@@ -74,9 +75,10 @@ class Simulation:
         self.timestep = 1 / 240
         # standard parameters seem to be best. leave them like they are
         # p.setPhysicsEngineParameter(fixedTimeStep=self.timestep, numSubSteps=1)
-        # no real time, as we will publish own clock
+        # no real time, as we will publish own clock, but we have option to switch to real_time by waiting
         self.real_time = False
         p.setRealTimeSimulation(0)
+        self.last_wall_time = time.time()
 
         self.load_models()
 
@@ -259,7 +261,6 @@ class Simulation:
                 self.set_gravity(not self.gravity)
             if tKey in keys and keys[tKey] & p.KEY_WAS_TRIGGERED:
                 self.real_time = not self.real_time
-                p.setRealTimeSimulation(self.real_time)
             if fKey in keys and keys[fKey] & p.KEY_WAS_TRIGGERED:
                 # generate new terain
                 self.terrain.randomize(0.01)
@@ -294,6 +295,10 @@ class Simulation:
                 if xKey in keys and keys[xKey] & p.KEY_IS_DOWN:
                     break
 
+        if self.real_time:
+            # wait till one timestep has actually passed in real time
+            time.sleep(max(0, self.timestep - (time.time() - self.last_wall_time)))
+        self.last_wall_time = time.time()
         self.time += self.timestep
         p.stepSimulation()
         for name, ps in self.pressure_sensors.items():

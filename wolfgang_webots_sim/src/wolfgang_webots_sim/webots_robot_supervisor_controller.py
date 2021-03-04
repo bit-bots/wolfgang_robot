@@ -14,10 +14,10 @@ class RobotSupervisorController(SupervisorController, RobotController):
 
         For the parameter documentation, see the parent class constructors.
         """
-        super().__init__(ros_active=ros_active, mode=mode)
+        super().__init__(ros_active=ros_active, mode=mode, do_ros_init=False)
         # This is used so that SupervisorController and RobotController can use the same underlying controller
         self.robot_node = self.supervisor
-        RobotController.__init__(self, ros_active=ros_active, robot=robot, do_ros_init=True, external_controller=True)
+        RobotController.__init__(self, ros_active=ros_active, robot=robot, do_ros_init=False, external_controller=True)
 
     def step(self):
         super().step()

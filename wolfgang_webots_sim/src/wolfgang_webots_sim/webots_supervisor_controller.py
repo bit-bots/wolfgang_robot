@@ -17,13 +17,14 @@ G = 9.81
 
 
 class SupervisorController:
-    def __init__(self, ros_active=False, mode='normal'):
+    def __init__(self, ros_active=False, mode='normal', do_ros_init=True):
         """
         The SupervisorController, a Webots controller that can control the world.
         Set the environment variable WEBOTS_ROBOT_NAME to "supervisor_robot" if used with 1_bot.wbt or 4_bots.wbt.
 
         :param ros_active: Whether to publish ROS messages
         :param mode: Webots mode, one of 'normal', 'paused', or 'fast'
+        :param do_ros_init: Whether rospy.init_node should be called
         """
         # requires WEBOTS_ROBOT_NAME to be set to "supervisor_robot"
         self.ros_active = ros_active
@@ -60,7 +61,8 @@ class SupervisorController:
                 self.rotation_fields[name] = node.getField("rotation")
 
         if self.ros_active:
-            rospy.init_node("webots_ros_supervisor", argv=['clock:=/clock'])
+            if do_ros_init:
+                rospy.init_node("webots_ros_supervisor", argv=['clock:=/clock'])
             self.clock_publisher = rospy.Publisher("/clock", Clock, queue_size=1)
             self.model_state_publisher = rospy.Publisher("/model_states", ModelStates, queue_size=1)
             self.reset_service = rospy.Service("reset", Empty, self.reset)

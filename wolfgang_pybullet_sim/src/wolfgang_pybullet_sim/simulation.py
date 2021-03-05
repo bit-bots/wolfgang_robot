@@ -40,7 +40,7 @@ class Simulation:
                                              "RHipPitch": -30, "RHipRoll": 0, "RHipYaw": 0, "RKnee": -60,
                                              "LShoulderPitch": 0, "LShoulderRoll": 0, "LElbow": 45, "RShoulderPitch": 0,
                                              "RShoulderRoll": 0, "RElbow": -45, "HeadPan": 0, "HeadTilt": 0}
-        elif self.robot == "robotis_op2":
+        elif self.robot in ["op2", "robotis_op2"]:
             self.initial_joints_positions = {"l_ankle_pitch": 0, "l_ankle_roll": 0, "l_hip_pitch": 0, "l_hip_roll": 0,
                                              "l_hip_yaw": 0, "l_knee": 0, "r_ankle_pitch": 0, "r_ankle_roll": 0,
                                              "r_hip_pitch": 0, "r_hip_roll": 0, "r_hip_yaw": 0, "r_knee": 0,

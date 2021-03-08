@@ -6,7 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Grid1/Offset1
-        - /Marker1
+        - /RobotModel1
+        - /TF1
       Splitter Ratio: 0.6515151262283325
     Tree Height: 729
   - Class: rviz/Selection
@@ -53,7 +54,7 @@ Visualization Manager:
       Plane Cell Count: 25
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -140,10 +141,6 @@ Visualization Manager:
           Show Trail: false
           Value: true
         l_sole:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        l_toe:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -241,10 +238,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        r_toe:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         r_upper_arm:
           Alpha: 1
           Show Axes: false
@@ -291,22 +284,182 @@ Visualization Manager:
       Value: true
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: true
+        base_link:
+          Value: true
+        camera:
+          Value: true
+        camera_optical_frame:
+          Value: true
+        head:
+          Value: true
+        imu_frame:
+          Value: true
+        imu_frame_2:
+          Value: true
+        l_ankle:
+          Value: true
+        l_cleat_l_back:
+          Value: true
+        l_cleat_l_front:
+          Value: true
+        l_cleat_r_back:
+          Value: true
+        l_cleat_r_front:
+          Value: true
+        l_foot:
+          Value: true
+        l_hip_1:
+          Value: true
+        l_hip_2:
+          Value: true
+        l_lower_arm:
+          Value: true
+        l_lower_leg:
+          Value: true
+        l_shoulder:
+          Value: true
+        l_sole:
+          Value: true
+        l_upper_arm:
+          Value: true
+        l_upper_leg:
+          Value: true
+        l_wrist:
+          Value: true
+        llb:
+          Value: true
+        llf:
+          Value: true
+        lrb:
+          Value: true
+        lrf:
+          Value: true
+        neck:
+          Value: true
+        odom:
+          Value: true
+        r_ankle:
+          Value: true
+        r_cleat_l_back:
+          Value: true
+        r_cleat_l_front:
+          Value: true
+        r_cleat_r_back:
+          Value: true
+        r_cleat_r_front:
+          Value: true
+        r_foot:
+          Value: true
+        r_hip_1:
+          Value: true
+        r_hip_2:
+          Value: true
+        r_lower_arm:
+          Value: true
+        r_lower_leg:
+          Value: true
+        r_shoulder:
+          Value: true
+        r_sole:
+          Value: true
+        r_upper_arm:
+          Value: true
+        r_upper_leg:
+          Value: true
+        r_wrist:
+          Value: true
+        rlb:
+          Value: true
+        rlf:
+          Value: true
+        rrb:
+          Value: true
+        rrf:
+          Value: true
+        torso:
+          Value: true
       Marker Scale: 0.20000000298023224
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        odom:
+          base_link:
+            base_footprint:
+              {}
+            torso:
+              imu_frame:
+                {}
+              l_hip_1:
+                l_hip_2:
+                  l_upper_leg:
+                    l_lower_leg:
+                      l_ankle:
+                        l_foot:
+                          l_sole:
+                            {}
+                          llb:
+                            l_cleat_l_back:
+                              {}
+                          llf:
+                            l_cleat_l_front:
+                              {}
+                          lrb:
+                            l_cleat_r_back:
+                              {}
+                          lrf:
+                            l_cleat_r_front:
+                              {}
+              l_shoulder:
+                l_upper_arm:
+                  l_lower_arm:
+                    l_wrist:
+                      {}
+              neck:
+                head:
+                  camera:
+                    {}
+                  camera_optical_frame:
+                    {}
+                  imu_frame_2:
+                    {}
+              r_hip_1:
+                r_hip_2:
+                  r_upper_leg:
+                    r_lower_leg:
+                      r_ankle:
+                        r_foot:
+                          r_sole:
+                            {}
+                          rlb:
+                            r_cleat_l_back:
+                              {}
+                          rlf:
+                            r_cleat_l_front:
+                              {}
+                          rrb:
+                            r_cleat_r_back:
+                              {}
+                          rrf:
+                            r_cleat_r_front:
+                              {}
+              r_shoulder:
+                r_upper_arm:
+                  r_lower_arm:
+                    r_wrist:
+                      {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /debug_markers
+      Marker Topic: /robocup_markers
       Name: Marker
       Namespaces:
         {}
@@ -457,7 +610,7 @@ Visualization Manager:
           Topic: /move_base/DWAPlannerROS/local_plan
           Unreliable: false
           Value: true
-      Enabled: false
+      Enabled: true
       Name: move_base
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true

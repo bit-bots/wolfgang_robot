@@ -198,7 +198,7 @@ class SupervisorController:
         return self.get_robot_position(name), self.get_robot_orientation_quat(name)
 
     def get_link_pose(self, link, name="amy"):
-        link_node = self.robot_nodes[name].getFromProtoDef("link")
+        link_node = self.robot_nodes[name].getFromProtoDef(link)
         link_position = link_node.getPosition()
         link_orientation = link_node.getOrientation()
         return link_position, link_orientation

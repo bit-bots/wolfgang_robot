@@ -198,10 +198,10 @@ class SupervisorController:
         return self.get_robot_position(name), self.get_robot_orientation_quat(name)
 
     def get_link_pose(self, link, name="amy"):
-        head_node = self.robot_nodes[name].getFromProtoDef("head")
-        head_position = head_node.getPosition()
-        head_orientation = head_node.getOrientation()
-        return head_position, head_orientation
+        link_node = self.robot_nodes[name].getFromProtoDef("link")
+        link_position = link_node.getPosition()
+        link_orientation = link_node.getOrientation()
+        return link_position, link_orientation
 
     def publish_model_states(self):
         msg = ModelStates()

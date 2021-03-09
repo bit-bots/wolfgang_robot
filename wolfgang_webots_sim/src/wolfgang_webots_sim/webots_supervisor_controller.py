@@ -61,10 +61,17 @@ class SupervisorController:
                 self.rotation_fields[name] = node.getField("rotation")
 
         if self.ros_active:
+            # need to handle these topics differently or we will end up having a double //
+            if base_ns == "":
+                clock_topic = "/clock"
+                model_topic = "/model_states"
+            else:
+                clock_topic = base_ns + "clock"
+                model_topic = base_ns + "model_states"
             if do_ros_init:
-                rospy.init_node("webots_ros_supervisor", argv=['clock:=' + base_ns + '/clock'])
-            self.clock_publisher = rospy.Publisher(base_ns + "/clock", Clock, queue_size=1)
-            self.model_state_publisher = rospy.Publisher(base_ns + "/model_states", ModelStates, queue_size=1)
+                rospy.init_node("webots_ros_supervisor", argv=['clock:=' + clock_topic])
+            self.clock_publisher = rospy.Publisher(clock_topic, Clock, queue_size=1)
+            self.model_state_publisher = rospy.Publisher(model_topic, ModelStates, queue_size=1)
             self.reset_service = rospy.Service(base_ns + "reset", Empty, self.reset)
             self.initial_poses_service = rospy.Service(base_ns + "initial_pose", Empty, self.set_initial_poses)
             self.set_robot_position_service = rospy.Service(base_ns + "set_robot_position", SetRobotPose,

@@ -112,7 +112,7 @@ class RobotController:
 
         if self.ros_active:
             if do_ros_init:
-                rospy.init_node("webots_ros_interface", argv=['clock:=/clock'])
+                rospy.init_node("webots_ros_interface", argv=['clock:=' + base_ns + '/clock'])
             self.l_sole_frame = rospy.get_param("~l_sole_frame", "l_sole")
             self.r_sole_frame = rospy.get_param("~r_sole_frame", "r_sole")
             self.camera_optical_frame = rospy.get_param("~camera_optical_frame", "camera_optical_frame")
@@ -125,10 +125,8 @@ class RobotController:
             self.pub_cam = rospy.Publisher(base_ns + "camera/image_proc", Image, queue_size=1)
             self.pub_cam_info = rospy.Publisher(base_ns + "camera/camera_info", CameraInfo, queue_size=1, latch=True)
 
-            self.pub_pres_left = rospy.Publisher(base_ns + "foot_pressure_left/filtered", FootPressure,
-                                                 queue_size=1)
-            self.pub_pres_right = rospy.Publisher(base_ns + "foot_pressure_right/filtered", FootPressure,
-                                                  queue_size=1)
+            self.pub_pres_left = rospy.Publisher(base_ns + "foot_pressure_left/filtered", FootPressure, queue_size=1)
+            self.pub_pres_right = rospy.Publisher(base_ns + "foot_pressure_right/filtered", FootPressure, queue_size=1)
             self.cop_l_pub_ = rospy.Publisher(base_ns + "cop_l", PointStamped, queue_size=1)
             self.cop_r_pub_ = rospy.Publisher(base_ns + "cop_r", PointStamped, queue_size=1)
             rospy.Subscriber(base_ns + "DynamixelController/command", JointCommand, self.command_cb)

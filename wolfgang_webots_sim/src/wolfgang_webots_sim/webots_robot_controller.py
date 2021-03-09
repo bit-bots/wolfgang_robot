@@ -20,6 +20,7 @@ class RobotController:
         :param do_ros_init: Whether to call rospy.init_node (only used when ros_active is True)
         :param external_controller: Whether an external controller is used, necessary for RobotSupervisorController
         """
+        print("robo")
         self.ros_active = ros_active
         if not external_controller:
             self.robot_node = Robot()

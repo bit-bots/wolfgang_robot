@@ -24,6 +24,7 @@ class SupervisorController:
         :param ros_active: Whether to publish ROS messages
         :param mode: Webots mode, one of 'normal', 'paused', or 'fast'
         :param do_ros_init: Whether rospy.init_node should be called
+        :param base_ns: The namespace of this node, can normally be left empty
         """
         # requires WEBOTS_ROBOT_NAME to be set to "supervisor_robot"
         self.ros_active = ros_active

@@ -1648,8 +1648,7 @@ PROTO Wolfgang [
                                             rotation -0.000000 0.000000 1.000000 1.570800
                                             name "r_toe"
                                           }
-                                          DEF rlb TouchSensor {
-                                            type "force-3d"
+                                          DEF rlb Solid {
                                             translation -0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1701,8 +1700,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rlf TouchSensor {
-                                            type "force-3d"
+                                          DEF rlf Solid {
                                             translation -0.030000 0.177000 -0.034000
                                             rotation -0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -1754,8 +1752,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rrf TouchSensor {
-                                            type "force-3d"
+                                          DEF rrf Solid {
                                             translation 0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1807,8 +1804,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rrb TouchSensor {
-                                            type "force-3d"
+                                          DEF rrb Solid {
                                             translation 0.060000 -0.007000 -0.034000
                                             rotation 0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -2726,8 +2722,7 @@ PROTO Wolfgang [
                                             rotation 0.000000 -0.000000 1.000000 1.570800
                                             name "l_toe"
                                           }
-                                          DEF llb TouchSensor {
-                                            type "force-3d"
+                                          DEF llb Solid {
                                             translation -0.060000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2779,8 +2774,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF llf TouchSensor {
-                                            type "force-3d"
+                                          DEF llf Solid {
                                             translation -0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2832,8 +2826,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrf TouchSensor {
-                                            type "force-3d"
+                                          DEF lrf Solid {
                                             translation 0.030000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2885,8 +2878,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrb TouchSensor {
-                                            type "force-3d"
+                                          DEF lrb Solid {
                                             translation 0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [

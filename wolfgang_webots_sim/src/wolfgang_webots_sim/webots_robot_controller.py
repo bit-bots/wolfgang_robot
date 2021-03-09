@@ -111,8 +111,12 @@ class RobotController:
         self.camera.enable(self.timestep)
 
         if self.ros_active:
+            if base_ns == "":
+                clock_topic = "/clock"
+            else:
+                clock_topic = base_ns + "clock"
             if do_ros_init:
-                rospy.init_node("webots_ros_interface", argv=['clock:=' + base_ns + '/clock'])
+                rospy.init_node("webots_ros_interface", argv=['clock:=' + clock_topic])
             self.l_sole_frame = rospy.get_param("~l_sole_frame", "l_sole")
             self.r_sole_frame = rospy.get_param("~r_sole_frame", "r_sole")
             self.camera_optical_frame = rospy.get_param("~camera_optical_frame", "camera_optical_frame")

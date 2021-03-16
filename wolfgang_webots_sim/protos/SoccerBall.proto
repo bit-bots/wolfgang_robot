@@ -49,8 +49,6 @@ PROTO SoccerBall [
           angular 0.2    # [0, 1]
       }
     }
-    recognitionColors [
-      1 1 1, 0 0 0
-    ]
+    recognitionColors [ 0.87451 0.756863 0.113725 ]
   }
 }

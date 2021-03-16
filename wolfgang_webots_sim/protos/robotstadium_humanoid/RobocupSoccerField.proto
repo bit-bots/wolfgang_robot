@@ -252,6 +252,8 @@ PROTO RobocupSoccerField [
   Solid {
     translation IS translation
     rotation IS rotation
+    recognitionColors [ 0 1 0 ]
+    model "field"
     children [
       DEF GRASS Shape {
         appearance Grass {

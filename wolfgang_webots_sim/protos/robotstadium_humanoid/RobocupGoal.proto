@@ -44,46 +44,68 @@ PROTO RobocupGoal [
         translation 0 0 %{= post_height }%
         rotation 0 0 1 1.5708
         children [
-          Shape {
-            appearance DEF POST_APP PBRAppearance {
-              baseColor IS frameColor
-              metalness 0
-              roughness 0.2
-            }
-            geometry Capsule {
-              height %{= post_spacing }%
-              radius %{= post_radius }%
-            }
+          Solid {
+            recognitionColors [ 0 1 1 ]
+            model "horizontal_bar"
+            name "horizontal_bar"
+            children [
+              Shape {
+                appearance DEF POST_APP PBRAppearance {
+                  baseColor IS frameColor
+                  metalness 0
+                  roughness 0.2
+                }
+                geometry Capsule {
+                  height %{= post_spacing }%
+                  radius %{= post_radius }%
+                }
+              }
+            ]
           }
+
         ]
       }
       DEF RIGHT_POST_TRANS Transform {
         translation %{= -post_spacing / 2 }% 0 %{= post_height / 2 }%
         rotation 1 0 0 1.5708
         children [
-          Shape {
-            appearance USE POST_APP
-            geometry Cylinder {
-              bottom FALSE
-              top FALSE
-              height %{= post_height }%
-              radius %{= post_radius }%
-            }
+          Solid {
+            recognitionColors [ 1 1 0 ]
+            model "right_post"
+            name "right_post"
+            children [
+              Shape {
+                appearance USE POST_APP
+                geometry Cylinder {
+                  bottom FALSE
+                  top FALSE
+                  height %{= post_height }%
+                  radius %{= post_radius }%
+                }
+              }
+            ]
           }
         ]
       }
-      DEF LEFT_POST_TRANS Transform {
-        translation %{= post_spacing / 2 }% 0 %{= post_height / 2 }%
-        rotation 1 0 0 1.5708
+      Solid {
+        model "left_post"
+        name "left_post"
+        recognitionColors [ 1 0 1 ]
         children [
-          Shape {
-            appearance USE POST_APP
-            geometry Cylinder {
-              bottom FALSE
-              top FALSE
-              height %{= post_height }%
-              radius %{= post_radius }%
-            }
+          DEF LEFT_POST_TRANS Transform {
+            translation %{= post_spacing / 2 }% 0 %{= post_height / 2 }%
+            rotation 1 0 0 1.5708
+            children [
+              Shape {
+                appearance USE POST_APP
+                geometry Cylinder {
+                  bottom FALSE
+                  top FALSE
+                  height %{= post_height }%
+                  radius %{= post_radius }%
+                }
+              }
+            ]
           }
         ]
       }

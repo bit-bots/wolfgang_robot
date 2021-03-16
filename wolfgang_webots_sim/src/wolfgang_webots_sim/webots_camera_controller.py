@@ -10,6 +10,7 @@ import time
 from rosgraph_msgs.msg import Clock
 from std_srvs.srv import Empty
 from bitbots_msgs.srv import SetBall, SetRobotPose
+from sensor_msgs.msg import Image
 
 import transforms3d
 import numpy as np
@@ -77,6 +78,7 @@ class CameraController:
         self.initial_poses_service = rospy.Service(base_ns + "initial_pose", Empty, self.set_initial_poses)
         self.set_robot_position_service = rospy.Service(base_ns + "set_robot_pose", SetRobotPose,
                                                         self.robot_pose_callback)
+        self.pub_cam = rospy.Publisher(base_ns + "recog_img", Image, queue_size=1)
         self.reset_ball_service = rospy.Service(base_ns + "reset_ball", Empty, self.reset_ball)
         self.reset_ball_service = rospy.Service(base_ns + "set_ball", SetBall, self.set_ball)
 
@@ -84,6 +86,7 @@ class CameraController:
         self.camera = self.supervisor.getDevice("camera")
         self.camera.enable(self.timestep)
         self.camera.recognitionEnable(self.timestep)
+        self.camera.enableRecognitionSegmentation()
         self.last_img_saved = 0.0
         self.img_save_dir = "/tmp/webots/images" + \
                             time.strftime("%Y-%m-%d-%H-%M-%S") + \
@@ -141,7 +144,7 @@ class CameraController:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
                 new_fov = fov_prelim
-        self.set_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
+        #self.set_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
         self.save_recognition()
 
 
@@ -242,11 +245,12 @@ class CameraController:
     def save_recognition(self):
         annotation = ""
         img_stamp = f"{self.time:.2f}".replace(".", "_")
-        img_name = f"img_fake_cam_{img_stamp}.PNG"
+        img_name = f"img_fake_cam_{img_stamp}"
         recognized_objects = self.camera.getRecognitionObjects()
         # variables for saving not in image later
         found_ball = False
         found_wolfgang = False
+        found_post = False
         for e in range(self.camera.getRecognitionNumberOfObjects()):
             model = recognized_objects[e].get_model()
             position = recognized_objects[e].get_position_on_image()
@@ -265,12 +269,25 @@ class CameraController:
                 annotation += "robot|"
                 annotation += vector
                 annotation += "\n"
+            print('model == b"left_post"')
+            print(model == b"left_post")
+            if model == b"left_post":
+                print("found a post")
+                found_post = True
+                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                annotation += f"{img_name}|"
+                annotation += "goalpost|"
+                annotation += vector
+                annotation += "\n"
+            print(model)
         if not found_ball:
             annotation +=  f"{img_name}|ball|not in image\n"
         if not found_wolfgang:
             annotation += f"{img_name}|robot|not in image\n"
+        if not found_post:
+            annotation += f"{img_name}|goalpost|not in image\n"
         with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
             f.write(annotation)
-        self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name), quality=100)
-
+        self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
+        self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"), quality=100)
 

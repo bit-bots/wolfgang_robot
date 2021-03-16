@@ -2,8 +2,8 @@
 DEF world_info WorldInfo {
 }
 Viewpoint {
-  orientation 0.4949020186745451 -0.33185639903849273 -0.8030836334585988 1.3888255741550921
-  position -9.272108046212564 -4.4121653838696435 8.832164735430325
+  orientation 0.7305962979089827 -0.3136201842778592 -0.6065240551661661 1.2290830581752084
+  position -8.677856888279171 -7.933481996500175 7.315237508626403
 }
 TexturedBackground {
   texture "stadium"
@@ -40,7 +40,7 @@ DEF ball SoccerBall {
   roll_damping 0.5
 }
 RobocupSoccerField {
-  rotation 0 0 1 1.5708
+  rotation 0 0 1 0
   size "kid"
 }
 DEF FakeCamera FakeCamera {

@@ -1,28 +1,27 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>bitbots_odometry</name>
-  <version>1.0.13</version>
-  <description>The bitbots_odometry package</description>
+  <name>wolfgang_ik</name>
+  <version>1.0.0</version>
+  <description>An analytic inverse kinematic for the wolfgang robot</description>
 
-  <maintainer email="5guelden@informatik.uni-hamburg.de">Jasper Güldenstein</maintainer>
+  <maintainer email="7engelke@informatik.uni-hamburg.de">Timon Engelke</maintainer>
 
   <license>MIT</license>
 
   <author email="bestmann@informatik.uni-hamburg.de">Marc Bestmann</author>
-  <author email="7vahl@informatik.uni-hamburg.de">Florian Vahl</author>
-  <author email="jasper@bit-bots.de">Jasper Güldenstein</author>
+  <author email="7engelke@informatik.uni-hamburg.de">Timon Engelke</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>nav_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_eigen</depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
   <depend>rotconv</depend>
+  <depend>moveit_ros_planning</depend>
   <depend>bitbots_docs</depend>
 
   <export>
     <bitbots_documentation>
-      <status>tested_robot</status>
+      <status>unknown</status>
       <language>c++</language>
     </bitbots_documentation>
   </export>

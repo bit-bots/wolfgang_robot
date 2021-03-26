@@ -15,7 +15,7 @@ TEST(TestIK, test_ik) {
   }
   robot_state::RobotStatePtr result;
   result.reset(new robot_state::RobotState(kinematic_model));
-  ik.solve(goal, result);
+  ASSERT_TRUE(ik.solve(goal, result));
   result->updateLinkTransforms();
   Eigen::Isometry3d foot_result = result->getGlobalLinkTransform("l_sole");
   ASSERT_DOUBLE_EQ((foot_result.translation() - goal.translation()).norm(), 0);

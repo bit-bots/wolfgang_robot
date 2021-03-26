@@ -14,6 +14,7 @@ from sensor_msgs.msg import Image
 
 import transforms3d
 import numpy as np
+import cv2
 
 G = 9.81
 
@@ -289,5 +290,31 @@ class CameraController:
         with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
             f.write(annotation)
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
+        seg_img = self.camera.getRecognitionSegmentationImageArray()
+        self.generatePolygonsFromSegmentation(seg_img)
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"), quality=100)
 
+    def generatePolygonsFromSegmentation(self, img):
+        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (255, 255, 0), "right_goalpost": (0, 255, 255), "field": (0, 255, 0)}
+        img = np.array(img, dtype=np.uint8)
+        # We need to swap axes so it's 1920x1080 instead of 1080x1920
+        img = np.swapaxes(img, 0, 1)
+
+        
+        # we make a mask of every place where in the image the value is exactly as defined
+        # thus we basically have a greyscale image with only our object in white
+        # calculate *255 to make visible for debug images
+        mask = ((img == (255, 0, 255)).all(axis=2)).astype(np.uint8)
+
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        for cnt in contours:
+            rect = cv2.minAreaRect(cnt)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            if True:
+                vector = f"""{{"x1": {box[0][0]}, "y1": {box[0][1]}, "x2": {box[1][0]}, "y2": {box[1][1]},""" \
+                         f""""x3": {box[2][0]}, "y3": {box[2][1]}, "x4": {box[3][0]}, "y4": {box[3][1]}}}"""
+                print(vector)
+                print(box)
+                image = cv2.polylines(np.zeros((1920,1080)), box, True, (255), 10)

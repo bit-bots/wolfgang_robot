@@ -18,9 +18,10 @@ TEST(TestIK, test_ik) {
   ASSERT_TRUE(ik.solve(goal, result));
   result->updateLinkTransforms();
   Eigen::Isometry3d foot_result = result->getGlobalLinkTransform("l_sole");
+  ASSERT_TRUE(foot_result.isApprox(goal));
   ASSERT_DOUBLE_EQ((foot_result.translation() - goal.translation()).norm(), 0);
   // if two quaternions are equal, their dot product is 1
-  //ASSERT_DOUBLE_EQ(foot_result.rotation().dot(goal.rotation()), 1);
+  ASSERT_TRUE(foot_result.rotation().isApprox(goal.rotation()));
 }
 
 TEST(TestIK, test_intersection) {

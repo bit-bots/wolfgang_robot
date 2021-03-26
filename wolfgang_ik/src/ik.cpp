@@ -1,13 +1,19 @@
 #include <wolfgang_ik/ik.h>
 
-std::ostream& operator<<(std::ostream& out, const Eigen::Isometry3d& iso) {
-  Eigen::Vector3d euler = iso.rotation().eulerAngles(0, 1, 2);
-  out << "Translation: " << iso.translation().x() << ", " << iso.translation().y() << ", " << iso.translation().z()
-      << std::endl
-      << "Rotation: " << euler.x() << ", " << euler.y() << ", " << euler.z() << std::endl;
+std::ostream &operator<<(std::ostream &out, const Eigen::Quaterniond &quat) {
+  out << "Rotation (q): " << quat.x() << ", " << quat.y() << ", " << quat.z() << ", " << quat.w() << std::endl;
   return out;
 }
 
+std::ostream &operator<<(std::ostream &out, const Eigen::Isometry3d &iso) {
+  Eigen::Vector3d euler = iso.rotation().eulerAngles(0, 1, 2);
+  Eigen::Quaterniond quat(iso.rotation());
+  out << "Translation: " << iso.translation().x() << ", " << iso.translation().y() << ", " << iso.translation().z()
+      << std::endl
+      << "Rotation: " << euler.x() << ", " << euler.y() << ", " << euler.z() << std::endl
+      << "Rotation (q): " << quat.x() << ", " << quat.y() << ", " << quat.z() << ", " << quat.w() << std::endl;
+  return out;
+}
 
 namespace wolfgang_ik {
 IK::IK() : robot_model_loader_("robot_description", false) {
@@ -23,7 +29,7 @@ IK::IK() : robot_model_loader_("robot_description", false) {
 
 }
 
-bool IK::solve(Eigen::Isometry3d& l_sole_goal, robot_state::RobotStatePtr goal_state) {
+bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_state) {
   // some naming conventions:
   // hip_RY_intersect: the point where the HipYaw and HipRoll axis intersect
   // ankle_intersect: the point where AnklePitch and AnkleRoll intersect
@@ -37,19 +43,25 @@ bool IK::solve(Eigen::Isometry3d& l_sole_goal, robot_state::RobotStatePtr goal_s
   // l_upper_leg -> LKnee -> l_lower_leg -> LAnklePitch -> l_ankle -> LAnkleRoll -> l_foot -> l_sole_frame(f) -> l_sole_goal
   // link -> joint transform is always zero, joint -> link is the interesting one
 
-  for (auto& joint : goal_state->getJointModelGroup("All")->getJointModels()) {
+  for (auto &joint : goal_state->getJointModelGroup("All")->getJointModels()) {
     double zero = 0;
     goal_state->setJointPositions(joint, &zero);
   }
-  Eigen::Isometry3d l_sole_to_l_foot = goal_state->getGlobalLinkTransform("l_sole").inverse() * goal_state->getGlobalLinkTransform("l_foot");
-  Eigen::Isometry3d l_sole_to_l_ankle = goal_state->getGlobalLinkTransform("l_sole").inverse() * goal_state->getGlobalLinkTransform("l_ankle");
+  Eigen::Isometry3d l_sole_to_l_foot =
+      goal_state->getGlobalLinkTransform("l_sole").inverse() * goal_state->getGlobalLinkTransform("l_foot");
+  Eigen::Isometry3d l_sole_to_l_ankle =
+      goal_state->getGlobalLinkTransform("l_sole").inverse() * goal_state->getGlobalLinkTransform("l_ankle");
   // calc ankle_intersection
   Eigen::Vector3d ankle_roll_axis = l_sole_to_l_foot.rotation()
       * dynamic_cast<const moveit::core::RevoluteJointModel *>(goal_state->getJointModel("LAnkleRoll"))->getAxis();
   Eigen::Vector3d ankle_pitch_axis = l_sole_to_l_ankle.rotation()
       * dynamic_cast<const moveit::core::RevoluteJointModel *>(goal_state->getJointModel("LAnklePitch"))->getAxis();
   Eigen::Vector3d ankle_intersection_point;
-  bool success = findIntersection(l_sole_to_l_foot.translation(), ankle_roll_axis, l_sole_to_l_ankle.translation(), ankle_pitch_axis, ankle_intersection_point);
+  bool success = findIntersection(l_sole_to_l_foot.translation(),
+                                  ankle_roll_axis,
+                                  l_sole_to_l_ankle.translation(),
+                                  ankle_pitch_axis,
+                                  ankle_intersection_point);
   if (!success) {
     return false;
   }
@@ -65,7 +77,11 @@ bool IK::solve(Eigen::Isometry3d& l_sole_goal, robot_state::RobotStatePtr goal_s
   Eigen::Vector3d hip_roll_axis = base_link_to_hip_2.rotation()
       * dynamic_cast<const moveit::core::RevoluteJointModel *>(goal_state->getJointModel("LHipRoll"))->getAxis();
   Eigen::Vector3d hip_ry_intersection_point;
-  success = findIntersection(base_link_to_hip_1.translation(), hip_yaw_axis, base_link_to_hip_2.translation(), hip_roll_axis, hip_ry_intersection_point);
+  success = findIntersection(base_link_to_hip_1.translation(),
+                             hip_yaw_axis,
+                             base_link_to_hip_2.translation(),
+                             hip_roll_axis,
+                             hip_ry_intersection_point);
   if (!success) {
     return false;
   }
@@ -100,14 +116,11 @@ bool IK::solve(Eigen::Isometry3d& l_sole_goal, robot_state::RobotStatePtr goal_s
   // This plane contains the goal position of the ankle_intersect. It can be defined by the normal which is the
   // Y axis in the ankle_intersect frame. //todo nicht sicher ob vorher der roll abgezogen werden muss
   // The hip_RY_intersect is also located on this plane.
-  //        We take the point where the normal of this plane starting from the ankle_intersect point intersects with
-  //        the Y axis. The vector (v) from hip_RY_intersect to this point and the global X and Y axis create a triangle.
-  //        Basically we are interested in the rotation between the leg plane and the global XZ plane.
-  //        HipYaw equals the atan(v.x,v.y)
   // We determine the intersection of this plane with the xy plane going through hip_ry_intersect
   // Then, we take the angle between this intersection line and the x axis
   // The intersection line can easily be computed with the cross product.
-  ankle_pitch_axis = goal.rotation() * Eigen::Vector3d(0, 1, 0);  // this is the rotational axis of the ankle pitch, todo get from urdf
+  ankle_pitch_axis =
+      goal.rotation() * Eigen::Vector3d(0, 1, 0);  // this is the rotational axis of the ankle pitch, todo get from urdf
   Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d(0, 0, 1));  // this is the normal of the xy plane
   double hip_yaw = std::acos(line.dot(Eigen::Vector3d(1, 0, 0)) / line.norm());
   goal_state->setJointPositions("LHipYaw", &hip_yaw);
@@ -115,18 +128,48 @@ bool IK::solve(Eigen::Isometry3d& l_sole_goal, robot_state::RobotStatePtr goal_s
 
   // Represent the goal in the HipPitch frame. Subtract transform from hip_RY_intersect to HipPitch
   goal_state->updateLinkTransforms();
-  Eigen::Isometry3d hip_intersect_to_hip_pitch = hip_ry_intersection.inverse() * goal_state->getGlobalLinkTransform("l_upper_leg");
-  Eigen::Isometry3d hip_pitch_to_goal = hip_intersect_to_hip_pitch.inverse() * goal;
+  Eigen::Isometry3d base_link_to_hip_pitch = goal_state->getGlobalLinkTransform("l_upper_leg");
+  l_sole_to_l_ankle = goal_state->getGlobalLinkTransform("l_sole").inverse() *
+      goal_state->getGlobalLinkTransform("l_ankle");
+  Eigen::Isometry3d base_link_to_l_ankle = l_sole_goal * l_sole_to_l_ankle;
+  Eigen::Isometry3d hip_pitch_to_l_ankle = base_link_to_hip_pitch.inverse() * base_link_to_l_ankle;
+  // todo
+  std::cout << Eigen::Quaterniond(base_link_to_l_ankle.rotation());
+  std::cout << Eigen::Quaterniond(base_link_to_l_ankle.rotation().inverse());
+  std::cout << Eigen::Quaterniond(base_link_to_l_ankle.rotation()).inverse();
+  //base_link_to_l_ankle.rotation() = Eigen::Quaterniond(base_link_to_l_ankle.rotation()).inverse().toRotationMatrix();
+  base_link_to_l_ankle.prerotate(Eigen::Quaterniond(-1, 0, 0, 0));
+
+  // todo base_link_to_l_ankle roll * -1
+  // todo base_link_to_l_ankle rotation is completely wrong...
+
+  std::cout << base_link_to_l_ankle << base_link_to_hip_pitch;
+  std::cout << hip_pitch_to_l_ankle << std::endl;
+
+  // rotation of hip_pitch_to_goal should be zero
   // Now we have a triangle of HipPitch, Knee and AnklePitch which we can treat as a prismatic joint.
   // First we can get the knee angle with the rule of cosine
-  std::cout<<hip_pitch_to_goal;
-
+  double upper_leg_length =
+      (goal_state->getGlobalLinkTransform("l_upper_leg").inverse() * goal_state->getGlobalLinkTransform("l_lower_leg"))
+          .translation().norm();
+  double upper_leg_length_2 = upper_leg_length * upper_leg_length;
+  double lower_leg_length =
+      (goal_state->getGlobalLinkTransform("l_lower_leg").inverse() * goal_state->getGlobalLinkTransform("l_ankle"))
+          .translation().norm();
+  double lower_leg_length_2 = lower_leg_length * lower_leg_length;
+  double hip_to_ankle_length = hip_pitch_to_l_ankle.translation().norm();
+  double hip_to_ankle_length_2 = hip_to_ankle_length * hip_to_ankle_length;
+  double knee = std::acos((upper_leg_length_2 + lower_leg_length_2 - hip_to_ankle_length_2) / (2 * upper_leg_length * lower_leg_length));
+  std::cout << knee << std::endl;
   // Similarly, we can compute HipPitch and AnklePitch, but we need to add half of the knee angle.
-
+  double hip_pitch = std::acos((upper_leg_length_2 + hip_to_ankle_length_2 - lower_leg_length_2) / (2 * upper_leg_length * hip_to_ankle_length));
+  std::cout << hip_pitch << std::endl;
   // ankle pitch needs goal pitch
+  double ankle_pitch = std::acos((lower_leg_length_2 + hip_to_ankle_length_2 - upper_leg_length_2) / (2 * lower_leg_length * hip_to_ankle_length));
+  ankle_pitch += goal_rpy.y();
+  std::cout << ankle_pitch << std::endl;
 
   //todo use markers to debug
-  //todo write unit test
   return true;
 }
 

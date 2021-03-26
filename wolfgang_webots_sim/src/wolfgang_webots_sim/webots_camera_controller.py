@@ -295,26 +295,39 @@ class CameraController:
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"), quality=100)
 
     def generatePolygonsFromSegmentation(self, img):
-        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (255, 255, 0), "right_goalpost": (0, 255, 255), "field": (0, 255, 0)}
+        # this method returns a list with the following items:
+        # if not in image: (name, False)
+        # otherwise: (name, ((1,2), (2,3), (3,4), (4,5))
+        # if multiple objects of the same type are present, then there will be multiple tuples starting with the same name
+
+        # find the colors by saving segmentation image and look at the values in gimp
+        # TODO goalnets are also field colored
+        # we don't automatically generate a line for the field, we only offer that in the segmentation image
+        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (255, 255, 0), "right_goalpost": (0, 255, 255),
+                  "ball": (223, 193, 29), "wolfgang": (51, 51, 51)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         img = np.swapaxes(img, 0, 1)
 
-        
-        # we make a mask of every place where in the image the value is exactly as defined
-        # thus we basically have a greyscale image with only our object in white
-        # calculate *255 to make visible for debug images
-        mask = ((img == (255, 0, 255)).all(axis=2)).astype(np.uint8)
+        # cv2.imwrite("/tmp/foo.png", img)
+        output = []
+        # TODO there are way too many wolfgangs in the detection
+        # TODO check if the found values make sense
+        for key, value in colors.items():
+            # we make a mask of every place where in the image the value is exactly as defined
+            # thus we basically have a greyscale image with only our object in white
+            # calculate *255 to make visible for debug images
+            mask = ((img == value).all(axis=2)).astype(np.uint8)
 
-        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        for cnt in contours:
-            rect = cv2.minAreaRect(cnt)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            if True:
-                vector = f"""{{"x1": {box[0][0]}, "y1": {box[0][1]}, "x2": {box[1][0]}, "y2": {box[1][1]},""" \
-                         f""""x3": {box[2][0]}, "y3": {box[2][1]}, "x4": {box[3][0]}, "y4": {box[3][1]}}}"""
+            contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            if len(contours) == 0:
+                output.append((key, False))
+            for cnt in contours:
+                rect = cv2.minAreaRect(cnt)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
+                vector = (key, f"""(({box[0][0]},{box[0][1]}), ({box[1][0]}, {box[1][1]}),""" \
+                         f"""({box[2][0]}, {box[2][1]}), ({box[3][0]}, {box[3][1]}))""")
+                output.append(vector)
                 print(vector)
-                print(box)
-                image = cv2.polylines(np.zeros((1920,1080)), box, True, (255), 10)
+        return output

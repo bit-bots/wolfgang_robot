@@ -299,11 +299,15 @@ class CameraController:
         # if not in image: (name, False)
         # otherwise: (name, ((1,2), (2,3), (3,4), (4,5))
         # if multiple objects of the same type are present, then there will be multiple tuples starting with the same name
+        # Things to know: If e.g. a robot occludes the top bar, then there will be an individual top bar detection
+        #       on the right and left of the robot
+        #   If two of the same object are too close too each other, this method will treat them as a single object
+        debug = False
 
         # find the colors by saving segmentation image and look at the values in gimp
         # TODO goalnets are also field colored
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (255, 255, 0), "right_goalpost": (0, 255, 255),
+        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (0, 255, 255), "right_goalpost": (255, 255, 0),
                   "ball": (223, 193, 29), "wolfgang": (51, 51, 51)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
@@ -311,23 +315,37 @@ class CameraController:
 
         # cv2.imwrite("/tmp/foo.png", img)
         output = []
-        # TODO there are way too many wolfgangs in the detection
-        # TODO check if the found values make sense
         for key, value in colors.items():
             # we make a mask of every place where in the image the value is exactly as defined
             # thus we basically have a greyscale image with only our object in white
             # calculate *255 to make visible for debug images
             mask = ((img == value).all(axis=2)).astype(np.uint8)
 
-            contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # Retr External seems to solve the problem of way too many Wolfgangs being a contour we had with RETR_TREE
+            #contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
             if len(contours) == 0:
                 output.append((key, False))
+
             for cnt in contours:
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.boxPoints(rect)
-                box = np.int0(box)
+                # skip too small boxes. It is unlikely this is of a relevant size as an object
+                if math.sqrt((box[0][0] - box[2][0]) ** 2 + (box[0][1] - box[2][1]) ** 2) < 50:
+                    continue
+
                 vector = (key, f"""(({box[0][0]},{box[0][1]}), ({box[1][0]}, {box[1][1]}),""" \
                          f"""({box[2][0]}, {box[2][1]}), ({box[3][0]}, {box[3][1]}))""")
                 output.append(vector)
-                print(vector)
+
+                if debug:
+                    print(vector)
+                    print(box)
+                    debug = cv2.drawContours(cv2.UMat(img), [box.astype(int)], -1, (255, 255, 255), 10)
+                    cv2.imshow(key, debug)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+
+
         return output

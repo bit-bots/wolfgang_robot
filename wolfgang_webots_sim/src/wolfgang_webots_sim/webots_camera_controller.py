@@ -11,6 +11,7 @@ from rosgraph_msgs.msg import Clock
 from std_srvs.srv import Empty
 from bitbots_msgs.srv import SetBall, SetRobotPose
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Point
 
 import transforms3d
 import numpy as np
@@ -51,7 +52,7 @@ class CameraController:
         self.timestep = int(self.supervisor.getBasicTimeStep())
 
         # resolve the node for corresponding name
-        self.robot_names = ["amy", "rory", "jack", "donna", "FakeCamera"]
+        self.robot_names = ["RED1", "RED2", "RED3", "BLUE1", "BLUE2", "BLUE3", "BLUE4", "FakeCamera"]
         self.robot_nodes = {}
         self.translation_fields = {}
         self.rotation_fields = {}
@@ -122,7 +123,7 @@ class CameraController:
             print("size not correct, ether kid or adult")
             return
         tilt_range = (0, 90)
-        pan_range = (-30, 30)  # TODO To be evaluated
+        pan_range = (-180, 180)  # TODO To be evaluated
         roll_range = (-5, 5)  # TODO To be evaulated
         z_choice = None
         while z_choice is None:
@@ -130,23 +131,51 @@ class CameraController:
             if z_range[0] < z_prelim < z_range[1]:
                 z_choice = z_prelim
 
+
+        ball_pos = Point(random.random()*6-3, random.random()*9.5-4.75, 0.08) # TODO field size by param furhtermore, ball height is ignored
+        self.set_ball(orientation="rand", position=ball_pos)
+
         new_position = [random.random()*(x_range[1]-x_range[0])+x_range[0],
                         random.random()*(y_range[1]-y_range[0])+y_range[0],
                         z_choice]
-        # todo this has to be changed so it is not changing the 
-        new_rpy = [random.random()*(roll_range[1]-roll_range[0])+roll_range[0],
-                   random.random()*(tilt_range[1]-tilt_range[0])+tilt_range[0],
-                   random.random()*(pan_range[1]-pan_range[0])+pan_range[0]]
 
-        new_rpy = [n * (math.pi/180.0) for n in new_rpy]
+        # todo this has to be changed so it is not changing the 
+        #new_rpy = [random.random()*(roll_range[1]-roll_range[0])+roll_range[0],
+        #          random.random()*(tilt_range[1]-tilt_range[0])+tilt_range[0],
+        #           random.random()*(pan_range[1]-pan_range[0])+pan_range[0]]
+
+
+
+        #new_rpy = [n * (math.pi/180.0) for n in new_rpy]
+
+        # this should be the x vector of the camera coordinate system
+        cam_to_ball = [ball_pos.x- new_position[0], ball_pos.y - new_position[1], ball_pos.z - new_position[2]]
+        print(f"cam_to_ball_vector: {cam_to_ball}")
+
+        yaw = math.atan2(cam_to_ball[0], -cam_to_ball[1]) - math.pi / 2  # dont ask why, it works
+        pitch = math.asin(math.fabs(cam_to_ball[2])/np.linalg.norm(cam_to_ball))
+        print(f"pitch: {pitch}, yaw: {yaw}")
+        new_rpy = [0, pitch, yaw]
         print(new_rpy)
         new_fov = None
         while new_fov is None:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
                 new_fov = fov_prelim
-        #self.set_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
-        self.save_recognition()
+        self.reset_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
+
+
+        robot_height_red = 0.406
+        goalie_pos_red = [x_range[0]+0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25), robot_height_red]
+        goalie_rpy_red = [0.0, 0,  np.random.normal(loc=0.0, scale=0.3)]
+        self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
+
+        robot_height_blue = 0.327
+        goalie_pos_blue = [x_range[1]-0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25), robot_height_blue]
+        goalie_rpy_blue = [0.0, 0.225, math.pi + np.random.normal(loc=0.0, scale=0.3)]
+        self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
+
+        #self.save_recognition()
 
 
     def step_sim(self):
@@ -206,9 +235,9 @@ class CameraController:
 
     def set_ball(self, req=None, orientation="rand", position=None):
         if req is None:
-            self.ball.getField("translation").setSFVec3f([position.x, position.y, 0.0772])
+            self.ball.getField("translation").setSFVec3f([position.x, position.y, 0.08])
         else:
-            self.ball.getField("translation").setSFVec3f([req.p.x, req.p.y, 0.0772])
+            self.ball.getField("translation").setSFVec3f([req.p.x, req.p.y, 0.08])
         if orientation == "rand":
             u = random.random()
             v = random.random()

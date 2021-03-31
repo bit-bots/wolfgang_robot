@@ -128,6 +128,7 @@ class RobotController:
             if not os.path.exists(self.img_save_dir):
                 os.makedirs(self.img_save_dir)
 
+        self.imu_frame = "imu_frame"
         if self.ros_active:
             if base_ns == "":
                 clock_topic = "/clock"

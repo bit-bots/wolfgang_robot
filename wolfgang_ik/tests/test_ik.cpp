@@ -5,10 +5,10 @@ TEST(TestIK, test_ik) {
   wolfgang_ik::IK ik;
 
   Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
-  goal.translation().x() = 0.00;
+  goal.translation().x() = 0.1;
   goal.translation().y() = 0.08;
   goal.translation().z() = -0.3;
-  robot_model_loader::RobotModelLoader robot_model_loader("robot_description", true);
+  robot_model_loader::RobotModelLoader robot_model_loader("robot_description", false);
   const robot_model::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
   if (!kinematic_model) {
     ROS_FATAL("No robot model loaded, unable to run IK");
@@ -19,21 +19,10 @@ TEST(TestIK, test_ik) {
   ASSERT_TRUE(ik.solve(goal, result));
   result->updateLinkTransforms();
 
-  robot_state::RobotStatePtr truth;
-  truth.reset(new robot_state::RobotState(kinematic_model));
-  robot_model::JointModelGroup* left_leg_group = kinematic_model->getJointModelGroup("LeftLeg");
-  truth->setFromIK(left_leg_group, goal, 0.01);
-  for (const auto& j : left_leg_group->getJointModels()) {
-    std::cout << j->getName() << " should be " << *truth->getJointPositions(j)
-              << " but is " << *result->getJointPositions(j) << std::endl;
-  }
-
   Eigen::Isometry3d foot_result = result->getGlobalLinkTransform("l_sole");
-  std::cout << foot_result.translation();
-  ASSERT_DOUBLE_EQ((foot_result.translation() - goal.translation()).norm(), 0);
-  ASSERT_TRUE(foot_result.isApprox(goal));
+  ASSERT_TRUE((foot_result.translation() - goal.translation()).norm() < 0.01);
   // if two quaternions are equal, their dot product is 1
-  ASSERT_TRUE(foot_result.rotation().isApprox(goal.rotation()));
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(foot_result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < 0.0001);
 }
 
 TEST(TestIK, test_intersection) {

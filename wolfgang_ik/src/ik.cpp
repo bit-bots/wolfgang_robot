@@ -145,39 +145,27 @@ bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_s
   double lower_leg_length_2 = lower_leg_length * lower_leg_length;
   double hip_to_ankle_length = std::sqrt(std::pow(hip_pitch_to_l_ankle.translation().x(), 2) + std::pow(hip_pitch_to_l_ankle.translation().y(), 2));
   double hip_to_ankle_length_2 = hip_to_ankle_length * hip_to_ankle_length;
-  std::cout << upper_leg_length << std::endl << lower_leg_length << std::endl << hip_to_ankle_length << std::endl;
   double knee = std::acos((upper_leg_length_2 + lower_leg_length_2 - hip_to_ankle_length_2) / (2 * upper_leg_length * lower_leg_length));
-  // todo actually calculate static offsets
-  //knee += 0.241566;  // offset
 
   // Similarly, we can compute HipPitch and AnklePitch, but we need to add half of the knee angle.
   double hip_pitch = std::acos((upper_leg_length_2 + hip_to_ankle_length_2 - lower_leg_length_2) / (2 * upper_leg_length * hip_to_ankle_length));
   // add pitch of hip_pitch_to_ankle todo not actually hip_pitch_to_l_ankle because this is already rotated?? why??
-  double a = std::atan2(hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
-  std::cout << "a " << a << std::endl;
-  hip_pitch -= a;
+  double foot_position_angle = std::atan2(hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
+  hip_pitch -= foot_position_angle;
+  // todo actually calculate static offsets
   hip_pitch += 0.026;
-  //hip_pitch -= 0.199751;  // offset
-  //hip_pitch -= 0.4;
-  goal_state->setJointPositions("LHipPitch", &hip_pitch);
-  // ankle pitch needs goal pitch
-  double ankle_pitch = std::acos((lower_leg_length_2 + hip_to_ankle_length_2 - upper_leg_length_2) / (2 * lower_leg_length * hip_to_ankle_length));
-  ankle_pitch += goal_rpy.y();
-  //ankle_pitch -= 1.722219;
-  Eigen::Isometry3d tf = goal_state->getJointModel("LKnee")->getChildLinkModel()->getJointOriginTransform();
-  Eigen::Vector3d knee_axis = dynamic_cast<const moveit::core::RevoluteJointModel *>(goal_state->getJointModel("LKnee"))->getAxis();
-  Eigen::Quaterniond knee_zero_pitch_q = getQuaternionTwist(Eigen::Quaterniond(tf.rotation()), knee_axis);
-  Eigen::Vector3d euler = Eigen::Matrix3d(knee_zero_pitch_q).eulerAngles(0, 1, 2);
-  std::cout << euler;
-  double knee_zero_pitch = euler.y();
-  //knee -= knee_zero_pitch - M_PI;
-  knee += 0.74;  // todo where do you come from?
-  goal_state->setJointPositions("LKnee", &knee);
 
+  knee += 0.74;  // todo where do you come from?
+
+  double ankle_pitch = std::acos((lower_leg_length_2 + hip_to_ankle_length_2 - upper_leg_length_2) / (2 * lower_leg_length * hip_to_ankle_length));
+  // ankle pitch needs goal pitch
+  ankle_pitch += goal_rpy.y();
   // subtract hip pitch from ankle pitch
   ankle_pitch += hip_pitch;
-
   ankle_pitch -= 2.72;
+  
+  goal_state->setJointPositions("LHipPitch", &hip_pitch);
+  goal_state->setJointPositions("LKnee", &knee);
   goal_state->setJointPositions("LAnklePitch", &ankle_pitch);
 
   return true;

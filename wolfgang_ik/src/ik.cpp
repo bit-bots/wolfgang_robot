@@ -71,26 +71,11 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
     return false;
   }
   Eigen::Isometry3d hip_ry_intersection = Eigen::Isometry3d::Identity();
-  hip_ry_intersection.translation() += hip_ry_intersection_point;
+  hip_ry_intersection.translate(hip_ry_intersection_point);
 
   // now the goal describes the pose of the ankle_intersect in hip_RY_intersect frame
   Eigen::Isometry3d goal = hip_ry_intersection.inverse() * ankle_intersection;
-  // compute AnkleRoll
-  // Create triangle in y,z dimension consisting of goal position vector and the y and z axis (in hip_RY_intersect frame)
-  // Compute atan(goal.y,goal.z), this gives us the angle of the foot as if the goal rotation would be zero.
-  double ankle_roll = std::atan2(goal.translation().y(), -goal.translation().z());
-  // This is only the angle coming from the goal position. We need to simply add the goal orientation in roll
-  // We can compute this joint angles without knowing the HipYaw value, since the position is not influenced by it.
-  // Because we use the exact intersection of HipYaw and HipRoll as a basis.
   Eigen::Vector3d goal_rpy = l_sole_goal.rotation().eulerAngles(0, 1, 2);
-  ankle_roll -= goal_rpy.x();
-  goal_state->setJointPositions("LAnkleRoll", &ankle_roll);
-
-  // Compute HipRoll
-  // We can compute this similarly as the AnkleRoll. We can also use the triangle method but don't need to add
-  // the goal orientation of the foot.
-  double hip_roll = std::atan2(goal.translation().y(), -goal.translation().z());
-  goal_state->setJointPositions("LHipRoll", &hip_roll);
 
   // We need to know the position of the HipPitch to compute the rest of the pitch joints.
   // Therefore we need to firstly compute the HipYaw joint, since it influences the position of the HipPitch
@@ -102,11 +87,30 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   // We determine the intersection of this plane with the xy plane going through hip_ry_intersect
   // Then, we take the angle between this intersection line and the x axis
   // The intersection line can easily be computed with the cross product.
-  ankle_pitch_axis =
-      goal.rotation() * Eigen::Vector3d(0, 1, 0);  // this is the rotational axis of the ankle pitch, todo get from urdf
-  Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d(0, 0, 1));  // this is the normal of the xy plane
-  double hip_yaw = std::acos(line.dot(Eigen::Vector3d(1, 0, 0)) / line.norm());
+
+  // this is the rotational axis of the ankle pitch, todo get from urdf
+  ankle_pitch_axis = goal.rotation() * Eigen::Vector3d::UnitY();
+  Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d::UnitZ());  // this is the normal of the xy plane
+  double hip_yaw = -std::acos(line.dot(Eigen::Vector3d::UnitX()) / line.norm());
+  //double hip_yaw = -goal_rpy.z();
   goal_state->setJointPositions("LHipYaw", &hip_yaw);
+
+  // compute AnkleRoll
+  // The rolls depend on the position of the ankle relative to the hip_ry_intersect, AFTER the yaw is applied.
+  // for that, we can just multiply the yaw because the origin is on the hip yaw rotation axis
+  Eigen::Isometry3d goal_with_yaw = Eigen::AngleAxisd(hip_yaw, Eigen::Vector3d::UnitZ()) * goal;
+  // Create triangle in y,z dimension consisting of goal position vector and the y and z axis (in hip_RY_intersect frame)
+  // Compute atan(goal.y,goal.z), this gives us the angle of the foot as if the goal rotation would be zero.
+  double ankle_roll = std::atan2(goal_with_yaw.translation().y(), -goal_with_yaw.translation().z());
+  // This is only the angle coming from the goal position. We need to simply add the goal orientation in roll
+  // We can compute this joint angles without knowing the HipYaw value, since the position is not influenced by it.
+  // Because we use the exact intersection of HipYaw and HipRoll as a basis.
+  ankle_roll -= goal_rpy.x();
+  goal_state->setJointPositions("LAnkleRoll", &ankle_roll);
+
+  // Compute HipRoll
+  double hip_roll = std::atan2(goal_with_yaw.translation().y(), -goal_with_yaw.translation().z());
+  goal_state->setJointPositions("LHipRoll", &hip_roll);
 
   // Represent the goal in the HipPitch frame. Subtract transform from hip_RY_intersect to HipPitch
   goal_state->updateLinkTransforms();
@@ -114,7 +118,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   l_sole_to_l_ankle = goal_state->getGlobalLinkTransform("l_sole").inverse() *
       goal_state->getGlobalLinkTransform("l_ankle");
   Eigen::Isometry3d base_link_to_l_ankle = l_sole_goal * l_sole_to_l_ankle;
-  Eigen::Isometry3d hip_pitch_to_l_ankle =  base_link_to_hip_pitch.inverse() * base_link_to_l_ankle;
+  Eigen::Isometry3d hip_pitch_to_l_ankle = base_link_to_hip_pitch.inverse() * base_link_to_l_ankle;
 
   // rotation of hip_pitch_to_goal should be zero
   // Now we have a triangle of HipPitch, Knee and AnklePitch which we can treat as a prismatic joint.

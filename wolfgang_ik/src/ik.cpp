@@ -145,25 +145,21 @@ bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_s
   double lower_leg_length_2 = lower_leg_length * lower_leg_length;
   double hip_to_ankle_length = std::sqrt(std::pow(hip_pitch_to_l_ankle.translation().x(), 2) + std::pow(hip_pitch_to_l_ankle.translation().y(), 2));
   double hip_to_ankle_length_2 = hip_to_ankle_length * hip_to_ankle_length;
-  double knee = std::acos((upper_leg_length_2 + lower_leg_length_2 - hip_to_ankle_length_2) / (2 * upper_leg_length * lower_leg_length));
+  double knee_angle = std::acos((upper_leg_length_2 + lower_leg_length_2 - hip_to_ankle_length_2) / (2 * upper_leg_length * lower_leg_length));
+  double knee = M_PI - knee_angle;
 
   // Similarly, we can compute HipPitch and AnklePitch, but we need to add half of the knee angle.
   double hip_pitch = std::acos((upper_leg_length_2 + hip_to_ankle_length_2 - lower_leg_length_2) / (2 * upper_leg_length * hip_to_ankle_length));
   // add pitch of hip_pitch_to_ankle todo not actually hip_pitch_to_l_ankle because this is already rotated?? why??
-  double foot_position_angle = std::atan2(hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
-  hip_pitch -= foot_position_angle;
-  // todo actually calculate static offsets
-  hip_pitch += 0.026;
+  double foot_position_angle = std::atan2(-hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
+  hip_pitch += foot_position_angle;
 
-  knee += 0.74;  // todo where do you come from?
+  knee += 15.0 / 180.0 * M_PI;
 
-  double ankle_pitch = std::acos((lower_leg_length_2 + hip_to_ankle_length_2 - upper_leg_length_2) / (2 * lower_leg_length * hip_to_ankle_length));
+  double ankle_pitch = hip_pitch + knee_angle - M_PI;
   // ankle pitch needs goal pitch
   ankle_pitch += goal_rpy.y();
-  // subtract hip pitch from ankle pitch
-  ankle_pitch += hip_pitch;
-  ankle_pitch -= 2.72;
-  
+
   goal_state->setJointPositions("LHipPitch", &hip_pitch);
   goal_state->setJointPositions("LKnee", &knee);
   goal_state->setJointPositions("LAnklePitch", &ankle_pitch);
@@ -233,9 +229,9 @@ int main(int argc, char** argv) {
   wolfgang_ik::IK ik;
 
   Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
-  goal.translation().x() = 0.1;
-  goal.translation().y() = 0.08;
-  goal.translation().z() = -0.3;
+  goal.translation().x() = std::stof(argv[1]);
+  goal.translation().y() = std::stof(argv[2]);
+  goal.translation().z() = std::stof(argv[3]);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description", false);
   const robot_model::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
   if (!kinematic_model) {
@@ -248,7 +244,7 @@ int main(int argc, char** argv) {
   sensor_msgs::JointState joint_state;
   joint_state.name = kinematic_model->getJointModelGroup("LeftLeg")->getJointModelNames();
   result->copyJointGroupPositions("LeftLeg", joint_state.position);
-  while (ros::ok()) {
+  for (int i = 0; i < 100; i++) {
     p.publish(joint_state);
   }
 }

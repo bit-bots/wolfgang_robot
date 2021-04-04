@@ -5,7 +5,7 @@ TEST(TestIK, test_ik) {
   wolfgang_ik::IK ik;
 
   Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
-  goal.translation().x() = 0.05;
+  goal.translation().x() = 0.00;
   goal.translation().y() = 0.08;
   goal.translation().z() = -0.3;
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description", true);

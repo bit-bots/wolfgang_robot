@@ -51,7 +51,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
     return false;
   }
   Eigen::Isometry3d ankle_intersection = l_sole_goal;
-  ankle_intersection.translation() += ankle_intersection_point;
+  ankle_intersection.translate(ankle_intersection_point);
 
   // get rid of static transform between base_link and hip_RY_intersect
   Eigen::Isometry3d base_link_to_hip_1 = goal_state->getGlobalLinkTransform("l_hip_1");
@@ -83,7 +83,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   // We can compute this joint angles without knowing the HipYaw value, since the position is not influenced by it.
   // Because we use the exact intersection of HipYaw and HipRoll as a basis.
   Eigen::Vector3d goal_rpy = l_sole_goal.rotation().eulerAngles(0, 1, 2);
-  ankle_roll += goal_rpy.x();
+  ankle_roll -= goal_rpy.x();
   goal_state->setJointPositions("LAnkleRoll", &ankle_roll);
 
   // Compute HipRoll

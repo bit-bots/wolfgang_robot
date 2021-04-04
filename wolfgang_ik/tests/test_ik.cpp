@@ -81,6 +81,45 @@ TEST(TestIK, test_ik_yaw) {
   ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
 }
 
+TEST(TestIK, test_ik_negative_roll) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(-1, 0, 0));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
+TEST(TestIK, test_ik_negative_pitch) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(0, -1, 0));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
+TEST(TestIK, test_ik_negative_yaw) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(0, 0, -1));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
 TEST(TestIK, test_ik_pose) {
   Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
   goal.translation().x() = 0.12;

@@ -75,6 +75,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
 
   // now the goal describes the pose of the ankle_intersect in hip_RY_intersect frame
   Eigen::Isometry3d goal = hip_ry_intersection.inverse() * ankle_intersection;
+  // todo extracting euler angles do not work: they are not continuous
   Eigen::Vector3d goal_rpy = l_sole_goal.rotation().eulerAngles(0, 1, 2);
 
   // We need to know the position of the HipPitch to compute the rest of the pitch joints.
@@ -82,7 +83,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   // joint (as their axes do not intersect)
   // First we compute the plane of the leg (the plane in which all pitch joints are).
   // This plane contains the goal position of the ankle_intersect. It can be defined by the normal which is the
-  // Y axis in the ankle_intersect frame. //todo nicht sicher ob vorher der roll abgezogen werden muss
+  // Y axis in the ankle_intersect frame.
   // The hip_RY_intersect is also located on this plane.
   // We determine the intersection of this plane with the xy plane going through hip_ry_intersect
   // Then, we take the angle between this intersection line and the x axis
@@ -92,7 +93,6 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   ankle_pitch_axis = goal.rotation() * Eigen::Vector3d::UnitY();
   Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d::UnitZ());  // this is the normal of the xy plane
   double hip_yaw = -std::acos(line.dot(Eigen::Vector3d::UnitX()) / line.norm());
-  //double hip_yaw = -goal_rpy.z();
   goal_state->setJointPositions("LHipYaw", &hip_yaw);
 
   // compute AnkleRoll
@@ -142,6 +142,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   double foot_position_angle = std::atan2(-hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
   hip_pitch += foot_position_angle;
 
+  // todo get from urdf
   knee += 15.0 / 180.0 * M_PI;
 
   double ankle_pitch = hip_pitch + knee_angle - M_PI;

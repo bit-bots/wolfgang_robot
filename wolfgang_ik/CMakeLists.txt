@@ -35,11 +35,3 @@ catkin_add_gtest(test_ik tests/test_ik.cpp)
 target_link_libraries(test_ik ${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 
 enable_bitbots_docs()
-
-add_executable(${PROJECT_NAME}_exec src/ik.cpp)
-
-
-target_link_libraries(${PROJECT_NAME}_exec
-  ${catkin_LIBRARIES}
-  ${Eigen3_LIBRARIES}
-  )

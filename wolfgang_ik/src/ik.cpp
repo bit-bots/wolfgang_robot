@@ -167,15 +167,6 @@ bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_s
   return true;
 }
 
-Eigen::Quaterniond IK::getQuaternionTwist(const Eigen::Quaterniond& rotation,
-                                          const Eigen::Vector3d& direction) {
-  Eigen::Vector3d rotation_axis(rotation.x(), rotation.y(), rotation.z());
-  Eigen::Vector3d projection = rotation_axis.dot(direction) / (direction.dot(direction)) * direction;
-  Eigen::Quaterniond twist(rotation.w(), projection.x(), projection.y(), projection.z());
-  twist.normalize();
-  return twist;
-}
-
 bool IK::findIntersection(const Eigen::Vector3d &p1,
                           const Eigen::Vector3d &v1,
                           const Eigen::Vector3d &p2,
@@ -219,32 +210,4 @@ bool IK::findIntersection(const Eigen::Vector3d &p1,
   return true;
 }
 
-}
-
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "tester");
-  ros::NodeHandle nh;
-  ros::Publisher p = nh.advertise<sensor_msgs::JointState>("/config/fake_controller_joint_states", 1);
-
-  wolfgang_ik::IK ik;
-
-  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
-  goal.translation().x() = std::stof(argv[1]);
-  goal.translation().y() = std::stof(argv[2]);
-  goal.translation().z() = std::stof(argv[3]);
-  robot_model_loader::RobotModelLoader robot_model_loader("robot_description", false);
-  const robot_model::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
-  if (!kinematic_model) {
-    ROS_FATAL("No robot model loaded, unable to run IK");
-    exit(1);
-  }
-  robot_state::RobotStatePtr result;
-  result.reset(new robot_state::RobotState(kinematic_model));
-  ik.solve(goal, result);
-  sensor_msgs::JointState joint_state;
-  joint_state.name = kinematic_model->getJointModelGroup("LeftLeg")->getJointModelNames();
-  result->copyJointGroupPositions("LeftLeg", joint_state.position);
-  for (int i = 0; i < 100; i++) {
-    p.publish(joint_state);
-  }
 }

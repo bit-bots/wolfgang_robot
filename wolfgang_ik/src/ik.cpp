@@ -156,6 +156,7 @@ bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_s
   double a = std::atan2(hip_pitch_to_l_ankle.translation().x(), -hip_pitch_to_l_ankle.translation().y());  // todo z axis is y axis?
   std::cout << "a " << a << std::endl;
   hip_pitch -= a;
+  hip_pitch += 0.026;
   //hip_pitch -= 0.199751;  // offset
   //hip_pitch -= 0.4;
   goal_state->setJointPositions("LHipPitch", &hip_pitch);
@@ -174,9 +175,9 @@ bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_s
   goal_state->setJointPositions("LKnee", &knee);
 
   // subtract hip pitch from ankle pitch
-  ankle_pitch -= hip_pitch;
+  ankle_pitch += hip_pitch;
 
-  ankle_pitch -= 0.35;
+  ankle_pitch -= 2.72;
   goal_state->setJointPositions("LAnklePitch", &ankle_pitch);
 
   return true;

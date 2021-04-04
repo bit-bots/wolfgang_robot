@@ -1,21 +1,5 @@
 #include <wolfgang_ik/ik.h>
 
-std::ostream &operator<<(std::ostream &out, const Eigen::Quaterniond &quat) {
-  Eigen::Vector3d euler = Eigen::Matrix3d(quat).eulerAngles(0, 1, 2);
-  out << "Rotation: " << euler.x() << ", " << euler.y() << ", " << euler.z() << std::endl
-      <<"Rotation (q): " << quat.x() << ", " << quat.y() << ", " << quat.z() << ", " << quat.w() << std::endl;
-  return out;
-}
-
-std::ostream &operator<<(std::ostream &out, const Eigen::Isometry3d &iso) {
-  Eigen::Vector3d euler = iso.rotation().eulerAngles(0, 1, 2);
-  Eigen::Quaterniond quat(iso.rotation());
-  out << "Translation: " << iso.translation().x() << ", " << iso.translation().y() << ", " << iso.translation().z()
-      << std::endl
-      << "Rotation: " << euler.x() << ", " << euler.y() << ", " << euler.z() << std::endl
-      << "Rotation (q): " << quat.x() << ", " << quat.y() << ", " << quat.z() << ", " << quat.w() << std::endl;
-  return out;
-}
 
 namespace wolfgang_ik {
 IK::IK() : robot_model_loader_("robot_description", false) {
@@ -30,7 +14,7 @@ IK::IK() : robot_model_loader_("robot_description", false) {
   // compute the necessary link length and save them as class variables
 }
 
-bool IK::solve(Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_state) {
+bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_state) {
   // some naming conventions:
   // hip_RY_intersect: the point where the HipYaw and HipRoll axis intersect
   // ankle_intersect: the point where AnklePitch and AnkleRoll intersect

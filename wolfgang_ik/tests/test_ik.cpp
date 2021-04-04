@@ -1,28 +1,87 @@
 #include <wolfgang_ik/ik.h>
 #include <gtest/gtest.h>
 
-TEST(TestIK, test_ik) {
+const double TRANSLATION_TOLERANCE = 0.01;
+const double ROTATION_TOLERANCE = 0.001;
+
+bool test_ik(const Eigen::Isometry3d &request, Eigen::Isometry3d &result) {
   wolfgang_ik::IK ik;
 
-  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
-  goal.translation().x() = 0.1;
-  goal.translation().y() = 0.08;
-  goal.translation().z() = -0.3;
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description", false);
-  const robot_model::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
+  const robot_model::RobotModelPtr &kinematic_model = robot_model_loader.getModel();
   if (!kinematic_model) {
     ROS_FATAL("No robot model loaded, unable to run IK");
     exit(1);
   }
-  robot_state::RobotStatePtr result;
-  result.reset(new robot_state::RobotState(kinematic_model));
-  ASSERT_TRUE(ik.solve(goal, result));
-  result->updateLinkTransforms();
+  robot_state::RobotStatePtr state;
+  state.reset(new robot_state::RobotState(kinematic_model));
+  bool success = ik.solve(request, state);
+  state->updateLinkTransforms();
 
-  Eigen::Isometry3d foot_result = result->getGlobalLinkTransform("l_sole");
-  ASSERT_TRUE((foot_result.translation() - goal.translation()).norm() < 0.01);
+  result = state->getGlobalLinkTransform("l_sole");
+  return success;
+}
+
+Eigen::Quaterniond euler_to_quat(double roll, double pitch, double yaw) {
+  Eigen::Quaterniond q;
+  q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+      * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+      * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+  return q;
+}
+
+TEST(TestIK, test_ik_position) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0.1;
+  goal.translation().y() = 0.08;
+  goal.translation().z() = -0.3;
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
   // if two quaternions are equal, their dot product is 1
-  ASSERT_TRUE(std::abs(Eigen::Quaterniond(foot_result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < 0.0001);
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
+TEST(TestIK, test_ik_roll) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(0.2, 0, 0));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  std::cout << result;
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
+TEST(TestIK, test_ik_pitch) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(0.0, 0.2, 0));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  std::cout << result;
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
+}
+
+TEST(TestIK, test_ik_yaw) {
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = 0;
+  goal.translation().y() = 0;
+  goal.translation().z() = -0.35;
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(euler_to_quat(0, 0, 0.2));
+  Eigen::Isometry3d result;
+  ASSERT_TRUE(test_ik(goal, result));
+  std::cout << result;
+  ASSERT_TRUE((result.translation() - goal.translation()).norm() < TRANSLATION_TOLERANCE);
+  // if two quaternions are equal, their dot product is 1
+  ASSERT_TRUE(std::abs(Eigen::Quaterniond(result.rotation()).dot(Eigen::Quaterniond(goal.rotation())) - 1) < ROTATION_TOLERANCE);
 }
 
 TEST(TestIK, test_intersection) {

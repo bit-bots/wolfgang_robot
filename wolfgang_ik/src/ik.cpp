@@ -92,7 +92,8 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   // this is the rotational axis of the ankle pitch, todo get from urdf
   ankle_pitch_axis = goal.rotation() * Eigen::Vector3d::UnitY();
   Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d::UnitZ());  // this is the normal of the xy plane
-  double hip_yaw = -std::acos(line.dot(Eigen::Vector3d::UnitX()) / line.norm());
+  double sign = std::copysign(1.0, ankle_pitch_axis.x());  // todo explain why we use x here
+  double hip_yaw = sign * std::acos(line.dot(Eigen::Vector3d::UnitX()) / line.norm());
   goal_state->setJointPositions("LHipYaw", &hip_yaw);
 
   // compute AnkleRoll

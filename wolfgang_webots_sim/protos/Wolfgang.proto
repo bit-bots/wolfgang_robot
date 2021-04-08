@@ -330,7 +330,7 @@ PROTO Wolfgang [
           axis 0.000003 -1.000000 -0.000000
           anchor -0.001500 -0.076500 0.203500
           dampingConstant IS MX64-damping
-          staticFriction MX64-friction
+          staticFriction IS MX64-friction
         }
         device [
           RotationalMotor {
@@ -380,7 +380,7 @@ PROTO Wolfgang [
                 axis 1.000000 -0.000004 0.000004
                 anchor -0.016950 0.042000 0.000000
                 dampingConstant IS MX64-damping
-                staticFriction MX64-friction
+                staticFriction IS MX64-friction
               }
               device [
                 RotationalMotor {
@@ -453,7 +453,7 @@ PROTO Wolfgang [
                       axis 1.000000 -0.000004 -0.000004
                       anchor 0.024000 -0.144000 -0.023500
                       dampingConstant IS MX64-damping
-                      staticFriction MX64-friction
+                      staticFriction IS MX64-friction
                     }
                     device [
                       RotationalMotor {
@@ -786,7 +786,7 @@ PROTO Wolfgang [
           axis 0.000003 1.000000 -0.000003
           anchor -0.001500 0.076500 0.203500
           dampingConstant IS MX64-damping
-          staticFriction MX64-friction
+          staticFriction IS MX64-friction
         }
         device [
           RotationalMotor {
@@ -836,7 +836,7 @@ PROTO Wolfgang [
                 axis 1.000000 0.000004 0.000004
                 anchor -0.016950 0.042000 -0.000000
                 dampingConstant IS MX64-damping
-                staticFriction MX64-friction
+                staticFriction IS MX64-friction
               }
               device [
                 RotationalMotor {
@@ -909,7 +909,7 @@ PROTO Wolfgang [
                       axis -1.000000 -0.000004 -0.000004
                       anchor -0.024000 -0.144000 -0.023500
                       dampingConstant IS MX64-damping
-                      staticFriction MX64-friction
+                      staticFriction IS MX64-friction
                     }
                     device [
                       RotationalMotor {
@@ -1242,7 +1242,7 @@ PROTO Wolfgang [
           axis 0.000000 -0.000004 -1.000000
           anchor 0.000000 -0.055000 0.000000
           dampingConstant IS MX106-damping
-          staticFriction MX106-friction
+          staticFriction IS MX106-friction
         }
         device [
           RotationalMotor {
@@ -1276,7 +1276,7 @@ PROTO Wolfgang [
                 axis 1.000000 -0.000003 -0.000004
                 anchor -0.046000 0.041400 0.000000
                 dampingConstant IS MX106-damping
-                staticFriction MX106-friction
+                staticFriction IS MX106-friction
               }
               device [
                 RotationalMotor {
@@ -1342,7 +1342,7 @@ PROTO Wolfgang [
                       axis -1.000000 -0.000004 0.000004
                       anchor -0.026500 -0.000000 -0.069100
                       dampingConstant IS MX106-damping
-                      staticFriction MX106-friction
+                      staticFriction IS MX106-friction
                     }
                     device [
                       RotationalMotor {
@@ -1440,7 +1440,7 @@ PROTO Wolfgang [
                             axis -0.000000 -1.000000 -0.000000
                             anchor -0.003923 -0.051000 -0.169043
                             dampingConstant IS XH540W270-damping
-                            staticFriction XH540W270-friction
+                            staticFriction IS XH540W270-friction
                             springConstant IS spring-constant
                           }
                           device [
@@ -1530,7 +1530,7 @@ PROTO Wolfgang [
                                   axis 0.000000 -1.000000 0.000004
                                   anchor 0.000000 0.050500 -0.170000
                                   dampingConstant IS XH540W270-damping
-                                  staticFriction XH540W270-friction
+                                  staticFriction IS XH540W270-friction
                                 }
                                 device [
                                   RotationalMotor {
@@ -2324,7 +2324,7 @@ PROTO Wolfgang [
           axis 0.000000 -0.000004 -1.000000
           anchor 0.000000 0.055000 -0.000000
           dampingConstant IS MX106-damping
-          staticFriction MX106-friction
+          staticFriction IS MX106-friction
         }
         device [
           RotationalMotor {
@@ -2358,7 +2358,7 @@ PROTO Wolfgang [
                 axis 1.000000 0.000003 -0.000004
                 anchor -0.046000 0.041400 0.000000
                 dampingConstant IS MX106-damping
-                staticFriction MX106-friction
+                staticFriction IS MX106-friction
               }
               device [
                 RotationalMotor {
@@ -2424,7 +2424,7 @@ PROTO Wolfgang [
                       axis 1.000000 -0.000000 0.000004
                       anchor 0.026000 0.000000 -0.069100
                       dampingConstant IS MX106-damping
-                      staticFriction MX106-friction
+                      staticFriction IS MX106-friction
                     }
                     device [
                       RotationalMotor {
@@ -2522,7 +2522,7 @@ PROTO Wolfgang [
                             axis 0.000001 0.000004 1.000000
                             anchor 0.004356 -0.168793 0.049000
                             dampingConstant IS XH540W270-damping
-                            staticFriction XH540W270-friction
+                            staticFriction IS XH540W270-friction
                             springConstant IS spring-constant
                           }
                           device [
@@ -2612,7 +2612,7 @@ PROTO Wolfgang [
                                   axis 0.000003 1.000000 0.000004
                                   anchor 0.000000 -0.050500 -0.170000
                                   dampingConstant IS MX106-damping
-                                  staticFriction MX106-friction
+                                  staticFriction IS MX106-friction
                                 }
                                 device [
                                   RotationalMotor {
@@ -2678,7 +2678,7 @@ PROTO Wolfgang [
                                         axis 1.000000 0.000004 0.000004
                                         anchor 0.069100 0.000000 -0.026000
                                         dampingConstant IS MX106-damping
-                                        staticFriction MX106-friction
+                                        staticFriction IS MX106-friction
                                       }
                                       device [
                                         RotationalMotor {
@@ -3407,7 +3407,7 @@ PROTO Wolfgang [
           axis 0.000000 -0.000003 1.000000
           anchor -0.009500 0.000000 0.234500
           dampingConstant IS MX64-damping
-          staticFriction MX64-friction
+          staticFriction IS MX64-friction
         }
         device [
           RotationalMotor {
@@ -3449,7 +3449,7 @@ PROTO Wolfgang [
                 axis 0.000000 1.000000 -0.000004
                 anchor 0.036000 0.023500 -0.024000
                 dampingConstant IS MX64-damping
-                staticFriction MX64-friction
+                staticFriction IS MX64-friction
               }
               device [
                 RotationalMotor {

@@ -18,6 +18,7 @@ import numpy as np
 import cv2
 
 G = 9.81
+DARWIN_PITCH = 0.225
 
 
 class CameraController:
@@ -65,7 +66,6 @@ class CameraController:
                 self.translation_fields[name] = node.getField("translation")
                 self.rotation_fields[name] = node.getField("rotation")
 
-
         # need to handle these topics differently or we will end up having a double //
         if base_ns == "":
             clock_topic = "/clock"
@@ -98,6 +98,7 @@ class CameraController:
 
         self.world_info = self.supervisor.getFromDef("world_info")
         self.ball = self.supervisor.getFromDef("ball")
+        self.cam_looks_at_ball = True
 
     def random_capture(self, size="kid", n=1000):
         # gleichverteilung über x und y, z: robot description
@@ -110,7 +111,7 @@ class CameraController:
             fov_range = (60, 180)
             fov_mean = 89.3
             fov_std_dev = 28.1
-        elif size=="adult":
+        elif size == "adult":
             z_mean = 1.37571428571429
             z_std_dev = 0.139386410487434
             z_range = (1.10, 1.80)
@@ -131,63 +132,143 @@ class CameraController:
             if z_range[0] < z_prelim < z_range[1]:
                 z_choice = z_prelim
 
+        ball_pos = Point(random.random() * 9.5 - 4.75, random.random() * 6 - 3,
+                         0.08)  # TODO field size by param ---furhtermore, ball height is ignored
 
-        ball_pos = Point(random.random()*6-3, random.random()*9.5-4.75, 0.08) # TODO field size by param furhtermore, ball height is ignored
+        ball_pos = Point(1, 2,
+                         0.08)
         self.set_ball(orientation="rand", position=ball_pos)
 
-        new_position = [random.random()*(x_range[1]-x_range[0])+x_range[0],
-                        random.random()*(y_range[1]-y_range[0])+y_range[0],
-                        z_choice]
-
-        # todo this has to be changed so it is not changing the 
-        #new_rpy = [random.random()*(roll_range[1]-roll_range[0])+roll_range[0],
-        #          random.random()*(tilt_range[1]-tilt_range[0])+tilt_range[0],
-        #           random.random()*(pan_range[1]-pan_range[0])+pan_range[0]]
-
-
-
-        #new_rpy = [n * (math.pi/180.0) for n in new_rpy]
-
-        # this should be the x vector of the camera coordinate system
-        cam_to_ball = [ball_pos.x- new_position[0], ball_pos.y - new_position[1], ball_pos.z - new_position[2]]
-        print(f"cam_to_ball_vector: {cam_to_ball}")
-
-        yaw = math.atan2(cam_to_ball[0], -cam_to_ball[1]) - math.pi / 2  # dont ask why, it works
-        pitch = math.asin(math.fabs(cam_to_ball[2])/np.linalg.norm(cam_to_ball))
-        print(f"pitch: {pitch}, yaw: {yaw}")
-        new_rpy = [0, pitch, yaw]
-        print(new_rpy)
         new_fov = None
         while new_fov is None:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
                 new_fov = fov_prelim
-        self.reset_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
-
+        #self.reset_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
 
         robot_height_red = 0.406
-        goalie_pos_red = [x_range[0]+0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25), robot_height_red]
-        goalie_rpy_red = [0.0, 0,  np.random.normal(loc=0.0, scale=0.3)]
+        goalie_pos_red = [x_range[0] + 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
+                          robot_height_red]
+        goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
 
         robot_height_blue = 0.327
-        goalie_pos_blue = [x_range[1]-0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25), robot_height_blue]
-        goalie_rpy_blue = [0.0, 0.225, math.pi + np.random.normal(loc=0.0, scale=0.3)]
+        goalie_pos_blue = [x_range[1] - 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
+                           robot_height_blue]
+        goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
-        #self.save_recognition()
+        num_strikers_red = 2 # random.randint(0, 2)
+        camera_is_striker = True # bool(random.randint(0, 1))
+        num_strikers_blue = 3 # random.randint(0, 3)
+        num_defenders_red = 2 - num_strikers_red
+        num_defenders_blue = 3 - num_strikers_blue
+        positions = [goalie_pos_red, goalie_pos_blue]
+        for i in range(num_strikers_red):
+            r = self.place_striker("RED" + str(i + 2), ball_pos, robot_height_red, [0.0, 0.0, 0.0], positions)
+            positions.append(r)
+        for i in range(num_strikers_blue):
+            r = self.place_striker("BLUE" + str(i + 2), ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
+            positions.append(r)
 
+        for i in range(num_defenders_red):
+            self.place_defender("RED" + str(num_strikers_red + i + 2), "RED", robot_height_red, [0.0, 0.0, 0.0], positions)
+        for i in range(num_defenders_blue):
+            self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
+
+        self.place_camera(ball_pos, z_choice, positions, x_range, y_range, new_fov)
+
+        self.save_recognition()
+
+    def place_striker(self, name, ball_pos, height, orientation, other_positions):
+        print(f"placing {name} as a striker")
+        robot_pos = Point(ball_pos.x, ball_pos.y, ball_pos.z)
+        # TODO collision check with other robots (lt < 0.2 m away or something like that)
+        while True:
+            preliminary_pos_x = robot_pos.x + np.random.normal(0, 2)
+            preliminary_pos_y = robot_pos.x + np.random.normal(0, 2)
+            pos_collides = False #  self.position_collides(preliminary_pos_x, preliminary_pos_y, other_positions)
+            if -5 < preliminary_pos_x < 5 and -3.5 < preliminary_pos_y < 3.5 and not pos_collides:
+                robot_pos.x = preliminary_pos_x
+                robot_pos.y = preliminary_pos_y
+                break
+        robot_pos.z = height
+        orientation[2] += np.random.normal(0, np.pi/8)
+        self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
+        return [robot_pos.x, robot_pos.y, robot_pos.z]
+
+    def place_defender(self, name, side, height, orientation, other_positions):
+        print(f"placing {name} as a defender on side {side}")
+
+    def place_camera(self, ball_pos, height, other_positions, x_range, y_range, fov):
+        if self.cam_looks_at_ball:
+            cam_position = [random.random() * (x_range[1] - x_range[0]) + x_range[0],
+                            random.random() * (y_range[1] - y_range[0]) + y_range[0],
+                            height]
+
+            # todo this has to be changed so it is not changing the
+            # new_rpy = [random.random()*(roll_range[1]-roll_range[0])+roll_range[0],
+            #          random.random()*(tilt_range[1]-tilt_range[0])+tilt_range[0],
+            #           random.random()*(pan_range[1]-pan_range[0])+pan_range[0]]
+
+            # new_rpy = [n * (math.pi/180.0) for n in new_rpy]
+
+            # this should be the x vector of the camera coordinate system
+            cam_to_ball = [ball_pos.x - cam_position[0], ball_pos.y - cam_position[1], ball_pos.z - cam_position[2]]
+
+            yaw = math.atan2(cam_to_ball[0], -cam_to_ball[1]) - math.pi / 2  # dont ask why, it works
+            pitch = math.asin(math.fabs(cam_to_ball[2]) / np.linalg.norm(cam_to_ball))
+            new_rpy = [0, pitch, yaw]
+
+            width = 1920
+            height = 1080
+
+
+            # camera matrix
+            K = np.identity(3)
+            f_y = self.mat_from_fov_and_resolution(
+                self.h_fov_to_v_fov(fov, height, width), height)
+            f_x = self.mat_from_fov_and_resolution(fov, width)
+            K[0, 0] = f_x
+            K[1, 1] = f_y
+            K[0, 2] = width/2
+            K[1, 2] = height/2
+            origin_to_cam = transforms3d.affines.compose(cam_position, np.identity(3), np.ones(3))
+            cam_to_origin = np.linalg.inv(origin_to_cam)
+            print(cam_to_origin)
+            ball_pos_affine = np.ones(4)
+            ball_pos_affine[0] = ball_pos.x
+            ball_pos_affine[1] = ball_pos.y
+            ball_pos_affine[2] = ball_pos.z
+            print(ball_pos_affine)
+            ball_in_camera_coordinate_system = np.matmul(cam_to_origin, ball_pos_affine)
+            print(f"ball_pos_not_affine {ball_in_camera_coordinate_system}")
+
+            ball_size_in_pixels_half = 0
+            #pick pixel TODO make it more than resolution so ball can be outside of center (margin of size_of_ball/2 on each side)
+            pixel = [0,0,0]
+            pixel[0] = random.randint(0-ball_size_in_pixels_half, width+ball_size_in_pixels_half)
+            pixel[1] = random.randint(0-ball_size_in_pixels_half, height+ball_size_in_pixels_half)
+            self.reset_robot_pose_rpy(cam_position, [0,0,0], "FakeCamera")
+        else:
+            print("not implemented")
+
+
+    def mat_from_fov_and_resolution(self, fov, res):
+        return 0.5 * res * (math.cos((fov / 2)) / math.sin((fov / 2)))
+
+    def h_fov_to_v_fov(self, h_fov, height, width):
+        return 2 * math.atan(math.tan(h_fov * 0.5) * (height / width))
 
     def step_sim(self):
         self.time += self.timestep / 1000
         self.supervisor.step(self.timestep)
 
     def step(self):
-        self.step_sim()
         self.random_capture()
         if self.ros_active:
             self.publish_clock()
-
+        self.step_sim()
 
     def publish_clock(self):
         self.clock_msg.clock = rospy.Time.from_seconds(self.time)
@@ -287,14 +368,14 @@ class CameraController:
             size = recognized_objects[e].get_size_on_image()
             if model == b"soccer ball":
                 found_ball = True
-                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
                 annotation += f"{img_name}|"
                 annotation += "ball|"
                 annotation += vector
                 annotation += "\n"
             if model == b"wolfgang":
                 found_wolfgang = True
-                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
                 annotation += f"{img_name}|"
                 annotation += "robot|"
                 annotation += vector
@@ -304,14 +385,14 @@ class CameraController:
             if model == b"left_post":
                 print("found a post")
                 found_post = True
-                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
                 annotation += f"{img_name}|"
                 annotation += "goalpost|"
                 annotation += vector
                 annotation += "\n"
             print(model)
         if not found_ball:
-            annotation +=  f"{img_name}|ball|not in image\n"
+            annotation += f"{img_name}|ball|not in image\n"
         if not found_wolfgang:
             annotation += f"{img_name}|robot|not in image\n"
         if not found_post:
@@ -321,7 +402,8 @@ class CameraController:
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         seg_img = self.camera.getRecognitionSegmentationImageArray()
         self.generatePolygonsFromSegmentation(seg_img)
-        self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"), quality=100)
+        self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
+                                                     quality=100)
 
     def generatePolygonsFromSegmentation(self, img):
         # this method returns a list with the following items:
@@ -336,7 +418,7 @@ class CameraController:
         # find the colors by saving segmentation image and look at the values in gimp
         # TODO goalnets are also field colored
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost" : (255, 0, 255), "top_bar": (0, 255, 255), "right_goalpost": (255, 255, 0),
+        colors = {"left_goalpost": (255, 0, 255), "top_bar": (0, 255, 255), "right_goalpost": (255, 255, 0),
                   "ball": (223, 193, 29), "wolfgang": (51, 51, 51)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
@@ -351,7 +433,7 @@ class CameraController:
             mask = ((img == value).all(axis=2)).astype(np.uint8)
 
             # Retr External seems to solve the problem of way too many Wolfgangs being a contour we had with RETR_TREE
-            #contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             if len(contours) == 0:
@@ -365,7 +447,7 @@ class CameraController:
                     continue
 
                 vector = (key, f"""(({box[0][0]},{box[0][1]}), ({box[1][0]}, {box[1][1]}),""" \
-                         f"""({box[2][0]}, {box[2][1]}), ({box[3][0]}, {box[3][1]}))""")
+                               f"""({box[2][0]}, {box[2][1]}), ({box[3][0]}, {box[3][1]}))""")
                 output.append(vector)
 
                 if debug:
@@ -375,6 +457,5 @@ class CameraController:
                     cv2.imshow(key, debug)
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()
-
 
         return output

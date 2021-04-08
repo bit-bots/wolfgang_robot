@@ -69,7 +69,7 @@ class joint_specs:
         print("")
 
 
-# max_tor_12V, max_tor_14V, max_vel_14V_rpm, max_vel_12V_rpm, NT_curve_point_1, NT_curve_point_2
+# max_tor_12V, max_tor_14V, max_vel_12V_rpm, max_vel_14V_rpm, NT_curve_point_1, NT_curve_point_2
 V14 = True
 joint_specs("MX64", 6.0, 7.3, 63, 78, Point(0.15, 64), Point(2.85, 25)).get_values(V14)
 joint_specs("MX106", 8.4, 10, 45, 55, Point(0.7, 42), Point(5.6, 5)).get_values(V14)

@@ -180,7 +180,7 @@ class CameraController:
         for i in range(num_defenders_blue):
             self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
 
-        self.place_camera(ball_pos, z_choice, positions, x_range, y_range, new_fov)
+        self.place_camera(ball_pos, z_choice, positions, x_range, y_range)
 
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
@@ -203,7 +203,7 @@ class CameraController:
     def place_defender(self, name, side, height, orientation, other_positions):
         print(f"placing {name} as a defender on side {side}")
 
-    def place_camera(self, ball_pos, height, other_positions, x_range, y_range, fov):
+    def place_camera(self, ball_pos, height, other_positions, x_range, y_range):
         if self.cam_looks_at_ball:
             cam_position = [random.random() * (x_range[1] - x_range[0]) + x_range[0],
                             random.random() * (y_range[1] - y_range[0]) + y_range[0],
@@ -221,8 +221,8 @@ class CameraController:
             ball_radius = 0.13/2
             dist_to_ball = np.linalg.norm(cam_to_ball)
             ball_angle_in_img = 2*math.atan(ball_radius/dist_to_ball)
-            fov_h = fov
-            fov_v = self.h_fov_to_v_fov(fov, height, width)
+            fov_h = self.fov
+            fov_v = self.h_fov_to_v_fov(fov_h, height, width)
             print(ball_angle_in_img)
             added_yaw = random.random() * (fov_h + ball_angle_in_img) - (fov_h + ball_angle_in_img) / 2
             added_pitch = random.random() * (fov_v + ball_angle_in_img) - (fov_v + ball_angle_in_img) / 2

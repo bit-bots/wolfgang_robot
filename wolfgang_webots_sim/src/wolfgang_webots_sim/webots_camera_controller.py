@@ -391,9 +391,9 @@ class CameraController:
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         seg_img = self.camera.getRecognitionSegmentationImageArray()
-        #annotation = self.generatePolygonsFromSegmentation(seg_img)
+        annotation = self.generatePolygonsFromSegmentation(seg_img)
         with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
-            f.write(annotation)
+            pass #f.write(annotation)
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
 
@@ -405,13 +405,11 @@ class CameraController:
         # Things to know: If e.g. a robot occludes the top bar, then there will be an individual top bar detection
         #       on the right and left of the robot
         #   If two of the same object are too close too each other, this method will treat them as a single object
-        debug = True
+        debug = False
 
         # find the colors by saving segmentation image and look at the values in gimp
-        # TODO goalnets are also field colored
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost": (255, 255, 0), "top_bar": (0, 255, 255), "right_goalpost": (255, 0, 255),
-                  "ball": (255, 255, 255), "wolfgang": (51, 51, 51),"darwin": (128, 128, 255), "field": (0, 255, 0)}
+        colors = {"left_goalpost": (255, 255, 0), "top_bar": (0, 255, 255), "right_goalpost": (255, 0, 255)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         img = np.swapaxes(img, 0, 1)

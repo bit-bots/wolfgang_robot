@@ -11,7 +11,7 @@ from rosgraph_msgs.msg import Clock
 from std_srvs.srv import Empty
 from bitbots_msgs.srv import SetBall, SetRobotPose
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Pose
 
 import transforms3d
 import numpy as np
@@ -99,6 +99,8 @@ class CameraController:
         self.world_info = self.supervisor.getFromDef("world_info")
         self.ball = self.supervisor.getFromDef("ball")
         self.cam_looks_at_ball = True
+        self.fov = None
+        self.robot_pose = Pose()
 
     def random_capture(self, size="kid", n=1000):
         # gleichverteilung über x und y, z: robot description
@@ -139,16 +141,16 @@ class CameraController:
                          0.08)
         self.set_ball(orientation="rand", position=ball_pos)
 
-        new_fov = None
-        while new_fov is None:
+        self.fov = None
+        while self.fov is None:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
-                new_fov = fov_prelim
-                new_fov = math.radians(new_fov)
-        new_fov = 1.04
-        #self.reset_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
+                self.fov = fov_prelim
+                self.fov = math.radians(self.fov)
+        self.robot_node.getField("cameraFOV").setSFFloat(self.fov)
 
-        robot_height_red = 0.406
+
+        robot_height_red = 0.41
         goalie_pos_red = [x_range[0] + 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
                           robot_height_red]
         goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
@@ -167,7 +169,7 @@ class CameraController:
         num_defenders_blue = 3 - num_strikers_blue
         positions = [goalie_pos_red, goalie_pos_blue]
         for i in range(num_strikers_red):
-            r = self.place_striker("RED" + str(i + 2), ball_pos, robot_height_red, [0.0, 0.0, 0.0], positions)
+            r = self.place_striker("RED" + str(i + 2), ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
             positions.append(r)
         for i in range(num_strikers_blue):
             r = self.place_striker("BLUE" + str(i + 2), ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
@@ -179,7 +181,7 @@ class CameraController:
             self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
 
         self.place_camera(ball_pos, z_choice, positions, x_range, y_range, new_fov)
-        self.save_recognition()
+
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
         print(f"placing {name} as a striker")
@@ -207,13 +209,6 @@ class CameraController:
                             random.random() * (y_range[1] - y_range[0]) + y_range[0],
                             height]
 
-            # todo this has to be changed so it is not changing the
-            # new_rpy = [random.random()*(roll_range[1]-roll_range[0])+roll_range[0],
-            #          random.random()*(tilt_range[1]-tilt_range[0])+tilt_range[0],
-            #           random.random()*(pan_range[1]-pan_range[0])+pan_range[0]]
-
-            # new_rpy = [n * (math.pi/180.0) for n in new_rpy]
-
             # this should be the x vector of the camera coordinate system
             cam_to_ball = [ball_pos.x - cam_position[0], ball_pos.y - cam_position[1], ball_pos.z - cam_position[2]]
 
@@ -238,7 +233,14 @@ class CameraController:
             new_mat = np.matmul(transforms3d.euler.euler2mat(0, pitch, yaw), transforms3d.euler.euler2mat(0, added_pitch, added_yaw),)
             new_new_rpy = transforms3d.euler.mat2euler(new_mat)
 
-
+            self.robot_pose.position.x = cam_position[0]
+            self.robot_pose.position.y = cam_position[1]
+            self.robot_pose.position.z = cam_position[2]
+            quat = transforms3d.euler.euler2quat(*new_new_rpy)
+            self.robot_pose.orientation.w = quat[0]
+            self.robot_pose.orientation.x = quat[1]
+            self.robot_pose.orientation.y = quat[2]
+            self.robot_pose.orientation.z = quat[3]
             self.reset_robot_pose_rpy(cam_position, new_new_rpy, "FakeCamera")
         else:
             print("not implemented")
@@ -260,6 +262,7 @@ class CameraController:
             self.publish_clock()
         self.step_sim()
         self.step_sim()
+        self.save_recognition()
 
     def publish_clock(self):
         self.clock_msg.clock = rospy.Time.from_seconds(self.time)

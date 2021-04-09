@@ -16,6 +16,7 @@ from geometry_msgs.msg import Point, Pose
 import transforms3d
 import numpy as np
 import cv2
+import yaml
 
 G = 9.81
 DARWIN_PITCH = 0.225
@@ -430,7 +431,7 @@ class CameraController:
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             if len(contours) == 0:
-                output.append((key, False))
+                output.append({"type": key, "in_image": False})
 
             for cnt in contours:
                 rect = cv2.minAreaRect(cnt)
@@ -439,8 +440,15 @@ class CameraController:
                 if math.sqrt((box[0][0] - box[2][0]) ** 2 + (box[0][1] - box[2][1]) ** 2) < 50:
                     continue
 
-                vector = (key, f"""(({box[0][0]},{box[0][1]}), ({box[1][0]}, {box[1][1]}),""" \
-                               f"""({box[2][0]}, {box[2][1]}), ({box[3][0]}, {box[3][1]}))""")
+                # catch coordinates below zero
+                for i, boxa in enumerate(box):
+                    for j, boxb in enumerate(boxa):
+                        box[i][j] = max(0, boxb)
+
+                vector = {"vector": [[int(box[0][0]), int(box[0][1])], [int(box[1][0]), int(box[1][1])],
+                                     [int(box[2][0]), int(box[2][1])], [int(box[3][0]), int(box[3][1])]],
+                          "type": key,
+                          "in_image": True}
                 output.append(vector)
 
                 if debug:
@@ -450,5 +458,4 @@ class CameraController:
                     cv2.imshow(key, debug)
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()
-
-        return output
+        return {"annotations": output}

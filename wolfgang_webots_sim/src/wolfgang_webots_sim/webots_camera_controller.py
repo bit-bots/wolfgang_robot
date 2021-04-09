@@ -144,6 +144,8 @@ class CameraController:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
                 new_fov = fov_prelim
+                new_fov = math.radians(new_fov)
+        new_fov = 1.04
         #self.reset_robot_pose_rpy(new_position, new_rpy, name="FakeCamera")
 
         robot_height_red = 0.406
@@ -177,7 +179,6 @@ class CameraController:
             self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
 
         self.place_camera(ball_pos, z_choice, positions, x_range, y_range, new_fov)
-
         self.save_recognition()
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
@@ -222,34 +223,23 @@ class CameraController:
 
             width = 1920
             height = 1080
+            ball_radius = 0.13/2
+            dist_to_ball = np.linalg.norm(cam_to_ball)
+            ball_angle_in_img = 2*math.atan(ball_radius/dist_to_ball)
+            fov_h = fov
+            fov_v = self.h_fov_to_v_fov(fov, height, width)
+            print(ball_angle_in_img)
+            added_yaw = random.random() * (fov_h + ball_angle_in_img) - (fov_h + ball_angle_in_img) / 2
+            added_pitch = random.random() * (fov_v + ball_angle_in_img) - (fov_v + ball_angle_in_img) / 2
+
+            print(f" added_yaw = {added_yaw}")
+            print(f" added_pitch = {added_pitch}")
+
+            new_mat = np.matmul(transforms3d.euler.euler2mat(0, pitch, yaw), transforms3d.euler.euler2mat(0, added_pitch, added_yaw),)
+            new_new_rpy = transforms3d.euler.mat2euler(new_mat)
 
 
-            # camera matrix
-            K = np.identity(3)
-            f_y = self.mat_from_fov_and_resolution(
-                self.h_fov_to_v_fov(fov, height, width), height)
-            f_x = self.mat_from_fov_and_resolution(fov, width)
-            K[0, 0] = f_x
-            K[1, 1] = f_y
-            K[0, 2] = width/2
-            K[1, 2] = height/2
-            origin_to_cam = transforms3d.affines.compose(cam_position, np.identity(3), np.ones(3))
-            cam_to_origin = np.linalg.inv(origin_to_cam)
-            print(cam_to_origin)
-            ball_pos_affine = np.ones(4)
-            ball_pos_affine[0] = ball_pos.x
-            ball_pos_affine[1] = ball_pos.y
-            ball_pos_affine[2] = ball_pos.z
-            print(ball_pos_affine)
-            ball_in_camera_coordinate_system = np.matmul(cam_to_origin, ball_pos_affine)
-            print(f"ball_pos_not_affine {ball_in_camera_coordinate_system}")
-
-            ball_size_in_pixels_half = 0
-            #pick pixel TODO make it more than resolution so ball can be outside of center (margin of size_of_ball/2 on each side)
-            pixel = [0,0,0]
-            pixel[0] = random.randint(0-ball_size_in_pixels_half, width+ball_size_in_pixels_half)
-            pixel[1] = random.randint(0-ball_size_in_pixels_half, height+ball_size_in_pixels_half)
-            self.reset_robot_pose_rpy(cam_position, [0,0,0], "FakeCamera")
+            self.reset_robot_pose_rpy(cam_position, new_new_rpy, "FakeCamera")
         else:
             print("not implemented")
 
@@ -268,6 +258,7 @@ class CameraController:
         self.random_capture()
         if self.ros_active:
             self.publish_clock()
+        self.step_sim()
         self.step_sim()
 
     def publish_clock(self):
@@ -397,11 +388,12 @@ class CameraController:
             annotation += f"{img_name}|robot|not in image\n"
         if not found_post:
             annotation += f"{img_name}|goalpost|not in image\n"
-        with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
-            f.write(annotation)
+
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         seg_img = self.camera.getRecognitionSegmentationImageArray()
-        self.generatePolygonsFromSegmentation(seg_img)
+        #annotation = self.generatePolygonsFromSegmentation(seg_img)
+        with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
+            f.write(annotation)
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
 
@@ -413,13 +405,13 @@ class CameraController:
         # Things to know: If e.g. a robot occludes the top bar, then there will be an individual top bar detection
         #       on the right and left of the robot
         #   If two of the same object are too close too each other, this method will treat them as a single object
-        debug = False
+        debug = True
 
         # find the colors by saving segmentation image and look at the values in gimp
         # TODO goalnets are also field colored
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost": (255, 0, 255), "top_bar": (0, 255, 255), "right_goalpost": (255, 255, 0),
-                  "ball": (223, 193, 29), "wolfgang": (51, 51, 51)}
+        colors = {"left_goalpost": (255, 255, 0), "top_bar": (0, 255, 255), "right_goalpost": (255, 0, 255),
+                  "ball": (255, 255, 255), "wolfgang": (51, 51, 51),"darwin": (128, 128, 255), "field": (0, 255, 0)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         img = np.swapaxes(img, 0, 1)

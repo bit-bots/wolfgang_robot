@@ -349,7 +349,7 @@ class CameraController:
         self.set_robot_quat(quat, name)
 
     def save_recognition(self):
-        annotation = ""
+        annotations = []
         img_stamp = f"{self.time:.2f}".replace(".", "_")
         img_name = f"img_fake_cam_{img_stamp}"
         recognized_objects = self.camera.getRecognitionObjects()
@@ -363,43 +363,32 @@ class CameraController:
             size = recognized_objects[e].get_size_on_image()
             if model == b"soccer ball":
                 found_ball = True
-                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
-                annotation += f"{img_name}|"
-                annotation += "ball|"
-                annotation += vector
-                annotation += "\n"
+                anno = {"type": "ball", "in_image": True,
+                              "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
+                                         [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
+                annotations.append(anno)
             if model == b"wolfgang":
                 found_wolfgang = True
-                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
-                annotation += f"{img_name}|"
-                annotation += "robot|"
-                annotation += vector
-                annotation += "\n"
-            print('model == b"left_post"')
-            print(model == b"left_post")
-            if model == b"left_post":
-                print("found a post")
-                found_post = True
-                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
-                annotation += f"{img_name}|"
-                annotation += "goalpost|"
-                annotation += vector
-                annotation += "\n"
+                anno = {"type": "robot", "in_image": True,
+                              "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
+                                         [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
+                annotations.append(anno)
             print(model)
         if not found_ball:
-            annotation += f"{img_name}|ball|not in image\n"
+            annotations.append({"type": "ball", "in_image": False})
         if not found_wolfgang:
-            annotation += f"{img_name}|robot|not in image\n"
-        if not found_post:
-            annotation += f"{img_name}|goalpost|not in image\n"
+            annotations.append({"type": "robot", "in_image": False})
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         seg_img = self.camera.getRecognitionSegmentationImageArray()
-        annotation = self.generatePolygonsFromSegmentation(seg_img)
-        with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
-            pass #f.write(annotation)
+        annos = self.generatePolygonsFromSegmentation(seg_img)
+        for e in annos:
+            annotations.append(e)
+        #with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
+        #    f.write(yaml.dump(annotations))
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
+        return annotations
 
     def generatePolygonsFromSegmentation(self, img):
         # this method returns a list with the following items:
@@ -458,4 +447,4 @@ class CameraController:
                     cv2.imshow(key, debug)
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()
-        return {"annotations": output}
+        return output

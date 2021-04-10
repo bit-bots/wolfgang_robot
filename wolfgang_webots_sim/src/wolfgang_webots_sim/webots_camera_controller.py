@@ -266,7 +266,7 @@ class CameraController:
 
             images[self.filenames[i]] = {"annotations": current_annotation, "metadata": metadata_dict }
         f = open(folder + "/annotations.yaml", "w")
-        yaml.dump({images}, f)
+        yaml.dump({"images": images}, f)
         f.close()
 
 

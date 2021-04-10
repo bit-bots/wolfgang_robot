@@ -23,7 +23,7 @@ DARWIN_PITCH = 0.225
 
 
 class CameraController:
-    def __init__(self, ros_active=False, mode='normal', do_ros_init=True, base_ns=''):
+    def __init__(self, ros_active=False, mode='normal'):
         """
         The SupervisorController, a Webots controller that can control the world.
         Set the environment variable WEBOTS_ROBOT_NAME to "supervisor_robot" if used with 1_bot.wbt or 4_bots.wbt.
@@ -34,20 +34,10 @@ class CameraController:
         :param base_ns: The namespace of this node, can normally be left empty
         """
         # requires WEBOTS_ROBOT_NAME to be set to "supervisor_robot"
-        self.ros_active = ros_active
         self.time = 0
-        self.clock_msg = Clock()
-
         self.supervisor = Supervisor()
 
-        if mode == 'normal':
-            self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_REAL_TIME)
-        elif mode == 'paused':
-            self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_PAUSE)
-        elif mode == 'fast':
-            self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_FAST)
-        else:
-            self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_REAL_TIME)
+        self.supervisor.simulationSetMode(Supervisor.SIMULATION_MODE_REAL_TIME)
 
         self.motors = []
         self.sensors = []
@@ -67,43 +57,27 @@ class CameraController:
                 self.translation_fields[name] = node.getField("translation")
                 self.rotation_fields[name] = node.getField("rotation")
 
-        # need to handle these topics differently or we will end up having a double //
-        if base_ns == "":
-            clock_topic = "/clock"
-            model_topic = "/model_states"
-        else:
-            clock_topic = base_ns + "clock"
-            model_topic = base_ns + "model_states"
-        if do_ros_init:
-            rospy.init_node("webots_ros_supervisor", argv=['clock:=' + clock_topic])
-        self.clock_publisher = rospy.Publisher(clock_topic, Clock, queue_size=1)
-        self.reset_service = rospy.Service(base_ns + "reset", Empty, self.reset)
-        self.initial_poses_service = rospy.Service(base_ns + "initial_pose", Empty, self.set_initial_poses)
-        self.set_robot_position_service = rospy.Service(base_ns + "set_robot_pose", SetRobotPose,
-                                                        self.robot_pose_callback)
-        self.pub_cam = rospy.Publisher(base_ns + "recog_img", Image, queue_size=1)
-        self.reset_ball_service = rospy.Service(base_ns + "reset_ball", Empty, self.reset_ball)
-        self.reset_ball_service = rospy.Service(base_ns + "set_ball", SetBall, self.set_ball)
-
         self.robot_node = self.supervisor.getSelf()
         self.camera = self.supervisor.getDevice("camera")
         self.camera.enable(self.timestep)
         self.camera.recognitionEnable(self.timestep)
         self.camera.enableRecognitionSegmentation()
         self.last_img_saved = 0.0
-        self.img_save_dir = "/tmp/webots/images" + \
-                            time.strftime("%Y-%m-%d-%H-%M-%S") + \
-                            "fake_cam"
-        if not os.path.exists(self.img_save_dir):
-            os.makedirs(self.img_save_dir)
 
         self.world_info = self.supervisor.getFromDef("world_info")
         self.ball = self.supervisor.getFromDef("ball")
         self.cam_looks_at_ball = True
-        self.fov = None
-        self.robot_pose = Pose()
+        self.fov = []
+        self.camera_poses = []
+        self.robot_poses = []
+        self.ball_positions = []
+        self.annotations = []
+        self.img_save_dir = "img"
+        self.filenames = []
+        if not os.path.exists(self.img_save_dir):
+            os.makedirs(self.img_save_dir)
 
-    def random_capture(self, size="kid", n=1000):
+    def random_placement(self, size="kid", n=1000):
         # gleichverteilung über x und y, z: robot description
         if size == "kid":
             z_mean = 0.64
@@ -137,19 +111,17 @@ class CameraController:
 
         ball_pos = Point(random.random() * 9.5 - 4.75, random.random() * 6 - 3,
                          0.08)  # TODO field size by param ---furhtermore, ball height is ignored
-
-        ball_pos = Point(1, 2,
-                         0.08)
+        self.ball_positions.append(ball_pos)
         self.set_ball(orientation="rand", position=ball_pos)
 
-        self.fov = None
-        while self.fov is None:
+        fov = None
+        while fov is None:
             fov_prelim = np.random.normal(loc=fov_mean, scale=fov_std_dev)
             if fov_range[0] < fov_prelim < fov_range[1]:
-                self.fov = fov_prelim
-                self.fov = math.radians(self.fov)
-        self.robot_node.getField("cameraFOV").setSFFloat(self.fov)
-
+                fov = fov_prelim
+                fov = math.radians(fov)
+        self.robot_node.getField("cameraFOV").setSFFloat(fov)
+        self.fov.append(fov)
 
         robot_height_red = 0.41
         goalie_pos_red = [x_range[0] + 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
@@ -163,26 +135,30 @@ class CameraController:
         goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
-        num_strikers_red = 2 # random.randint(0, 2)
-        camera_is_striker = True # bool(random.randint(0, 1))
-        num_strikers_blue = 3 # random.randint(0, 3)
+        num_strikers_red = 2  # random.randint(0, 2)
+        camera_is_striker = True  # bool(random.randint(0, 1))
+        num_strikers_blue = 3  # random.randint(0, 3)
         num_defenders_red = 2 - num_strikers_red
         num_defenders_blue = 3 - num_strikers_blue
-        positions = [goalie_pos_red, goalie_pos_blue]
+        positions = {"RED1":[goalie_pos_red, goalie_rpy_red], "BLUE1": [goalie_pos_blue, goalie_rpy_blue]}
         for i in range(num_strikers_red):
-            r = self.place_striker("RED" + str(i + 2), ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
-            positions.append(r)
+            name = "RED" + str(i + 2)
+            r = self.place_striker(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
+            positions[name] = r
         for i in range(num_strikers_blue):
-            r = self.place_striker("BLUE" + str(i + 2), ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
-            positions.append(r)
+            name = "BLUE" + str(i + 2)
+            r = self.place_striker(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
+                                   positions)
+            positions[name] = r
 
         for i in range(num_defenders_red):
-            self.place_defender("RED" + str(num_strikers_red + i + 2), "RED", robot_height_red, [0.0, 0.0, 0.0], positions)
+            self.place_defender("RED" + str(num_strikers_red + i + 2), "RED", robot_height_red, [0.0, 0.0, 0.0],
+                                positions)
         for i in range(num_defenders_blue):
-            self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue, [0.0, DARWIN_PITCH, 0.0], positions)
-
-        self.place_camera(ball_pos, z_choice, positions, x_range, y_range)
-
+            self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue,
+                                [0.0, DARWIN_PITCH, 0.0], positions)
+        self.robot_poses.append(positions)
+        self.place_camera(ball_pos, z_choice, positions, x_range, y_range, fov)
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
         print(f"placing {name} as a striker")
@@ -191,20 +167,20 @@ class CameraController:
         while True:
             preliminary_pos_x = robot_pos.x + np.random.normal(0, 2)
             preliminary_pos_y = robot_pos.x + np.random.normal(0, 2)
-            pos_collides = False #  self.position_collides(preliminary_pos_x, preliminary_pos_y, other_positions)
+            pos_collides = False  # self.position_collides(preliminary_pos_x, preliminary_pos_y, other_positions)
             if -5 < preliminary_pos_x < 5 and -3.5 < preliminary_pos_y < 3.5 and not pos_collides:
                 robot_pos.x = preliminary_pos_x
                 robot_pos.y = preliminary_pos_y
                 break
         robot_pos.z = height
-        orientation[2] += np.random.normal(0, np.pi/8)
+        orientation[2] += np.random.normal(0, np.pi / 8)
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
-        return [robot_pos.x, robot_pos.y, robot_pos.z]
+        return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]
 
     def place_defender(self, name, side, height, orientation, other_positions):
         print(f"placing {name} as a defender on side {side}")
 
-    def place_camera(self, ball_pos, height, other_positions, x_range, y_range):
+    def place_camera(self, ball_pos, height, other_positions, x_range, y_range, fov):
         if self.cam_looks_at_ball:
             cam_position = [random.random() * (x_range[1] - x_range[0]) + x_range[0],
                             random.random() * (y_range[1] - y_range[0]) + y_range[0],
@@ -219,10 +195,10 @@ class CameraController:
 
             width = 1920
             height = 1080
-            ball_radius = 0.13/2
+            ball_radius = 0.13 / 2
             dist_to_ball = np.linalg.norm(cam_to_ball)
-            ball_angle_in_img = 2*math.atan(ball_radius/dist_to_ball)
-            fov_h = self.fov
+            ball_angle_in_img = 2 * math.atan(ball_radius / dist_to_ball)
+            fov_h = fov
             fov_v = self.h_fov_to_v_fov(fov_h, height, width)
             print(ball_angle_in_img)
             added_yaw = random.random() * (fov_h + ball_angle_in_img) - (fov_h + ball_angle_in_img) / 2
@@ -231,20 +207,66 @@ class CameraController:
             print(f" added_yaw = {added_yaw}")
             print(f" added_pitch = {added_pitch}")
 
-            new_mat = np.matmul(transforms3d.euler.euler2mat(0, pitch, yaw), transforms3d.euler.euler2mat(0, added_pitch, added_yaw),)
+            new_mat = np.matmul(transforms3d.euler.euler2mat(0, pitch, yaw),
+                                transforms3d.euler.euler2mat(0, added_pitch, added_yaw), )
             new_new_rpy = transforms3d.euler.mat2euler(new_mat)
 
-            self.robot_pose.position.x = cam_position[0]
-            self.robot_pose.position.y = cam_position[1]
-            self.robot_pose.position.z = cam_position[2]
+            camera_pose = Pose()
+            camera_pose.position.x = cam_position[0]
+            camera_pose.position.y = cam_position[1]
+            camera_pose.position.z = cam_position[2]
             quat = transforms3d.euler.euler2quat(*new_new_rpy)
-            self.robot_pose.orientation.w = quat[0]
-            self.robot_pose.orientation.x = quat[1]
-            self.robot_pose.orientation.y = quat[2]
-            self.robot_pose.orientation.z = quat[3]
+            camera_pose.orientation.w = quat[0]
+            camera_pose.orientation.x = quat[1]
+            camera_pose.orientation.y = quat[2]
+            camera_pose.orientation.z = quat[3]
+            self.camera_poses.append(camera_pose)
             self.reset_robot_pose_rpy(cam_position, new_new_rpy, "FakeCamera")
         else:
             print("not implemented")
+
+    def generate_n_images(self, n, folder="img"):
+        self.img_save_dir = folder
+        if not os.path.exists(self.img_save_dir):
+            os.makedirs(self.img_save_dir)
+        self.annotations = []
+        for i in range(n):
+            print("stepping...")
+            self.step()
+
+        images = {}
+        for i in range(n):
+            current_annotation = self.annotations[i]
+            for a in current_annotation:
+                pose_dict = {}
+                if a["type"] == "robot" and a["in_image"]:
+                    current_pose = self.robot_poses[i][a["name"]]
+                    print(current_pose)
+                    quat = transforms3d.euler.euler2quat(*current_pose[1])
+                    pose_dict = {"position": {"x": float(current_pose[0][0]), "y": float(current_pose[0][1]), "z": 0},
+                                 "orientation": {"x": float(quat[1]), "y":  float(quat[2]), "z":  float(quat[3]), "w": float(quat[0])}}
+                    del(a["name"])
+                elif a["type"] == "ball" and a["in_image"]:
+                    pose_dict = {"position": {"x": float(self.ball_positions[i].x), "y": float(self.ball_positions[i].y), "z": float(self.ball_positions[i].z)}}
+                elif a["type"] == "right_goalpost" and a["in_image"]:
+                    print("todo l_goalpost")
+                elif a["type"] == "left_goalpost" and a["in_image"]:
+                    print("todo r_goalpost")
+                elif a["type"] == "horizontal_goalpost" and a["in_image"]:
+                    print("todo horiz")
+                a["pose"] = pose_dict
+            camera_pose_dict = {"position": {"x": float(self.camera_poses[i].position.x),
+                                             "y": float(self.camera_poses[i].position.y),
+                                             "z": float(self.camera_poses[i].position.z)},
+                                 "orientation": {"x": float(self.camera_poses[i].orientation.x),
+                                                 "y": float(self.camera_poses[i].orientation.y),
+                                                 "z": float(self.camera_poses[i].orientation.z),
+                                                 "w": float(self.camera_poses[i].orientation.w)}}
+            metadata_dict = {"fov": float(self.fov[i]), "camera_pose": camera_pose_dict, "tags": ["simulation"], "location": "Webots"}
+
+            images[self.filenames[i]] = {"annotations": current_annotation, "metadata": metadata_dict }
+        f = open(folder + "/annotations.yaml", "w")
+        yaml.dump({images)
 
 
     def mat_from_fov_and_resolution(self, fov, res):
@@ -258,22 +280,9 @@ class CameraController:
         self.supervisor.step(self.timestep)
 
     def step(self):
-        self.random_capture()
-        if self.ros_active:
-            self.publish_clock()
+        self.random_placement()
         self.step_sim()
-        self.step_sim()
-        self.save_recognition()
-
-    def publish_clock(self):
-        self.clock_msg.clock = rospy.Time.from_seconds(self.time)
-        self.clock_publisher.publish(self.clock_msg)
-
-    def set_gravity(self, active):
-        if active:
-            self.world_info.getField("gravity").setSFFloat(9.81)
-        else:
-            self.world_info.getField("gravity").setSFFloat(0)
+        self.annotations.append(self.save_recognition())
 
     def reset_robot_pose(self, pos, quat, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
@@ -284,17 +293,6 @@ class CameraController:
         self.set_robot_pose_rpy(pos, rpy, name)
         if name in self.robot_nodes:
             self.robot_nodes[name].resetPhysics()
-
-    def reset(self, req=None):
-        self.supervisor.simulationReset()
-        self.supervisor.simulationResetPhysics()
-
-    def set_initial_poses(self, req=None):
-        self.reset_robot_pose_rpy([-1, 3, 0.42], [0, 0.24, -1.57], name="amy")
-        self.reset_robot_pose_rpy([-1, -3, 0.42], [0, 0.24, 1.57], name="rory")
-        self.reset_robot_pose_rpy([-3, 3, 0.42], [0, 0.24, -1.57], name="jack")
-        self.reset_robot_pose_rpy([-3, -3, 0.42], [0, 0.24, 1.57], name="donna")
-        self.reset_robot_pose_rpy([0, 6, 0.42], [0, 0.24, -1.57], name="melody")
 
     def robot_pose_callback(self, req=None):
         if req.orientation.x == 0 and req.orientation.y == 0 and req.orientation.z == 0 and req.orientation.w == 0:
@@ -355,7 +353,7 @@ class CameraController:
         recognized_objects = self.camera.getRecognitionObjects()
         # variables for saving not in image later
         found_ball = False
-        found_wolfgang = False
+        found_robot = False
         found_post = False
         for e in range(self.camera.getRecognitionNumberOfObjects()):
             model = recognized_objects[e].get_model()
@@ -364,27 +362,30 @@ class CameraController:
             if model == b"soccer ball":
                 found_ball = True
                 anno = {"type": "ball", "in_image": True,
-                              "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
-                                         [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
+                        "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
+                                   [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
                 annotations.append(anno)
-            if model == b"wolfgang":
-                found_wolfgang = True
+            if model == b"RED1" or model == b"RED2" or model == b"RED3" or model == b"RED4" \
+                    or model == b"BLUE1" or model == b"BLUE2" or model == b"BLUE3" or model == b"BLUE4":
+                found_robot = True
                 anno = {"type": "robot", "in_image": True,
-                              "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
-                                         [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
+                        "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
+                                   [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]],
+                        "name" : model.decode("utf-8")}
                 annotations.append(anno)
             print(model)
         if not found_ball:
             annotations.append({"type": "ball", "in_image": False})
-        if not found_wolfgang:
+        if not found_robot:
             annotations.append({"type": "robot", "in_image": False})
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
+        self.filenames.append(os.path.join(self.img_save_dir, img_name + ".PNG"))
         seg_img = self.camera.getRecognitionSegmentationImageArray()
         annos = self.generatePolygonsFromSegmentation(seg_img)
         for e in annos:
             annotations.append(e)
-        #with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
+        # with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
         #    f.write(yaml.dump(annotations))
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)

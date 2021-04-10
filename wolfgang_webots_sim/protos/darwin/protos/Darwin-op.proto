@@ -15,6 +15,7 @@ PROTO Darwin-op [
   field SFVec3f    translation     0 0 0                      # Is `Transform.translation`.
   field SFRotation rotation        0 0 1 0                    # Is `Transform.rotation`.
   field SFString   name            "DARwIn-OP"                # Is `Solid.name`.
+  field SFString   model           "RED1"
   field SFString   controller      "motion_player"            # Is `Robot.controller`.
   field MFString   controllerArgs  []                         # Is `Robot.controllerArgs`.
   field SFString   customData      ""                         # Is `Robot.customData`.
@@ -62,7 +63,7 @@ PROTO Darwin-op [
     rotation IS rotation
     battery IS battery
     recognitionColors [ 0.5 0.5 1 ]
-    model "goal"
+    model IS model
     children [
       DEF BODY_SLOT Group {
         children IS bodySlot
@@ -1912,7 +1913,6 @@ PROTO Darwin-op [
       ]
     }
     name IS name
-    model IS _model
     description IS _description
     physics Physics {
       density -1

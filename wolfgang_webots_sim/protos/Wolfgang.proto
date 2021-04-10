@@ -8,6 +8,7 @@ PROTO Wolfgang [
   field  SFVec3f     translation     0 0 0
   field  SFRotation  rotation        0 1 0 0
   field  SFString    name            "Wolfgang"  # Is `Robot.name`.
+  field  SFString    model           "RED1"      # Is `Robot.name`.
   field  SFString    controller      "void"      # Is `Robot.controller`.
   field  MFString    controllerArgs  []          # Is `Robot.controllerArgs`.
   field  SFString    customData      ""          # Is `Robot.customData`.
@@ -29,7 +30,7 @@ PROTO Wolfgang [
     recognitionColors [
       0.2 0.2 0.2
     ]
-    model "wolfgang"
+    model IS model
     children [
       Transform {
         translation -0.001500 0.053000 0.203500

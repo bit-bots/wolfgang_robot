@@ -35,5 +35,4 @@ for k in goals.keys():
 while (robot.step(timestep) != -1):
   for k,v in motors.items():
       v.setPosition(goals[k])
-      print(f"setting {k} to {goals[k]}")
 

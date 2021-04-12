@@ -1,7 +1,6 @@
 from controller import Robot, Node, Supervisor, Field
 
 import os
-import rospy
 
 import random
 import math
@@ -12,6 +11,7 @@ from std_srvs.srv import Empty
 from bitbots_msgs.srv import SetBall, SetRobotPose
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point, Pose
+from skimage.morphology import convex_hull_image
 
 import transforms3d
 import numpy as np
@@ -20,6 +20,11 @@ import yaml
 
 G = 9.81
 DARWIN_PITCH = 0.225
+T_INTERSECTIONS = [[1.5,-4.5], [-1.5, -4.5], [2.5,-4.5], [2.5,-4.5],
+                   [1.5,4.5], [-1.5, 4.5], [2.5,4.5], [2.5,4.5],
+                   [3,0] [-3,0]
+X_INTERSECTIONS = [[0.75, 0], [-0.75,0], [0,0] # center circle +penalty marks
+                   ]
 
 
 class CameraController:
@@ -74,8 +79,6 @@ class CameraController:
         self.annotations = []
         self.img_save_dir = "img"
         self.filenames = []
-        if not os.path.exists(self.img_save_dir):
-            os.makedirs(self.img_save_dir)
 
     def random_placement(self, size="kid", n=1000):
         # gleichverteilung über x und y, z: robot description
@@ -161,7 +164,6 @@ class CameraController:
         self.place_camera(ball_pos, z_choice, positions, x_range, y_range, fov)
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
-        print(f"placing {name} as a striker")
         robot_pos = Point(ball_pos.x, ball_pos.y, ball_pos.z)
         # TODO collision check with other robots (lt < 0.2 m away or something like that)
         while True:
@@ -200,12 +202,8 @@ class CameraController:
             ball_angle_in_img = 2 * math.atan(ball_radius / dist_to_ball)
             fov_h = fov
             fov_v = self.h_fov_to_v_fov(fov_h, height, width)
-            print(ball_angle_in_img)
             added_yaw = random.random() * (fov_h + ball_angle_in_img) - (fov_h + ball_angle_in_img) / 2
             added_pitch = random.random() * (fov_v + ball_angle_in_img) - (fov_v + ball_angle_in_img) / 2
-
-            print(f" added_yaw = {added_yaw}")
-            print(f" added_pitch = {added_pitch}")
 
             new_mat = np.matmul(transforms3d.euler.euler2mat(0, pitch, yaw),
                                 transforms3d.euler.euler2mat(0, added_pitch, added_yaw), )
@@ -226,35 +224,84 @@ class CameraController:
             print("not implemented")
 
     def generate_n_images(self, n, folder="img"):
+        self.fov = []
+        self.camera_poses = []
+        self.robot_poses = []
+        self.ball_positions = []
+        self.annotations = []
+        self.filenames = []
         self.img_save_dir = folder
         if not os.path.exists(self.img_save_dir):
             os.makedirs(self.img_save_dir)
         self.annotations = []
         for i in range(n):
-            print("stepping...")
+            print(f"stepping... {i+1}/{n}")
             self.step()
 
+        images = self.generate_annotations()
+        f = open(folder + "/annotations.yaml", "w")
+        yaml.dump({"images": images}, f)
+        f.close()
+
+    def generate_annotations(self):
+        robot_equivalent = ["RED1", "RED2", "RED3", "BLUE1", "BLUE2", "BLUE3", "BLUE4"]
+        gp_equivalent = ["left_goalpost_home", "right_goalpost_home",
+                         "left_goalpost_enemy","right_goalpost_enemy",]
+        hb_equivalent = ["top_bar_enemy", "top_bar_home"]
+        gp_poses = [[-1.3, -4.5, 0], [1.3, -4.5, 0],[-1.3, 4.5, 0], [1.3, 4.5, 0]]
+        hb_poses = [[0, -4.5, 1.25], [0, -4.5, 1.25]]
         images = {}
-        for i in range(n):
+        for i in range(len(self.filenames)):
             current_annotation = self.annotations[i]
+            new_annotations = []
+            found_robot = False
+            found_goalpost = False
+            found_ball = False
+            found_horizontal_goalpost = False
             for a in current_annotation:
                 pose_dict = {}
-                if a["type"] == "robot" and a["in_image"]:
-                    current_pose = self.robot_poses[i][a["name"]]
-                    print(current_pose)
+                if a["type"] in robot_equivalent and a["in_image"]:
+                    current_pose = self.robot_poses[i][a["type"]]
                     quat = transforms3d.euler.euler2quat(*current_pose[1])
                     pose_dict = {"position": {"x": float(current_pose[0][0]), "y": float(current_pose[0][1]), "z": 0},
                                  "orientation": {"x": float(quat[1]), "y":  float(quat[2]), "z":  float(quat[3]), "w": float(quat[0])}}
-                    del(a["name"])
+                    [xmin, ymin] = np.min(a["vector"], axis=0)
+                    [xmax, ymax] = np.max(a["vector"], axis=0)
+                    vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
+                    new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector" : vector})
+                    found_robot = True
+
                 elif a["type"] == "ball" and a["in_image"]:
                     pose_dict = {"position": {"x": float(self.ball_positions[i].x), "y": float(self.ball_positions[i].y), "z": float(self.ball_positions[i].z)}}
-                elif a["type"] == "right_goalpost" and a["in_image"]:
-                    print("todo l_goalpost")
-                elif a["type"] == "left_goalpost" and a["in_image"]:
-                    print("todo r_goalpost")
-                elif a["type"] == "horizontal_goalpost" and a["in_image"]:
-                    print("todo horiz")
-                a["pose"] = pose_dict
+                    found_ball = True
+                    [xmin, ymin] = np.min(a["vector"], axis=0)
+                    [xmax, ymax] = np.max(a["vector"], axis=0)
+                    vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
+                    new_annotations.append({"type": "ball", "in_image": True, "pose": pose_dict, "vector" : vector})
+
+                elif a["type"] in gp_equivalent and a["in_image"]:
+                    current_pose = gp_poses[gp_equivalent.index(a["type"])]
+                    pose_dict = {"position": {"x": current_pose[0], "y": current_pose[1], "z": current_pose[2]},
+                                 "orientation": {"x": 0, "y": 0, "z": 0, "w": 1}}
+                    vector = a["vector"]
+                    new_annotations.append({"type": "goalpost", "in_image": True, "pose": pose_dict, "vector": vector})
+                    found_goalpost = True
+                elif a["type"] in hb_equivalent and a["in_image"]:
+                    current_pose = hb_poses[hb_equivalent.index(a["type"])]
+                    pose_dict = {"position": {"x": current_pose[0], "y": current_pose[1], "z": current_pose[2]},
+                                 "orientation": {"x": 0, "y": 0, "z": 0, "w": 1}}
+                    vector = a["vector"]
+                    new_annotations.append({"type": "top_bar", "in_image": True, "pose": pose_dict, "vector": vector})
+                    found_horizontal_goalpost = True
+            if not found_robot:
+                new_annotations.append({"type": "robot", "in_image": False})
+            if not found_goalpost:
+                new_annotations.append({"type": "goalpost", "in_image": False})
+            if not found_ball:
+                new_annotations.append({"type": "ball", "in_image": False})
+            if not found_horizontal_goalpost:
+                new_annotations.append({"type": "horizontal_post", "in_image": False})
+
             camera_pose_dict = {"position": {"x": float(self.camera_poses[i].position.x),
                                              "y": float(self.camera_poses[i].position.y),
                                              "z": float(self.camera_poses[i].position.z)},
@@ -264,10 +311,8 @@ class CameraController:
                                                  "w": float(self.camera_poses[i].orientation.w)}}
             metadata_dict = {"fov": float(self.fov[i]), "camera_pose": camera_pose_dict, "tags": ["simulation"], "location": "Webots"}
 
-            images[self.filenames[i]] = {"annotations": current_annotation, "metadata": metadata_dict }
-        f = open(folder + "/annotations.yaml", "w")
-        yaml.dump({"images": images}, f)
-        f.close()
+            images[self.filenames[i]] = {"annotations": new_annotations, "metadata": metadata_dict }
+        return images
 
 
     def mat_from_fov_and_resolution(self, fov, res):
@@ -348,46 +393,14 @@ class CameraController:
         self.set_robot_quat(quat, name)
 
     def save_recognition(self):
-        annotations = []
-        img_stamp = f"{self.time:.2f}".replace(".", "_")
+        img_stamp = f"{int(self.time*1000):08d}"
         img_name = f"img_fake_cam_{img_stamp}"
-        recognized_objects = self.camera.getRecognitionObjects()
-        # variables for saving not in image later
-        found_ball = False
-        found_robot = False
-        found_post = False
-        for e in range(self.camera.getRecognitionNumberOfObjects()):
-            model = recognized_objects[e].get_model()
-            position = recognized_objects[e].get_position_on_image()
-            size = recognized_objects[e].get_size_on_image()
-            if model == b"soccer ball":
-                found_ball = True
-                anno = {"type": "ball", "in_image": True,
-                        "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
-                                   [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]]}
-                annotations.append(anno)
-            if model == b"RED1" or model == b"RED2" or model == b"RED3" or model == b"RED4" \
-                    or model == b"BLUE1" or model == b"BLUE2" or model == b"BLUE3" or model == b"BLUE4":
-                found_robot = True
-                anno = {"type": "robot", "in_image": True,
-                        "vector": [[position[0] - 0.5 * size[0], position[1] - 0.5 * size[1]],
-                                   [position[0] + 0.5 * size[0], position[1] + 0.5 * size[1]]],
-                        "name" : model.decode("utf-8")}
-                annotations.append(anno)
-            print(model)
-        if not found_ball:
-            annotations.append({"type": "ball", "in_image": False})
-        if not found_robot:
-            annotations.append({"type": "robot", "in_image": False})
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
-        self.filenames.append(os.path.join(self.img_save_dir, img_name + ".PNG"))
+        self.filenames.append((img_name + ".PNG"))
         seg_img = self.camera.getRecognitionSegmentationImageArray()
-        annos = self.generatePolygonsFromSegmentation(seg_img)
-        for e in annos:
-            annotations.append(e)
-        # with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
-        #    f.write(yaml.dump(annotations))
+        annotations = self.generatePolygonsFromSegmentation(seg_img)
+
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
         return annotations
@@ -404,22 +417,39 @@ class CameraController:
 
         # find the colors by saving segmentation image and look at the values in gimp
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost": (255, 255, 0), "top_bar": (0, 255, 255), "right_goalpost": (255, 0, 255)}
+        colors = {"left_goalpost_home": (128, 25, 51), "top_bar_home": (128, 51, 51), "right_goalpost_home": (128, 51, 25),
+                  "left_goalpost_enemy": (0, 25, 51), "top_bar_enemy": (0, 51, 51), "right_goalpost_enemy": (0, 51, 25),
+                  "BLUE1": (25,25,255), "BLUE2": (51,25,255), "BLUE3": (25,51,255), "BLUE4": (51,51,255),
+                  "RED1": (255,25,25), "RED2": (255,51,25), "RED3": (255,25,51), "RED4": (255,51,51),
+                  "ball": (128,128,128)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         img = np.swapaxes(img, 0, 1)
-
+        self.seg_img = img
         # cv2.imwrite("/tmp/foo.png", img)
         output = []
+        """cv2.imshow("lol", cv2.resize(img, (1920//2, 1080//2)))
+        key = 0
+        while key not in [83, 100]:
+            key = cv2.waitKey(0)"""
+
         for key, value in colors.items():
             # we make a mask of every place where in the image the value is exactly as defined
             # thus we basically have a greyscale image with only our object in white
             # calculate *255 to make visible for debug images
             mask = ((img == value).all(axis=2)).astype(np.uint8)
+            chull = np.array(convex_hull_image(mask)).astype(np.uint8) * 255
+
 
             # Retr External seems to solve the problem of way too many Wolfgangs being a contour we had with RETR_TREE
             # contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(chull, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            """print(f"found {len(contours)} contours with mask name {key}")
+            cv2.imshow("lol", cv2.resize(chull, (1920//2, 1080//2)))
+            key = 0
+            while key not in [83, 100]:
+                key = cv2.waitKey(0)"""
 
             if len(contours) == 0:
                 output.append({"type": key, "in_image": False})
@@ -427,9 +457,6 @@ class CameraController:
             for cnt in contours:
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.boxPoints(rect)
-                # skip too small boxes. It is unlikely this is of a relevant size as an object
-                if math.sqrt((box[0][0] - box[2][0]) ** 2 + (box[0][1] - box[2][1]) ** 2) < 50:
-                    continue
 
                 # catch coordinates below zero
                 for i, boxa in enumerate(box):
@@ -445,6 +472,9 @@ class CameraController:
                 if debug:
                     print(vector)
                     print(box)
+                    print([box.astype(int)])
+                    print(type([box.astype(int)][0]))
+
                     debug = cv2.drawContours(cv2.UMat(img), [box.astype(int)], -1, (255, 255, 255), 10)
                     cv2.imshow(key, debug)
                     cv2.waitKey(0)

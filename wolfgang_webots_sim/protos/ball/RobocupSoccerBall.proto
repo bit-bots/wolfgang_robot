@@ -22,7 +22,7 @@ PROTO RobocupSoccerBall [
   Solid {
     translation IS translation
     rotation IS rotation
-    recognitionColors [ 1 1 1 ]
+    recognitionColors [0.5 0.5 0.5]
     model "ball"
     scale %{= scale }% %{= scale }% %{= scale }%
     children [
@@ -64,7 +64,6 @@ PROTO RobocupSoccerBall [
       }
     ]
     name IS name
-    model "soccer ball"
     contactMaterial "robocup soccer ball"
     boundingObject Sphere {
       radius %{= radius / scale }%

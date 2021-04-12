@@ -5,7 +5,7 @@
 # Robocup Humanoid League 2021 soccer goal.
 # The color and size of the goal can be modified.
 
-PROTO RobocupGoal [
+PROTO RobocupGoalEnemy [
   field SFVec3f    translation        0 0 0
   field SFRotation rotation           0 1 0 0
   field SFString   name               "robotstadium goal"
@@ -39,11 +39,11 @@ PROTO RobocupGoal [
   Solid {
     translation IS translation
     rotation IS rotation
-    recognitionColors [0.5 0.1 0.1]
+    recognitionColors [0 0.1 0.1]
     model "goal"
     children [
       Solid {
-        recognitionColors [0.5 0.2 0.2]
+        recognitionColors [0 0.2 0.2]
         model "horizontal_post"
         name "horizontal_post"
         children [
@@ -67,7 +67,7 @@ PROTO RobocupGoal [
         ]
       }
       Solid {
-        recognitionColors [0.5 0.2 0.1]
+        recognitionColors [0 0.2 0.1]
         model "right_post"
         name "right_post"
         children [
@@ -89,7 +89,7 @@ PROTO RobocupGoal [
         ]
       }
       Solid {
-        recognitionColors [0.5 0.1 0.2]
+        recognitionColors [0 0.1 0.2]
         model "left_post"
         name "left_post"
         children [

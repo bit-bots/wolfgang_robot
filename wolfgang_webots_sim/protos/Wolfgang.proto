@@ -9,6 +9,7 @@ PROTO Wolfgang [
   field  SFRotation  rotation        0 1 0 0
   field  SFString    name            "Wolfgang"  # Is `Robot.name`.
   field  SFString    model           "RED1"      # Is `Robot.name`.
+  field  MFColor     recogColors     [1 0.1 0.1]
   field  SFString    controller      "void"      # Is `Robot.controller`.
   field  MFString    controllerArgs  []          # Is `Robot.controllerArgs`.
   field  SFString    customData      ""          # Is `Robot.customData`.
@@ -27,9 +28,7 @@ PROTO Wolfgang [
     supervisor IS supervisor
     synchronization IS synchronization
     selfCollision IS selfCollision
-    recognitionColors [
-      0.2 0.2 0.2
-    ]
+    recognitionColors IS recogColors
     model IS model
     children [
       Transform {
@@ -1653,8 +1652,7 @@ PROTO Wolfgang [
                                             rotation -0.000000 0.000000 1.000000 1.570800
                                             name "r_toe"
                                           }
-                                          DEF rlb TouchSensor {
-                                            type "force-3d"
+                                          DEF rlb Solid {
                                             translation -0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1706,8 +1704,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rlf TouchSensor {
-                                            type "force-3d"
+                                          DEF rlf Solid {
                                             translation -0.030000 0.177000 -0.034000
                                             rotation -0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -1759,8 +1756,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rrf TouchSensor {
-                                            type "force-3d"
+                                          DEF rrf Solid {
                                             translation 0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -1812,8 +1808,8 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rrb TouchSensor {
-                                            type "force-3d"
+                                          DEF rrb SolidSensor {
+
                                             translation 0.060000 -0.007000 -0.034000
                                             rotation 0.000000 0.000000 -1.000000 1.570800
                                             children [
@@ -2731,8 +2727,8 @@ PROTO Wolfgang [
                                             rotation 0.000000 -0.000000 1.000000 1.570800
                                             name "l_toe"
                                           }
-                                          DEF llb TouchSensor {
-                                            type "force-3d"
+                                          DEF llb SolidSensor {
+
                                             translation -0.060000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2784,8 +2780,8 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF llf TouchSensor {
-                                            type "force-3d"
+                                          DEF llf SolidSensor {
+
                                             translation -0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2837,8 +2833,8 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrf TouchSensor {
-                                            type "force-3d"
+                                          DEF lrf SolidSensor {
+
                                             translation 0.030000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [
@@ -2890,8 +2886,8 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrb TouchSensor {
-                                            type "force-3d"
+                                          DEF lrb SolidSensor {
+
                                             translation 0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
                                             children [

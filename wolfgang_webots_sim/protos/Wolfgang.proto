@@ -1808,7 +1808,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF rrb SolidSensor {
+                                          DEF rrb Solid {
 
                                             translation 0.060000 -0.007000 -0.034000
                                             rotation 0.000000 0.000000 -1.000000 1.570800
@@ -2727,7 +2727,7 @@ PROTO Wolfgang [
                                             rotation 0.000000 -0.000000 1.000000 1.570800
                                             name "l_toe"
                                           }
-                                          DEF llb SolidSensor {
+                                          DEF llb Solid {
 
                                             translation -0.060000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
@@ -2780,7 +2780,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF llf SolidSensor {
+                                          DEF llf Solid {
 
                                             translation -0.060000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
@@ -2833,7 +2833,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrf SolidSensor {
+                                          DEF lrf Solid {
 
                                             translation 0.030000 0.177000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800
@@ -2886,7 +2886,7 @@ PROTO Wolfgang [
                                               ]
                                             }
                                           }
-                                          DEF lrb SolidSensor {
+                                          DEF lrb Solid {
 
                                             translation 0.030000 -0.007000 -0.034000
                                             rotation -0.000000 -0.000000 -1.000000 1.570800

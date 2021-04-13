@@ -455,15 +455,13 @@ class CameraController:
                   "BLUE1": (25, 25, 255), "BLUE2": (51, 25, 255), "BLUE3": (25, 51, 255), "BLUE4": (51, 51, 255),
                   "RED1": (255, 25, 25), "RED2": (255, 51, 25), "RED3": (255, 25, 51), "RED4": (255, 51, 51),
                   "ball": (128, 128, 128)}
+
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
-        t = time.time()
         img = np.swapaxes(img, 0, 1)
-        t2 = time.time()
-        print()
         self.seg_img = img
         # cv2.imwrite("/tmp/foo.png", img)
-        output = []      img = np.swapaxes(img, 0, 1)
+        output = []
         """cv2.imshow("lol", cv2.resize(img, (1920//2, 1080//2)))
         key = 0
         while key not in [83, 100]:

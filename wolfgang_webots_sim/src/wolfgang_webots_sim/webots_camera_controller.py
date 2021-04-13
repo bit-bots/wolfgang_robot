@@ -20,25 +20,19 @@ import yaml
 
 G = 9.81
 DARWIN_PITCH = 0.225
-T_INTERSECTIONS = [[1.5,-4.5], [-1.5, -4.5], [2.5,-4.5], [2.5,-4.5],
-                   [1.5,4.5], [-1.5, 4.5], [2.5,4.5], [2.5,4.5],
-                   [3,0] [-3,0]
-X_INTERSECTIONS = [[0.75, 0], [-0.75,0], [0,0] # center circle +penalty marks
+T_INTERSECTIONS = [[-4.5, 1.5], [-4.5, -1.5], [-4.5, 2.5], [-4.5, -2.5],
+                   [4.5, 1.5], [4.5, -1.5], [4.5, 2.5], [4.5, -2.5],
+                   [0, 3], [0, -3]]
+X_INTERSECTIONS = [[0, 0.75], [0, -0.75], [0, 0],  # center circle +penalty marks
+                   [3, 0], [-3, 0]]  # penalty marks
+L_INTERSECTIONS = [[-4.5,-3], [-4.5, 3], [4.5, -3], [4.5, 3],  # field corners
+                   [-3.5, 1.5], [-3.5, -1.5], [3.5, 1.5], [3.5, -1.5],  # penalty areas
+                   [2.5, -2.5], [-2.5, -2.5], [2.5, 2.5], [-2.5, 2.5],  # goal areas
                    ]
 
 
 class CameraController:
-    def __init__(self, ros_active=False, mode='normal'):
-        """
-        The SupervisorController, a Webots controller that can control the world.
-        Set the environment variable WEBOTS_ROBOT_NAME to "supervisor_robot" if used with 1_bot.wbt or 4_bots.wbt.
-
-        :param ros_active: Whether to publish ROS messages
-        :param mode: Webots mode, one of 'normal', 'paused', or 'fast'
-        :param do_ros_init: Whether rospy.init_node should be called
-        :param base_ns: The namespace of this node, can normally be left empty
-        """
-        # requires WEBOTS_ROBOT_NAME to be set to "supervisor_robot"
+    def __init__(self):
         self.time = 0
         self.supervisor = Supervisor()
 
@@ -79,8 +73,9 @@ class CameraController:
         self.annotations = []
         self.img_save_dir = "img"
         self.filenames = []
+        self.intersections = []
 
-    def random_placement(self, size="kid", n=1000):
+    def random_placement(self, size="kid"):
         # gleichverteilung über x und y, z: robot description
         if size == "kid":
             z_mean = 0.64
@@ -143,7 +138,7 @@ class CameraController:
         num_strikers_blue = 3  # random.randint(0, 3)
         num_defenders_red = 2 - num_strikers_red
         num_defenders_blue = 3 - num_strikers_blue
-        positions = {"RED1":[goalie_pos_red, goalie_rpy_red], "BLUE1": [goalie_pos_blue, goalie_rpy_blue]}
+        positions = {"RED1": [goalie_pos_red, goalie_rpy_red], "BLUE1": [goalie_pos_blue, goalie_rpy_blue]}
         for i in range(num_strikers_red):
             name = "RED" + str(i + 2)
             r = self.place_striker(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
@@ -224,18 +219,20 @@ class CameraController:
             print("not implemented")
 
     def generate_n_images(self, n, folder="img"):
+        self.step_sim()
         self.fov = []
         self.camera_poses = []
         self.robot_poses = []
         self.ball_positions = []
         self.annotations = []
         self.filenames = []
+        self.intersections = []
         self.img_save_dir = folder
         if not os.path.exists(self.img_save_dir):
             os.makedirs(self.img_save_dir)
         self.annotations = []
         for i in range(n):
-            print(f"stepping... {i+1}/{n}")
+            print(f"stepping... {i + 1}/{n}")
             self.step()
 
         images = self.generate_annotations()
@@ -246,9 +243,9 @@ class CameraController:
     def generate_annotations(self):
         robot_equivalent = ["RED1", "RED2", "RED3", "BLUE1", "BLUE2", "BLUE3", "BLUE4"]
         gp_equivalent = ["left_goalpost_home", "right_goalpost_home",
-                         "left_goalpost_enemy","right_goalpost_enemy",]
+                         "left_goalpost_enemy", "right_goalpost_enemy", ]
         hb_equivalent = ["top_bar_enemy", "top_bar_home"]
-        gp_poses = [[-1.3, -4.5, 0], [1.3, -4.5, 0],[-1.3, 4.5, 0], [1.3, 4.5, 0]]
+        gp_poses = [[-1.3, -4.5, 0], [1.3, -4.5, 0], [-1.3, 4.5, 0], [1.3, 4.5, 0]]
         hb_poses = [[0, -4.5, 1.25], [0, -4.5, 1.25]]
         images = {}
         for i in range(len(self.filenames)):
@@ -259,25 +256,27 @@ class CameraController:
             found_ball = False
             found_horizontal_goalpost = False
             for a in current_annotation:
-                pose_dict = {}
                 if a["type"] in robot_equivalent and a["in_image"]:
                     current_pose = self.robot_poses[i][a["type"]]
                     quat = transforms3d.euler.euler2quat(*current_pose[1])
                     pose_dict = {"position": {"x": float(current_pose[0][0]), "y": float(current_pose[0][1]), "z": 0},
-                                 "orientation": {"x": float(quat[1]), "y":  float(quat[2]), "z":  float(quat[3]), "w": float(quat[0])}}
+                                 "orientation": {"x": float(quat[1]), "y": float(quat[2]), "z": float(quat[3]),
+                                                 "w": float(quat[0])}}
                     [xmin, ymin] = np.min(a["vector"], axis=0)
                     [xmax, ymax] = np.max(a["vector"], axis=0)
                     vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
-                    new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector" : vector})
+                    new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector": vector})
                     found_robot = True
 
                 elif a["type"] == "ball" and a["in_image"]:
-                    pose_dict = {"position": {"x": float(self.ball_positions[i].x), "y": float(self.ball_positions[i].y), "z": float(self.ball_positions[i].z)}}
+                    pose_dict = {
+                        "position": {"x": float(self.ball_positions[i].x), "y": float(self.ball_positions[i].y),
+                                     "z": float(self.ball_positions[i].z)}}
                     found_ball = True
                     [xmin, ymin] = np.min(a["vector"], axis=0)
                     [xmax, ymax] = np.max(a["vector"], axis=0)
                     vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
-                    new_annotations.append({"type": "ball", "in_image": True, "pose": pose_dict, "vector" : vector})
+                    new_annotations.append({"type": "ball", "in_image": True, "pose": pose_dict, "vector": vector})
 
                 elif a["type"] in gp_equivalent and a["in_image"]:
                     current_pose = gp_poses[gp_equivalent.index(a["type"])]
@@ -301,19 +300,51 @@ class CameraController:
                 new_annotations.append({"type": "ball", "in_image": False})
             if not found_horizontal_goalpost:
                 new_annotations.append({"type": "horizontal_post", "in_image": False})
+            t_in_image = False
+            x_in_image = False
+            l_in_image = False
+            current_intersections = self.intersections[i]
+            for single_crossing in current_intersections["T"]:
+                new_annotations.append({"type":"T-Intersection", "in_image": True,
+                                        "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
+                                        "pose": {"position": {"x": float(single_crossing[1][0]),
+                                             "y": float(single_crossing[1][1]),
+                                             "z": float(0)}}})
+                t_in_image = True
+            for single_crossing in current_intersections["X"]:
+                new_annotations.append({"type":"X-Intersection", "in_image": True,
+                                        "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
+                                        "pose": {"position": {"x": float(single_crossing[1][0]),
+                                             "y": float(single_crossing[1][1]),
+                                             "z": float(0)}}})
+                x_in_image = True
+            for single_crossing in current_intersections["L"]:
+                new_annotations.append({"type":"L-Intersection", "in_image": True,
+                                        "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
+                                        "pose": {"position": {"x": float(single_crossing[1][0]),
+                                             "y": float(single_crossing[1][1]),
+                                             "z": float(0)}}})
+                l_in_image = True
+
+            if not t_in_image:
+                new_annotations.append({"type": "T-Intersection", "in_image": False})
+            if not x_in_image:
+                new_annotations.append({"type": "X-Intersection", "in_image": False})
+            if not l_in_image:
+                new_annotations.append({"type": "L-Intersection", "in_image": False})
 
             camera_pose_dict = {"position": {"x": float(self.camera_poses[i].position.x),
                                              "y": float(self.camera_poses[i].position.y),
                                              "z": float(self.camera_poses[i].position.z)},
-                                 "orientation": {"x": float(self.camera_poses[i].orientation.x),
-                                                 "y": float(self.camera_poses[i].orientation.y),
-                                                 "z": float(self.camera_poses[i].orientation.z),
-                                                 "w": float(self.camera_poses[i].orientation.w)}}
-            metadata_dict = {"fov": float(self.fov[i]), "camera_pose": camera_pose_dict, "tags": ["simulation"], "location": "Webots"}
+                                "orientation": {"x": float(self.camera_poses[i].orientation.x),
+                                                "y": float(self.camera_poses[i].orientation.y),
+                                                "z": float(self.camera_poses[i].orientation.z),
+                                                "w": float(self.camera_poses[i].orientation.w)}}
+            metadata_dict = {"fov": float(self.fov[i]), "camera_pose": camera_pose_dict, "tags": ["simulation"],
+                             "location": "Webots"}
 
-            images[self.filenames[i]] = {"annotations": new_annotations, "metadata": metadata_dict }
+            images[self.filenames[i]] = {"annotations": new_annotations, "metadata": metadata_dict}
         return images
-
 
     def mat_from_fov_and_resolution(self, fov, res):
         return 0.5 * res * (math.cos((fov / 2)) / math.sin((fov / 2)))
@@ -329,6 +360,7 @@ class CameraController:
         self.random_placement()
         self.step_sim()
         self.annotations.append(self.save_recognition())
+        self.intersections.append(self.check_intersections_in_image())
 
     def reset_robot_pose(self, pos, quat, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
@@ -393,7 +425,7 @@ class CameraController:
         self.set_robot_quat(quat, name)
 
     def save_recognition(self):
-        img_stamp = f"{int(self.time*1000):08d}"
+        img_stamp = f"{int(self.time * 1000):08d}"
         img_name = f"img_fake_cam_{img_stamp}"
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
@@ -417,17 +449,21 @@ class CameraController:
 
         # find the colors by saving segmentation image and look at the values in gimp
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost_home": (128, 25, 51), "top_bar_home": (128, 51, 51), "right_goalpost_home": (128, 51, 25),
+        colors = {"left_goalpost_home": (128, 25, 51), "top_bar_home": (128, 51, 51),
+                  "right_goalpost_home": (128, 51, 25),
                   "left_goalpost_enemy": (0, 25, 51), "top_bar_enemy": (0, 51, 51), "right_goalpost_enemy": (0, 51, 25),
-                  "BLUE1": (25,25,255), "BLUE2": (51,25,255), "BLUE3": (25,51,255), "BLUE4": (51,51,255),
-                  "RED1": (255,25,25), "RED2": (255,51,25), "RED3": (255,25,51), "RED4": (255,51,51),
-                  "ball": (128,128,128)}
+                  "BLUE1": (25, 25, 255), "BLUE2": (51, 25, 255), "BLUE3": (25, 51, 255), "BLUE4": (51, 51, 255),
+                  "RED1": (255, 25, 25), "RED2": (255, 51, 25), "RED3": (255, 25, 51), "RED4": (255, 51, 51),
+                  "ball": (128, 128, 128)}
         img = np.array(img, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
+        t = time.time()
         img = np.swapaxes(img, 0, 1)
+        t2 = time.time()
+        print()
         self.seg_img = img
         # cv2.imwrite("/tmp/foo.png", img)
-        output = []
+        output = []      img = np.swapaxes(img, 0, 1)
         """cv2.imshow("lol", cv2.resize(img, (1920//2, 1080//2)))
         key = 0
         while key not in [83, 100]:
@@ -439,7 +475,6 @@ class CameraController:
             # calculate *255 to make visible for debug images
             mask = ((img == value).all(axis=2)).astype(np.uint8)
             chull = np.array(convex_hull_image(mask)).astype(np.uint8) * 255
-
 
             # Retr External seems to solve the problem of way too many Wolfgangs being a contour we had with RETR_TREE
             # contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -480,3 +515,72 @@ class CameraController:
                     cv2.waitKey(0)
                     cv2.destroyAllWindows()
         return output
+
+    def check_intersections_in_image(self):
+        width = 1920
+        height = 1080
+        f_y = self.mat_from_fov_and_resolution(
+            self.h_fov_to_v_fov(self.camera.getFov(), height, width),
+            height)
+        f_x = self.mat_from_fov_and_resolution(self.fov[-1], width)
+        K = [[f_x, 0, width / 2],
+             [0, f_y, height / 2],
+             [0, 0, 1]]
+        origin_to_camera_pos = [self.camera_poses[-1].position.x,
+                                self.camera_poses[-1].position.y,
+                                self.camera_poses[-1].position.z]
+        origin_to_camera_quat = [self.camera_poses[-1].orientation.w, self.camera_poses[-1].orientation.x,
+                                 self.camera_poses[-1].orientation.y, self.camera_poses[-1].orientation.z]
+        origin_to_camera_mat = transforms3d.quaternions.quat2mat(origin_to_camera_quat)
+        origin_to_camera_transform = transforms3d.affines.compose(origin_to_camera_pos,
+                                                                  origin_to_camera_mat,
+                                                                  [1, 1, 1])
+        camera_to_origin_transform = np.linalg.inv(origin_to_camera_transform)
+
+
+        def expand_point(p):
+            p_new = np.ndarray((4,1))
+            p_new[0][0] = p[0]
+            p_new[1][0] = p[1]
+            p_new[2][0] = 0
+            p_new[3][0] = 1
+            return p_new
+
+        def in_image(p):
+            if p[2] < 0:  # behind camera
+                return None
+            p_new = p[:3]
+            p_pixel = np.matmul(K, p_new)
+            p_pixel = p_pixel * (1 / p_pixel[2])
+            if 0 < p_pixel[0] < 1920 and 0 < p_pixel[1] < 1080:
+                return p_pixel[:2]
+            else:
+                return None
+
+        def get_pixel(p):
+            point = expand_point(p)
+            p_transformed = np.matmul(camera_to_origin_transform, point)
+            p_axis_corrected = np.ndarray((3,1)) # to camera coordinate system
+            p_axis_corrected[0][0] = -p_transformed[1][0]
+            p_axis_corrected[1][0] = -p_transformed[2][0]
+            p_axis_corrected[2][0] = p_transformed[0][0]
+            pixel = in_image(p_axis_corrected)
+            return pixel
+
+        t_intersecs = []
+        l_intersecs = []
+        x_intersecs = []
+        for t in T_INTERSECTIONS:
+            pixel = get_pixel(t)
+            if pixel is not None:
+                t_intersecs.append((pixel, t))
+        for t in L_INTERSECTIONS:
+            pixel = get_pixel(t)
+            if pixel is not None:
+                l_intersecs.append((pixel, t))
+        for t in X_INTERSECTIONS:
+            pixel = get_pixel(t)
+            if pixel is not None:
+                x_intersecs.append((pixel, t))
+
+        return {"T": t_intersecs, "L": l_intersecs, "X": x_intersecs}

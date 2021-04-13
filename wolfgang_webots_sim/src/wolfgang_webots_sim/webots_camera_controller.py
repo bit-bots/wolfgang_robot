@@ -74,6 +74,7 @@ class CameraController:
         self.img_save_dir = "img"
         self.filenames = []
         self.intersections = []
+        self.ball_in_image = True
 
     def random_placement(self, size="kid"):
         # gleichverteilung über x und y, z: robot description
@@ -179,8 +180,13 @@ class CameraController:
                 robot_pos.y = preliminary_pos_y
                 break
         robot_pos.z = height
-        # TODO uniform random
-        orientation[2] += np.random.normal(0, np.pi / 8)
+        if self.ball_in_image:
+            robot_to_ball = [ball_pos.x - robot_pos.x, ball_pos.y - robot_pos.y]
+            orientation[2] = math.atan2(robot_to_ball[1], robot_to_ball[0])
+            orientation[2] += np.random.normal(0, np.pi/2)
+        else:
+            orientation[2] = random.random() * math.pi * 2 - math.pi
+
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]
 

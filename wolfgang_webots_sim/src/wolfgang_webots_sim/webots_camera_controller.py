@@ -6,10 +6,6 @@ import random
 import math
 import time
 
-from rosgraph_msgs.msg import Clock
-from std_srvs.srv import Empty
-from bitbots_msgs.srv import SetBall, SetRobotPose
-from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point, Pose
 from skimage.morphology import convex_hull_image
 
@@ -20,14 +16,34 @@ import yaml
 
 G = 9.81
 DARWIN_PITCH = 0.225
-T_INTERSECTIONS = [[-4.5, 1.5], [-4.5, -1.5], [-4.5, 2.5], [-4.5, -2.5],
-                   [4.5, 1.5], [4.5, -1.5], [4.5, 2.5], [4.5, -2.5],
-                   [0, 3], [0, -3]]
-X_INTERSECTIONS = [[0, 0.75], [0, -0.75], [0, 0],  # center circle +penalty marks
+LINE_WIDTH = 0.05
+LINE_WIDTH_HALF = LINE_WIDTH/2
+T_INTERSECTIONS = [[-4.5 + LINE_WIDTH_HALF,  1.5 - LINE_WIDTH_HALF], # check
+                   [-4.5 + LINE_WIDTH_HALF, -1.5 + LINE_WIDTH_HALF], # check penalty area home
+                   [-4.5 + LINE_WIDTH_HALF,  2.5 - LINE_WIDTH_HALF], # check
+                   [-4.5 + LINE_WIDTH_HALF, -2.5 + LINE_WIDTH_HALF], # check goal area home
+                   [4.5 - LINE_WIDTH_HALF,  1.5 - LINE_WIDTH_HALF],
+                   [4.5 - LINE_WIDTH_HALF, -1.5 + LINE_WIDTH_HALF], # penalty area far
+                   [4.5 - LINE_WIDTH_HALF,  2.5 - LINE_WIDTH_HALF],
+                   [4.5 - LINE_WIDTH_HALF, -2.5 + LINE_WIDTH_HALF], # goal area far
+                   [0, 3 - LINE_WIDTH_HALF], [0, -3 + LINE_WIDTH_HALF]]
+
+X_INTERSECTIONS = [[0, 0.75 - LINE_WIDTH_HALF],
+                   [0, -0.75 + LINE_WIDTH_HALF],
+                   [0, 0],  # center circle + center mark
                    [3, 0], [-3, 0]]  # penalty marks
-L_INTERSECTIONS = [[-4.5,-3], [-4.5, 3], [4.5, -3], [4.5, 3],  # field corners
-                   [-3.5, 1.5], [-3.5, -1.5], [3.5, 1.5], [3.5, -1.5],  # penalty areas
-                   [2.5, -2.5], [-2.5, -2.5], [2.5, 2.5], [-2.5, 2.5],  # goal areas
+L_INTERSECTIONS = [[-4.5 + LINE_WIDTH_HALF, -3 + LINE_WIDTH_HALF],
+                   [-4.5 + LINE_WIDTH_HALF, 3 - LINE_WIDTH_HALF],  # check
+                   [4.5 - LINE_WIDTH_HALF, -3 + LINE_WIDTH_HALF],
+                   [4.5 - LINE_WIDTH_HALF,  3 - LINE_WIDTH_HALF],  # field corners
+                   [-3.5 - LINE_WIDTH_HALF,  1.5 - LINE_WIDTH_HALF],
+                   [-3.5 - LINE_WIDTH_HALF, -1.5 + LINE_WIDTH_HALF],
+                   [3.5 + LINE_WIDTH_HALF,  1.5 - LINE_WIDTH_HALF],
+                   [3.5 + LINE_WIDTH_HALF, -1.5 + LINE_WIDTH_HALF],  # penalty areas
+                   [-2.5 - LINE_WIDTH_HALF, -2.5 + LINE_WIDTH_HALF],
+                   [-2.5 - LINE_WIDTH_HALF, 2.5 - LINE_WIDTH_HALF],  # goal areas
+                   [2.5 + LINE_WIDTH_HALF, -2.5 + LINE_WIDTH_HALF],
+                   [2.5 + LINE_WIDTH_HALF, 2.5 - LINE_WIDTH_HALF],
                    ]
 
 
@@ -350,7 +366,7 @@ class CameraController:
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
                                              "z": float(0)}},
-                                        "concealed": single_crossing[2]})
+                                        "concealed": not bool(single_crossing[2])})
                 t_in_image = True
             for single_crossing in current_intersections["X"]:
                 new_annotations.append({"type":"X-Intersection", "in_image": True,
@@ -358,7 +374,7 @@ class CameraController:
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
                                              "z": float(0)}},
-                                        "concealed": single_crossing[2]})
+                                        "concealed": not bool(single_crossing[2])})
                 x_in_image = True
             for single_crossing in current_intersections["L"]:
                 new_annotations.append({"type":"L-Intersection", "in_image": True,
@@ -366,7 +382,7 @@ class CameraController:
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
                                              "z": float(0)}},
-                                        "concealed": single_crossing[2]})
+                                        "concealed": not bool(single_crossing[2])})
                 l_in_image = True
 
             if not t_in_image:
@@ -477,7 +493,7 @@ class CameraController:
         seg_img_raw = self.camera.getRecognitionSegmentationImageArray()
         seg_img = np.array(seg_img_raw, dtype=np.uint8)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
-        seg_img = np.swapaxes(seg_img_raw, 0, 1)
+        seg_img = np.swapaxes(seg_img, 0, 1)
         annotations = self.generatePolygonsFromSegmentation(seg_img)
 
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
@@ -602,40 +618,55 @@ class CameraController:
         def get_pixel(p):
             point = expand_point(p)
             p_transformed = np.matmul(camera_to_origin_transform, point)
+            dist = np.linalg.norm(p_transformed[:3])
             p_axis_corrected = np.ndarray((3,1)) # to camera coordinate system
             p_axis_corrected[0][0] = -p_transformed[1][0]
             p_axis_corrected[1][0] = -p_transformed[2][0]
             p_axis_corrected[2][0] = p_transformed[0][0]
             pixel = in_image(p_axis_corrected)
-            return pixel
+            return pixel, dist
 
         t_intersecs = []
         l_intersecs = []
         x_intersecs = []
         for t in T_INTERSECTIONS:
-            pixel = get_pixel(t)
+            pixel, dist = get_pixel(t)
             if pixel is not None:
-                t_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img)))
+                t_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img, dist)))
         for t in L_INTERSECTIONS:
-            pixel = get_pixel(t)
+            pixel, dist = get_pixel(t)
             if pixel is not None:
-                l_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img)))
+                l_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img, dist)))
         for t in X_INTERSECTIONS:
-            pixel = get_pixel(t)
+            pixel, dist = get_pixel(t)
             if pixel is not None:
-                x_intersecs.append((pixel, t,  self.intersection_visible(pixel, seg_img)))
+                x_intersecs.append((pixel, t,  self.intersection_visible(pixel, seg_img, dist)))
 
         return {"T": t_intersecs, "L": l_intersecs, "X": x_intersecs}
 
-    def intersection_visible(self, pixel, image):
+    def intersection_visible(self, pixel, image, dist):
         line_color = (204, 204, 204)
-        range = 20
-        y_min = min(int(pixel[1])-range, 0)
-        y_max = max(int(pixel[1])+range, 1080-1)
-        x_min = min(int(pixel[0])-range, 0)
+        range = 10
+        y_min = max(int(pixel[1])-range, 0)
+        y_max = min(int(pixel[1])+range, 1080-1)
+        x_min = max(int(pixel[0])-range, 0)
         x_max = min(int(pixel[0])+range, 1920-1)
-        area = image[x_min:x_max][y_min:y_max]
-        res = ((area == line_color).all(axis=2)).any()
-        if not res:
-            print(f"occluded intersection at {pixel}")
-        return res
+
+        area = image[y_min:y_max, x_min:x_max]
+        true_values = ((area == line_color).all(axis=2))
+
+        max_dist = math.sqrt(10**2 + 8**2)
+        min_dist = 0.45
+        at_max = 0.02 * (range *2) ** 2
+        at_min = 0.3 * (range *2) ** 2
+        thresh = min(math.atan(1/dist) ** 2 / math.pi/2 * (range *2) ** 2 * 5, 150)
+
+        res = np.sum(true_values)
+        print(f"number of values that are a line: {res}")
+        print(f"dist to intersection: {dist}, expected pixels: {thresh}")
+        if res > thresh:
+            print(f"intersection at {pixel} not occluded")
+            return True
+        else:
+            print(f"intersection at {pixel}  occluded")
+            return False

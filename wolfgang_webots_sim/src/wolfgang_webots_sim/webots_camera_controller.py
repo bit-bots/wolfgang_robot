@@ -285,7 +285,7 @@ class CameraController:
         gp_equivalent = ["left_goalpost_home", "right_goalpost_home",
                          "left_goalpost_enemy", "right_goalpost_enemy", ]
         hb_equivalent = ["top_bar_enemy", "top_bar_home"]
-        gp_poses = [[-1.3, -4.5, 0], [1.3, -4.5, 0], [-1.3, 4.5, 0], [1.3, 4.5, 0]]
+        gp_poses = [[-4.475, -1.3, 0], [-4.475, 1.3, 0], [4.475, -1.3, 0], [4.475, 1.3, 0]]
         hb_poses = [[0, -4.5, 1.25], [0, -4.5, 1.25]]
         images = {}
         for i in range(len(self.filenames)):

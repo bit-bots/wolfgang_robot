@@ -210,7 +210,6 @@ class CameraController:
     def position_collides(self, x, y, others, name):
         for k,o in others.items():
             if math.sqrt((x-o[0][0]) ** 2 + (y - o[0][1]) ** 2) < 0.2:
-                print(f"{k} collides with {name}")
                 return True
         return False
 
@@ -660,13 +659,5 @@ class CameraController:
         at_max = 0.02 * (range *2) ** 2
         at_min = 0.3 * (range *2) ** 2
         thresh = min(math.atan(1/dist) ** 2 / math.pi/2 * (range *2) ** 2 * 5, 150)
-
         res = np.sum(true_values)
-        print(f"number of values that are a line: {res}")
-        print(f"dist to intersection: {dist}, expected pixels: {thresh}")
-        if res > thresh:
-            print(f"intersection at {pixel} not occluded")
-            return True
-        else:
-            print(f"intersection at {pixel}  occluded")
-            return False
+        return res > thresh

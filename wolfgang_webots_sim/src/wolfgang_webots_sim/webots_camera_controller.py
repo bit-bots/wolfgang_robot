@@ -122,14 +122,23 @@ class CameraController:
         self.fov.append(fov)
 
         robot_height_red = 0.41
-        goalie_pos_red = [x_range[0] + 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
-                          robot_height_red]
+        # todo clip too far, resample instead
+        goalie_y_red = None
+        while goalie_y_red is None:
+            goalie_y_red_prelim = np.random.normal(loc=0, scale=0.5)
+            if -1.4 < goalie_y_red_prelim < 1.4:
+                goalie_y_red = goalie_y_red_prelim
+        goalie_pos_red = [x_range[0] + 0.5, goalie_y_red, robot_height_red]
         goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
 
         robot_height_blue = 0.327
-        goalie_pos_blue = [x_range[1] - 0.5, np.clip(np.random.normal(loc=0.0, scale=0.5), -2.25, 2.25),
-                           robot_height_blue]
+        goalie_y_blue = None
+        while goalie_y_blue is None:
+            goalie_y_blue_prelim = np.random.normal(loc=0, scale=0.5)
+            if -1.4 < goalie_y_blue_prelim < 1.4:
+                goalie_y_blue = goalie_y_blue_prelim
+        goalie_pos_blue = [x_range[1] - 0.5, goalie_y_blue, robot_height_blue]
         goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
@@ -170,6 +179,7 @@ class CameraController:
                 robot_pos.y = preliminary_pos_y
                 break
         robot_pos.z = height
+        # TODO uniform random
         orientation[2] += np.random.normal(0, np.pi / 8)
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]

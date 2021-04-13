@@ -173,7 +173,7 @@ class CameraController:
         while True:
             preliminary_pos_x = robot_pos.x + np.random.normal(0, 2)
             preliminary_pos_y = robot_pos.x + np.random.normal(0, 2)
-            pos_collides = False  # self.position_collides(preliminary_pos_x, preliminary_pos_y, other_positions)
+            pos_collides = self.position_collides(preliminary_pos_x, preliminary_pos_y, other_positions, name)
             if -5 < preliminary_pos_x < 5 and -3.5 < preliminary_pos_y < 3.5 and not pos_collides:
                 robot_pos.x = preliminary_pos_x
                 robot_pos.y = preliminary_pos_y
@@ -183,6 +183,14 @@ class CameraController:
         orientation[2] += np.random.normal(0, np.pi / 8)
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]
+
+    def position_collides(self, x, y, others, name):
+        for k,o in others.items():
+            if math.sqrt((x-o[0][0]) ** 2 + (y - o[0][1]) ** 2) < 0.2:
+                print(f"{k} collides with {name}")
+                return True
+        return False
+
 
     def place_defender(self, name, side, height, orientation, other_positions):
         print(f"placing {name} as a defender on side {side}")

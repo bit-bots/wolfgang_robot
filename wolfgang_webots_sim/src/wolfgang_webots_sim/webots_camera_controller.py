@@ -75,6 +75,7 @@ class CameraController:
         self.filenames = []
         self.intersections = []
         self.ball_in_image = True
+        self.uniform_camera_position = True
 
     def random_placement(self, size="kid"):
         # gleichverteilung über x und y, z: robot description
@@ -99,19 +100,19 @@ class CameraController:
         else:
             print("size not correct, ether kid or adult")
             return
-        tilt_range = (0, 90)
-        pan_range = (-180, 180)  # TODO To be evaluated
-        roll_range = (-5, 5)  # TODO To be evaulated
+
         z_choice = None
         while z_choice is None:
             z_prelim = np.random.normal(loc=z_mean, scale=z_std_dev)
             if z_range[0] < z_prelim < z_range[1]:
                 z_choice = z_prelim
 
-        ball_pos = Point(random.random() * 9.5 - 4.75, random.random() * 6 - 3,
-                         0.08)  # TODO field size by param ---furhtermore, ball height is ignored
+        ball_pos = Point(random.random() * 9.5 - 4.75, random.random() * 6 - 3, 0.08)
         self.ball_positions.append(ball_pos)
-        self.set_ball(orientation="rand", position=ball_pos)
+        if self.ball_in_image:
+            self.set_ball(orientation="rand", position=ball_pos)
+        else:
+            self.set_ball(orientation="rand", position=Point(0,0,100))
 
         fov = None
         while fov is None:
@@ -203,9 +204,22 @@ class CameraController:
 
     def place_camera(self, ball_pos, height, other_positions, x_range, y_range, fov):
         if self.cam_looks_at_ball:
-            cam_position = [random.random() * (x_range[1] - x_range[0]) + x_range[0],
-                            random.random() * (y_range[1] - y_range[0]) + y_range[0],
-                            height]
+            if self.uniform_camera_position:
+                cam_position = [random.random() * (x_range[1] - x_range[0]) + x_range[0],
+                                random.random() * (y_range[1] - y_range[0]) + y_range[0],
+                                height]
+            else:
+                cam_pos_x = None
+                while cam_pos_x is None:
+                    cam_pos_x_prelim = ball_pos.x + np.random.normal(loc=0, scale=1.5)
+                    if x_range[0] < cam_pos_x_prelim < x_range[1]:
+                        cam_pos_x = cam_pos_x_prelim
+                cam_pos_y = None
+                while cam_pos_y is None:
+                    cam_pos_y_prelim = ball_pos.x + np.random.normal(loc=0, scale=1.5)
+                    if y_range[0] < cam_pos_y_prelim < y_range[1]:
+                        cam_pos_y = cam_pos_y_prelim
+                cam_position = [cam_pos_x, cam_pos_y, height]
 
             # this should be the x vector of the camera coordinate system
             cam_to_ball = [ball_pos.x - cam_position[0], ball_pos.y - cam_position[1], ball_pos.z - cam_position[2]]
@@ -242,7 +256,9 @@ class CameraController:
         else:
             print("not implemented")
 
-    def generate_n_images(self, n, folder="img"):
+    def generate_n_images(self, n, folder="img", ball_in_image=True, uniform_camera=True):
+        self.ball_in_image = ball_in_image
+        self.uniform_camera_position = uniform_camera
         self.step_sim()
         self.fov = []
         self.camera_poses = []
@@ -411,7 +427,7 @@ class CameraController:
 
     def set_ball(self, req=None, orientation="rand", position=None):
         if req is None:
-            self.ball.getField("translation").setSFVec3f([position.x, position.y, 0.08])
+            self.ball.getField("translation").setSFVec3f([position.x, position.y, position.z])
         else:
             self.ball.getField("translation").setSFVec3f([req.p.x, req.p.y, 0.08])
         if orientation == "rand":

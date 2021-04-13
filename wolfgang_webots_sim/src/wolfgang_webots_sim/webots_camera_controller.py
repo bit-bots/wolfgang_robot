@@ -349,21 +349,24 @@ class CameraController:
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}}})
+                                             "z": float(0)}},
+                                        "concealed": single_crossing[2]})
                 t_in_image = True
             for single_crossing in current_intersections["X"]:
                 new_annotations.append({"type":"X-Intersection", "in_image": True,
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}}})
+                                             "z": float(0)}},
+                                        "concealed": single_crossing[2]})
                 x_in_image = True
             for single_crossing in current_intersections["L"]:
                 new_annotations.append({"type":"L-Intersection", "in_image": True,
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}}})
+                                             "z": float(0)}},
+                                        "concealed": single_crossing[2]})
                 l_in_image = True
 
             if not t_in_image:
@@ -399,8 +402,9 @@ class CameraController:
     def step(self):
         self.random_placement()
         self.step_sim()
-        self.annotations.append(self.save_recognition())
-        self.intersections.append(self.check_intersections_in_image())
+        recog, seg_img = self.save_recognition()
+        self.annotations.append(recog)
+        self.intersections.append(self.check_intersections_in_image(seg_img))
 
     def reset_robot_pose(self, pos, quat, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
@@ -470,12 +474,15 @@ class CameraController:
 
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         self.filenames.append((img_name + ".PNG"))
-        seg_img = self.camera.getRecognitionSegmentationImageArray()
+        seg_img_raw = self.camera.getRecognitionSegmentationImageArray()
+        seg_img = np.array(seg_img_raw, dtype=np.uint8)
+        # We need to swap axes so it's 1920x1080 instead of 1080x1920
+        seg_img = np.swapaxes(seg_img_raw, 0, 1)
         annotations = self.generatePolygonsFromSegmentation(seg_img)
 
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
-        return annotations
+        return annotations, seg_img
 
     def generatePolygonsFromSegmentation(self, img):
         # this method returns a list with the following items:
@@ -496,10 +503,7 @@ class CameraController:
                   "RED1": (255, 25, 25), "RED2": (255, 51, 25), "RED3": (255, 25, 51), "RED4": (255, 51, 51),
                   "ball": (128, 128, 128)}
 
-        img = np.array(img, dtype=np.uint8)
-        # We need to swap axes so it's 1920x1080 instead of 1080x1920
-        img = np.swapaxes(img, 0, 1)
-        self.seg_img = img
+
         # cv2.imwrite("/tmp/foo.png", img)
         output = []
         """cv2.imshow("lol", cv2.resize(img, (1920//2, 1080//2)))
@@ -554,7 +558,7 @@ class CameraController:
                     cv2.destroyAllWindows()
         return output
 
-    def check_intersections_in_image(self):
+    def check_intersections_in_image(self, seg_img):
         width = 1920
         height = 1080
         f_y = self.mat_from_fov_and_resolution(
@@ -611,14 +615,27 @@ class CameraController:
         for t in T_INTERSECTIONS:
             pixel = get_pixel(t)
             if pixel is not None:
-                t_intersecs.append((pixel, t))
+                t_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img)))
         for t in L_INTERSECTIONS:
             pixel = get_pixel(t)
             if pixel is not None:
-                l_intersecs.append((pixel, t))
+                l_intersecs.append((pixel, t, self.intersection_visible(pixel, seg_img)))
         for t in X_INTERSECTIONS:
             pixel = get_pixel(t)
             if pixel is not None:
-                x_intersecs.append((pixel, t))
+                x_intersecs.append((pixel, t,  self.intersection_visible(pixel, seg_img)))
 
         return {"T": t_intersecs, "L": l_intersecs, "X": x_intersecs}
+
+    def intersection_visible(self, pixel, image):
+        line_color = (204, 204, 204)
+        range = 20
+        y_min = min(int(pixel[1])-range, 0)
+        y_max = max(int(pixel[1])+range, 1080-1)
+        x_min = min(int(pixel[0])-range, 0)
+        x_max = min(int(pixel[0])+range, 1920-1)
+        area = image[x_min:x_max][y_min:y_max]
+        res = ((area == line_color).all(axis=2)).any()
+        if not res:
+            print(f"occluded intersection at {pixel}")
+        return res

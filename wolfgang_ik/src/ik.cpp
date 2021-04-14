@@ -11,17 +11,23 @@ IK::IK() : robot_model_loader_("robot_description", false) {
   }
   robot_state_.reset(new robot_state::RobotState(kinematic_model));
   robot_state_->updateLinkTransforms();
+  visual_tools_base_.reset(new rviz_visual_tools::RvizVisualTools("base_link", "/rviz_visual_markers_base"));
+  visual_tools_goal_.reset(new rviz_visual_tools::RvizVisualTools("sole_goal", "/rviz_visual_markers"));
+  visual_tools_sole_.reset(new rviz_visual_tools::RvizVisualTools("l_sole", "/rviz_visual_markers_sole"));
+  visual_tools_hip_ry_.reset(new rviz_visual_tools::RvizVisualTools("hip_ry", "/rviz_visual_markers_hip_ry"));
+  visual_tools_ankle_ry_.reset(new rviz_visual_tools::RvizVisualTools("ankle_ry", "/rviz_visual_markers_ankle_ry"));
+
   // compute the necessary link length and save them as class variables
 }
 
-bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr goal_state) {
+bool IK::solve(const Eigen::Isometry3d &l_sole_goal, geometry_msgs::TransformStamped &hip_ry_tf, geometry_msgs::TransformStamped &ankle_ry_tf, robot_state::RobotStatePtr goal_state) {
   // some naming conventions:
   // hip_RY_intersect: the point where the HipYaw and HipRoll axis intersect
   // ankle_intersect: the point where AnklePitch and AnkleRoll intersect
 
-  // the provided goal points from base_link to sole link
+  // the provided hip_ry_to_ankle_intersect points from base_link to sole link
   // first get rid of the static transform between sole and ankle_intersect
-  // vector rotate with goal rotation and subtract
+  // vector rotate with hip_ry_to_ankle_intersect rotation and subtract
 
   // in our robot, the chain is (alternating link -> joint -> link...), fixed joints are denoted (f)
   // base_link -> base_link_to_base(f) -> torso -> LHipYaw -> l_hip_1 -> LHipRoll -> l_hip_2 -> LHipPitch ->
@@ -52,6 +58,13 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   }
   Eigen::Isometry3d ankle_intersection = l_sole_goal;
   ankle_intersection.translate(ankle_intersection_point);
+  visual_tools_goal_->publishSphere(ankle_intersection_point);
+  visual_tools_sole_->publishSphere(ankle_intersection_point, rviz_visual_tools::RED);
+  ankle_ry_tf.header.frame_id = "base_link";
+  ankle_ry_tf.header.stamp = ros::Time::now();
+  ankle_ry_tf.child_frame_id = "ankle_ry";
+  ankle_ry_tf.transform = tf2::eigenToTransform(ankle_intersection).transform;
+
 
   // get rid of static transform between base_link and hip_RY_intersect
   Eigen::Isometry3d base_link_to_hip_1 = goal_state->getGlobalLinkTransform("l_hip_1");
@@ -72,17 +85,41 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   }
   Eigen::Isometry3d hip_ry_intersection = Eigen::Isometry3d::Identity();
   hip_ry_intersection.translate(hip_ry_intersection_point);
+  visual_tools_base_->publishSphere(hip_ry_intersection_point);
+  hip_ry_tf.header.frame_id = "base_link";
+  hip_ry_tf.header.stamp = ros::Time::now();
+  hip_ry_tf.child_frame_id = "hip_ry";
+  hip_ry_tf.transform = tf2::eigenToTransform(hip_ry_intersection).transform;
 
-  // now the goal describes the pose of the ankle_intersect in hip_RY_intersect frame
-  Eigen::Isometry3d goal = hip_ry_intersection.inverse() * ankle_intersection;
+  // now the hip_ry_to_ankle_intersect describes the pose of the ankle_intersect in hip_RY_intersect frame
+  Eigen::Isometry3d hip_ry_to_ankle_intersect = hip_ry_intersection.inverse() * ankle_intersection;
   // todo extracting euler angles do not work: they are not continuous
   Eigen::Vector3d goal_rpy = l_sole_goal.rotation().eulerAngles(0, 1, 2);
+  visual_tools_base_->publishLine(hip_ry_intersection.translation(), ankle_intersection.translation());
+  visual_tools_hip_ry_->publishAxis(hip_ry_to_ankle_intersect);
+
+  // compute AnkleRoll
+  /*// The rolls depend on the position of the ankle relative to the hip_ry_intersect, AFTER the yaw is applied.
+  // for that, we can just multiply the yaw because the origin is on the hip yaw rotation axis
+  Eigen::Isometry3d goal_with_yaw = Eigen::AngleAxisd(hip_yaw, Eigen::Vector3d::UnitZ()) * hip_ry_to_ankle_intersect;
+  // Create triangle in y,z dimension consisting of hip_ry_to_ankle_intersect position vector and the y and z axis (in hip_RY_intersect frame)
+  // Compute atan(hip_ry_to_ankle_intersect.y,hip_ry_to_ankle_intersect.z), this gives us the angle of the foot as if the hip_ry_to_ankle_intersect rotation would be zero.
+  double ankle_roll = std::atan2(goal_with_yaw.translation().y(), -goal_with_yaw.translation().z());
+  // This is only the angle coming from the hip_ry_to_ankle_intersect position. We need to simply add the hip_ry_to_ankle_intersect orientation in roll
+  // We can compute this joint angles without knowing the HipYaw value, since the position is not influenced by it.
+  // Because we use the exact intersection of HipYaw and HipRoll as a basis.*/
+  Eigen::Vector3d hip_to_ankle_translation = hip_ry_to_ankle_intersect.translation();
+  visual_tools_hip_ry_->publishLine({0,0,0}, hip_to_ankle_translation, rviz_visual_tools::YELLOW);
+  double ankle_roll = std::atan2(hip_to_ankle_translation.y(), -hip_to_ankle_translation.z());
+
+  ankle_roll -= goal_rpy.x();
+  goal_state->setJointPositions("LAnkleRoll", &ankle_roll);
 
   // We need to know the position of the HipPitch to compute the rest of the pitch joints.
   // Therefore we need to firstly compute the HipYaw joint, since it influences the position of the HipPitch
   // joint (as their axes do not intersect)
   // First we compute the plane of the leg (the plane in which all pitch joints are).
-  // This plane contains the goal position of the ankle_intersect. It can be defined by the normal which is the
+  // This plane contains the hip_ry_to_ankle_intersect position of the ankle_intersect. It can be defined by the normal which is the
   // Y axis in the ankle_intersect frame.
   // The hip_RY_intersect is also located on this plane.
   // We determine the intersection of this plane with the xy plane going through hip_ry_intersect
@@ -90,30 +127,22 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   // The intersection line can easily be computed with the cross product.
 
   // this is the rotational axis of the ankle pitch, todo get from urdf
-  ankle_pitch_axis = goal.rotation() * Eigen::Vector3d::UnitY();
+  ankle_pitch_axis = hip_ry_to_ankle_intersect.rotation() * (Eigen::AngleAxisd(ankle_roll, hip_ry_to_ankle_intersect.rotation() * Eigen::Vector3d::UnitX()) * Eigen::Vector3d::UnitY());
+  visual_tools_hip_ry_->publishLine({0,0,0}, ankle_pitch_axis, rviz_visual_tools::GREEN);
+  // project to xy plane
   Eigen::Vector3d line = ankle_pitch_axis.cross(Eigen::Vector3d::UnitZ());  // this is the normal of the xy plane
   double sign = std::copysign(1.0, ankle_pitch_axis.x());  // todo explain why we use x here
+  // calculate angle
   double hip_yaw = sign * std::acos(line.dot(Eigen::Vector3d::UnitX()) / line.norm());
   goal_state->setJointPositions("LHipYaw", &hip_yaw);
-
-  // compute AnkleRoll
-  // The rolls depend on the position of the ankle relative to the hip_ry_intersect, AFTER the yaw is applied.
-  // for that, we can just multiply the yaw because the origin is on the hip yaw rotation axis
-  Eigen::Isometry3d goal_with_yaw = Eigen::AngleAxisd(hip_yaw, Eigen::Vector3d::UnitZ()) * goal;
-  // Create triangle in y,z dimension consisting of goal position vector and the y and z axis (in hip_RY_intersect frame)
-  // Compute atan(goal.y,goal.z), this gives us the angle of the foot as if the goal rotation would be zero.
-  double ankle_roll = std::atan2(goal_with_yaw.translation().y(), -goal_with_yaw.translation().z());
-  // This is only the angle coming from the goal position. We need to simply add the goal orientation in roll
-  // We can compute this joint angles without knowing the HipYaw value, since the position is not influenced by it.
-  // Because we use the exact intersection of HipYaw and HipRoll as a basis.
-  ankle_roll -= goal_rpy.x();
-  goal_state->setJointPositions("LAnkleRoll", &ankle_roll);
+  visual_tools_hip_ry_->publishABCDPlane(ankle_pitch_axis.x(), ankle_pitch_axis.y(), ankle_pitch_axis.z(), 0);
 
   // Compute HipRoll
+  Eigen::Isometry3d goal_with_yaw = Eigen::AngleAxisd(hip_yaw, Eigen::Vector3d::UnitZ()) * hip_ry_to_ankle_intersect;
   double hip_roll = std::atan2(goal_with_yaw.translation().y(), -goal_with_yaw.translation().z());
   goal_state->setJointPositions("LHipRoll", &hip_roll);
 
-  // Represent the goal in the HipPitch frame. Subtract transform from hip_RY_intersect to HipPitch
+  // Represent the hip_ry_to_ankle_intersect in the HipPitch frame. Subtract transform from hip_RY_intersect to HipPitch
   goal_state->updateLinkTransforms();
   Eigen::Isometry3d base_link_to_hip_pitch = goal_state->getGlobalLinkTransform("l_upper_leg");
   l_sole_to_l_ankle = goal_state->getGlobalLinkTransform("l_sole").inverse() *
@@ -147,12 +176,18 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, robot_state::RobotStatePtr 
   knee += 15.0 / 180.0 * M_PI;
 
   double ankle_pitch = hip_pitch + knee_angle - M_PI;
-  // ankle pitch needs goal pitch
+  // ankle pitch needs hip_ry_to_ankle_intersect pitch
   ankle_pitch += goal_rpy.y();
 
   goal_state->setJointPositions("LHipPitch", &hip_pitch);
   goal_state->setJointPositions("LKnee", &knee);
   goal_state->setJointPositions("LAnklePitch", &ankle_pitch);
+
+  visual_tools_base_->trigger();
+  visual_tools_goal_->trigger();
+  visual_tools_sole_->trigger();
+  visual_tools_hip_ry_->trigger();
+  visual_tools_ankle_ry_->trigger();
 
   return true;
 }
@@ -200,4 +235,64 @@ bool IK::findIntersection(const Eigen::Vector3d &p1,
   return true;
 }
 
+}
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "tester");
+  ros::NodeHandle nh;
+  ros::Publisher p = nh.advertise<sensor_msgs::JointState>("/config/fake_controller_joint_states", 1, true);
+  tf2_ros::TransformBroadcaster br;
+
+  wolfgang_ik::IK ik;
+
+  Eigen::Isometry3d goal = Eigen::Isometry3d::Identity();
+  goal.translation().x() = std::stod(argv[1]);
+  goal.translation().y() = std::stod(argv[2]);
+  goal.translation().z() = std::stod(argv[3]);
+  Eigen::Quaterniond q = Eigen::AngleAxisd(std::stod(argv[4]), Eigen::Vector3d::UnitX())
+      * Eigen::AngleAxisd(std::stod(argv[5]), Eigen::Vector3d::UnitY())
+      * Eigen::AngleAxisd(std::stod(argv[6]), Eigen::Vector3d::UnitZ());
+  goal.matrix().block<3, 3>(0, 0) = Eigen::Matrix3d(q);
+  robot_model_loader::RobotModelLoader robot_model_loader("robot_description", false);
+  const robot_model::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
+  if (!kinematic_model) {
+    ROS_FATAL("No robot model loaded, unable to run IK");
+    exit(1);
+  }
+  robot_state::RobotStatePtr result;
+  result.reset(new robot_state::RobotState(kinematic_model));
+
+  geometry_msgs::TransformStamped hip_ry_tf, ankle_ry_tf;
+  ik.solve(goal, hip_ry_tf, ankle_ry_tf, result);
+  result->updateLinkTransforms();
+
+  Eigen::Isometry3d l_sole = result->getGlobalLinkTransform("l_sole");
+  std::cout << l_sole;
+
+  /*robot_state::RobotStatePtr truth;
+  truth.reset(new robot_state::RobotState(kinematic_model));
+  robot_model::JointModelGroup* left_leg_group = kinematic_model->getJointModelGroup("LeftLeg");
+  truth->setFromIK(left_leg_group, goal, 0.01);
+  for (const auto& j : left_leg_group->getJointModels()) {
+    std::cout << j->getName() << " should be " << *truth->getJointPositions(j)
+              << " but is " << *result->getJointPositions(j) << std::endl;
+  }*/
+
+  sensor_msgs::JointState joint_state;
+  joint_state.name = kinematic_model->getJointModelGroup("LeftLeg")->getJointModelNames();
+  result->copyJointGroupPositions("LeftLeg", joint_state.position);
+  p.publish(joint_state);
+
+  // publish goal as tf frame
+  geometry_msgs::TransformStamped goal_tf;
+  goal_tf.child_frame_id = "sole_goal";
+  goal_tf.header.stamp = ros::Time::now();
+  goal_tf.header.frame_id = "base_link";
+  goal_tf.transform = tf2::eigenToTransform(goal).transform;
+  while (ros::ok()) {
+    br.sendTransform(goal_tf);
+    br.sendTransform(hip_ry_tf);
+    br.sendTransform(ankle_ry_tf);
+    ros::Duration(0.01).sleep();
+  }
 }

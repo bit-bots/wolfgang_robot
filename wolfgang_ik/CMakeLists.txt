@@ -7,6 +7,9 @@ find_package(catkin REQUIRED COMPONENTS
   rotconv
   moveit_ros_planning
   bitbots_docs
+  rviz_visual_tools
+  tf2_ros
+  tf2_eigen
 )
 
 find_package(Eigen3 REQUIRED)
@@ -35,3 +38,11 @@ catkin_add_gtest(test_ik tests/test_ik.cpp)
 target_link_libraries(test_ik ${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 
 enable_bitbots_docs()
+
+add_executable(${PROJECT_NAME}_exec src/ik.cpp)
+
+
+target_link_libraries(${PROJECT_NAME}_exec
+  ${catkin_LIBRARIES}
+  ${Eigen3_LIBRARIES}
+  )

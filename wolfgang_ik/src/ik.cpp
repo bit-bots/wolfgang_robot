@@ -107,7 +107,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, geometry_msgs::TransformSta
   if (!success) {
     return false;
   }
-  Eigen::Vector3d hip_yaw_pitch_offset = hip_rp_intersection_point - hip_ry_intersection_point;
+  Eigen::Vector3d hip_yaw_pitch_offset = {(hip_rp_intersection_point - hip_ry_intersection_point).norm(), 0, 0};
 
   // now the hip_ry_to_ankle_intersect describes the pose of the ankle_intersect in hip_RY_intersect frame
   Eigen::Isometry3d hip_ry_to_ankle_intersect = hip_ry_intersection.inverse() * ankle_intersection;
@@ -179,6 +179,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, geometry_msgs::TransformSta
   rot_yaw = Eigen::AngleAxisd(yaw_angle, Eigen::Vector3d::UnitZ());
 
   // Determine the location of the intersection hip_roll/pitch in foot coordinates
+  visual_tools_hip_ry_->publishSphere(rot_yaw * hip_yaw_pitch_offset);
   Eigen::Vector3d pitch_goal_foot = rot_ankle_roll * footRot.transpose() * (-goal + rot_yaw * hip_yaw_pitch_offset);
   visual_tools_ankle_ry_->publishLine({0,0,0}, footRot.transpose() * pitch_goal_foot);
 
@@ -245,6 +246,7 @@ bool IK::solve(const Eigen::Isometry3d &l_sole_goal, geometry_msgs::TransformSta
 
   visual_tools_ankle_ry_->trigger();
   visual_tools_hip_ry_->trigger();
+  visual_tools_base_->trigger();
 
   return true;
 }

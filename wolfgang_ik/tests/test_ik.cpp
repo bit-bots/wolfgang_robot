@@ -1,8 +1,8 @@
 #include <wolfgang_ik/ik.h>
 #include <gtest/gtest.h>
 
-const double TRANSLATION_TOLERANCE = 0.01;
-const double ROTATION_TOLERANCE = 0.001;
+const double TRANSLATION_TOLERANCE = 0.1;
+const double ROTATION_TOLERANCE = 0.01;
 
 bool test_ik(const Eigen::Isometry3d &request, Eigen::Isometry3d &result) {
   wolfgang_ik::IK ik;
@@ -15,10 +15,13 @@ bool test_ik(const Eigen::Isometry3d &request, Eigen::Isometry3d &result) {
   }
   robot_state::RobotStatePtr state;
   state.reset(new robot_state::RobotState(kinematic_model));
-  bool success = ik.solve(request, state);
+  geometry_msgs::TransformStamped a, b;
+  bool success = ik.solve(request, a, b, state);
   state->updateLinkTransforms();
 
   result = state->getGlobalLinkTransform("l_sole");
+  std::cout << request;
+  std::cout << result;
   return success;
 }
 

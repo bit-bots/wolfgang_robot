@@ -53,21 +53,21 @@ class RobotController:
             accel_name = "imu accelerometer"
             gyro_name = "imu gyro"
             camera_name = "camera"
-            pressure_sensor_names = [] #["llb", "llf", "lrf", "lrb", "rlb", "rlf", "rrf", "rrb"]
+            pressure_sensor_names = []  # ["llb", "llf", "lrf", "lrb", "rlb", "rlf", "rrf", "rrb"]
             self.pressure_sensors = []
             for name in pressure_sensor_names:
                 sensor = self.robot_node.getDevice(name)
                 sensor.enable(self.timestep)
                 self.pressure_sensors.append(sensor)
 
-        elif robot == 'darwin':
+        elif robot == 'robotis_op2':
             self.motor_names = ["ShoulderR", "ShoulderL", "ArmUpperR", "ArmUpperL", "ArmLowerR", "ArmLowerL",
                                 "PelvYR", "PelvYL", "PelvR", "PelvL", "LegUpperR", "LegUpperL", "LegLowerR",
                                 "LegLowerL", "AnkleR", "AnkleL", "FootR", "FootL", "Neck", "Head"]
-            self.external_motor_names = ["RShoulderPitch", "LShoulderPitch", "RShoulderRoll", "LShoulderRoll", "RElbow",
-                                         "LElbow", "RHipYaw", "LHipYaw", "RHipRoll", "LHipRoll", "RHipPitch",
-                                         "LHipPitch", "RKnee", "LKnee", "RAnklePitch", "LAnklePitch", "RAnkleRoll",
-                                         "LAnkleRoll", "HeadPan", "HeadTilt"]
+            self.external_motor_names = ["r_sho_pitch", "l_sho_pitch", "r_sho_roll", "l_sho_roll", "RElbow","LElbow",
+                                         "r_hip_yaw", "LHipYaw", "r_hip_roll", "l_hip_roll", "r_hip_pitch", "l_hip_pitch",
+                                         "r_knee", "l_knee", "r_ank_pitch", "l_ank_pitch", "RAnkleRoll", "l_ank_roll",
+                                         "head_pan", "head_tilt"]
             sensor_postfix = "S"
             accel_name = "Accelerometer"
             gyro_name = "Gyro"
@@ -118,12 +118,12 @@ class RobotController:
         self.camera = self.robot_node.getDevice(camera_name)
         self.camera_counter = 0
         if self.camera_active:
-            self.camera.enable(self.timestep*CAMERA_DIVIDER)
+            self.camera.enable(self.timestep * CAMERA_DIVIDER)
         if self.recognize:
             self.camera.recognitionEnable(self.timestep)
             self.last_img_saved = 0.0
-            self.img_save_dir = "/tmp/webots/images" +\
-                                time.strftime("%Y-%m-%d-%H-%M-%S") +\
+            self.img_save_dir = "/tmp/webots/images" + \
+                                time.strftime("%Y-%m-%d-%H-%M-%S") + \
                                 os.getenv('WEBOTS_ROBOT_NAME')
             if not os.path.exists(self.img_save_dir):
                 os.makedirs(self.img_save_dir)
@@ -176,7 +176,7 @@ class RobotController:
             # start pose
             command = JointCommand()
             command.joint_names = ["r_sho_roll", "l_sho_roll"]
-            command.positions = [-math.tau/8, math.tau/8]
+            command.positions = [-math.tau / 8, math.tau / 8]
             self.command_cb(command)
 
     def mat_from_fov_and_resolution(self, fov, res):
@@ -310,28 +310,25 @@ class RobotController:
             size = recognized_objects[e].get_size_on_image()
             if model == b"soccer ball":
                 found_ball = True
-                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
                 annotation += f"{img_name}|"
                 annotation += "ball|"
                 annotation += vector
                 annotation += "\n"
             if model == b"wolfgang":
                 found_wolfgang = True
-                vector = f"""{{"x1": {position[0] - 0.5*size[0]}, "y1": {position[1] - 0.5*size[1]}, "x2": {position[0] + 0.5*size[0]}, "y2": {position[1] + 0.5*size[1]}}}"""
+                vector = f"""{{"x1": {position[0] - 0.5 * size[0]}, "y1": {position[1] - 0.5 * size[1]}, "x2": {position[0] + 0.5 * size[0]}, "y2": {position[1] + 0.5 * size[1]}}}"""
                 annotation += f"{img_name}|"
                 annotation += "robot|"
                 annotation += vector
                 annotation += "\n"
         if not found_ball:
-            annotation +=  f"{img_name}|ball|not in image\n"
+            annotation += f"{img_name}|ball|not in image\n"
         if not found_wolfgang:
             annotation += f"{img_name}|robot|not in image\n"
         with open(os.path.join(self.img_save_dir, "annotations.txt"), "a") as f:
             f.write(annotation)
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name), quality=100)
-
-
-
 
     def get_image(self):
         return self.camera.getImage()

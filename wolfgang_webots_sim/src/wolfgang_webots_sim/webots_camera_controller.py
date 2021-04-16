@@ -504,9 +504,6 @@ class CameraController:
         # if not in image: (name, False)
         # otherwise: (name, ((1,2), (2,3), (3,4), (4,5))
         # if multiple objects of the same type are present, then there will be multiple tuples starting with the same name
-        # Things to know: If e.g. a robot occludes the top bar, then there will be an individual top bar detection
-        #       on the right and left of the robot
-        #   If two of the same object are too close too each other, this method will treat them as a single object
         debug = False
 
         # find the colors by saving segmentation image and look at the values in gimp
@@ -547,7 +544,14 @@ class CameraController:
                 output.append({"type": key, "in_image": False})
 
             for cnt in contours:
-                rect = cv2.minAreaRect(cnt)
+                if key in ['left_goalpost_home', 'top_bar_home', 'right_goalpost_home',
+                           'left_goalpost_enemy', 'top_bar_enemy', 'right_goalpost_enemy']:
+                    rect = cv2.minAreaRect(cnt)
+                else:
+                    bound = cv2.boundingRect(cnt)
+                    # we format it so it is in the same format as cv2.minAreaRect
+                    rect = ((bound[0] + bound[2]/2, bound[1] + bound[3]/2), (bound[2], -bound[3]), 0.0)
+
                 box = cv2.boxPoints(rect)
 
                 # catch coordinates below zero

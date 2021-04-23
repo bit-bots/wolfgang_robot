@@ -37,6 +37,17 @@ PROTO FakeCamera [
             frameColor 0.929412 0.831373 0
             frameThickness 3
           }
+          name "camera"
+        }
+        RangeFinder {
+          rotation -0.57735027 0.57735027 0.57735027 -2.094395102393195
+          fieldOfView IS cameraFOV
+          width IS cameraWidth
+          height IS cameraHeight
+          near        0.01
+          minRange    0.01
+          maxRange    10.0
+          name "depth"
         }
       ]
   }

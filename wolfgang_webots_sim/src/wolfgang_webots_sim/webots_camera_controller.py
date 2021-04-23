@@ -75,6 +75,8 @@ class CameraController:
         self.robot_node = self.supervisor.getSelf()
         self.camera = self.supervisor.getDevice("camera")
         self.camera.enable(self.timestep)
+        self.depth = self.supervisor.getDevice("depth")
+        self.depth.enable(self.timestep)
         self.camera.recognitionEnable(self.timestep)
         self.camera.enableRecognitionSegmentation()
         self.last_img_saved = 0.0
@@ -87,11 +89,14 @@ class CameraController:
         self.robot_poses = []
         self.ball_positions = []
         self.annotations = []
-        self.img_save_dir = "img"
+        self.img_save_dir = "img/images"
+        self.seg_save_dir = "img/segmentations"
+        self.depth_save_dir = "img/depth"
         self.filenames = []
         self.intersections = []
         self.ball_in_image = True
         self.uniform_camera_position = True
+        self.i = 0
 
     def random_placement(self, size="kid"):
         # gleichverteilung über x und y, z: robot description
@@ -282,16 +287,24 @@ class CameraController:
         self.annotations = []
         self.filenames = []
         self.intersections = []
-        self.img_save_dir = folder
+        self.annotations = []
+        self.img_save_dir = os.path.join(folder, "images")
+        self.seg_save_dir = os.path.join(folder, "segmentations")
+        self.depth_save_dir = os.path.join(folder, "depth")
+
         if not os.path.exists(self.img_save_dir):
             os.makedirs(self.img_save_dir)
-        self.annotations = []
+        if not os.path.exists(self.seg_save_dir):
+            os.makedirs(self.seg_save_dir)
+        if not os.path.exists(self.depth_save_dir):
+            os.makedirs(self.depth_save_dir)
+
         for i in range(n):
             print(f"stepping... {i + 1}/{n}")
             self.step()
 
         images = self.generate_annotations()
-        f = open(folder + "/annotations.yaml", "w")
+        f = open(self.img_save_dir + "/annotations.yaml", "w")
         yaml.dump({"images": images}, f)
         f.close()
 
@@ -320,7 +333,8 @@ class CameraController:
                     [xmin, ymin] = np.min(a["vector"], axis=0)
                     [xmax, ymax] = np.max(a["vector"], axis=0)
                     vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
-                    new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector": vector})
+                    new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector": vector,
+                                            "robot_number" : int(a["type"][-1])})
                     found_robot = True
 
                 elif a["type"] == "ball" and a["in_image"]:
@@ -360,28 +374,25 @@ class CameraController:
             l_in_image = False
             current_intersections = self.intersections[i]
             for single_crossing in current_intersections["T"]:
-                new_annotations.append({"type":"T-Intersection", "in_image": True,
+                new_annotations.append({"type":"T-Intersection", "in_image": bool(single_crossing[2]),
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}},
-                                        "concealed": not bool(single_crossing[2])})
+                                             "z": float(0)}}})
                 t_in_image = True
             for single_crossing in current_intersections["X"]:
-                new_annotations.append({"type":"X-Intersection", "in_image": True,
+                new_annotations.append({"type":"X-Intersection", "in_image": bool(single_crossing[2]),
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}},
-                                        "concealed": not bool(single_crossing[2])})
+                                             "z": float(0)}}})
                 x_in_image = True
             for single_crossing in current_intersections["L"]:
-                new_annotations.append({"type":"L-Intersection", "in_image": True,
+                new_annotations.append({"type":"L-Intersection", "in_image": bool(single_crossing[2]),
                                         "vector": [[int(single_crossing[0][0]), int(single_crossing[0][1])]],
                                         "pose": {"position": {"x": float(single_crossing[1][0]),
                                              "y": float(single_crossing[1][1]),
-                                             "z": float(0)}},
-                                        "concealed": not bool(single_crossing[2])})
+                                             "z": float(0)}}})
                 l_in_image = True
 
             if not t_in_image:
@@ -399,9 +410,10 @@ class CameraController:
                                                 "z": float(self.camera_poses[i].orientation.z),
                                                 "w": float(self.camera_poses[i].orientation.w)}}
             metadata_dict = {"fov": float(self.fov[i]), "camera_pose": camera_pose_dict, "tags": ["simulation"],
-                             "location": "Webots"}
+                             "location": "Webots",}
 
-            images[self.filenames[i]] = {"annotations": new_annotations, "metadata": metadata_dict}
+            images[self.filenames[i]] = {"annotations": new_annotations, "metadata": metadata_dict,
+                                         "width": 1920, "height": 1080}
         return images
 
     def mat_from_fov_and_resolution(self, fov, res):
@@ -485,9 +497,9 @@ class CameraController:
 
     def save_recognition(self):
         img_stamp = f"{int(self.time * 1000):08d}"
-        img_name = f"img_fake_cam_{img_stamp}"
+        img_name = f"img_fake_cam_{self.i:06d}"
+        self.i += 1
 
-        self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         self.filenames.append((img_name + ".PNG"))
         seg_img_raw = self.camera.getRecognitionSegmentationImageArray()
         seg_img = np.array(seg_img_raw, dtype=np.uint8)
@@ -495,8 +507,13 @@ class CameraController:
         seg_img = np.swapaxes(seg_img, 0, 1)
         annotations = self.generatePolygonsFromSegmentation(seg_img)
 
-        self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.img_save_dir, img_name + "_seg.PNG"),
+
+        self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
+        self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.seg_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
+        self.depth.saveImage(filename=os.path.join(self.depth_save_dir, img_name + "_depth.PNG"), quality=100)
+        depth_array = self.depth.getRangeImageArray()
+        np.save(os.path.join(self.depth_save_dir, img_name + "_depth_raw"), depth_array, allow_pickle=False)
         return annotations, seg_img
 
     def generatePolygonsFromSegmentation(self, img):

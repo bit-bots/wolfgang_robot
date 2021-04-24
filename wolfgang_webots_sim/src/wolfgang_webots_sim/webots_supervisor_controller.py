@@ -4,6 +4,7 @@ import os
 import rospy
 from geometry_msgs.msg import Quaternion, PointStamped, Pose, Point, Twist
 from gazebo_msgs.msg import ModelStates
+from bitbots_msgs.msg import ModelStatesStamped
 from bitbots_msgs.srv import SetRobotPose
 
 from rosgraph_msgs.msg import Clock
@@ -71,7 +72,7 @@ class SupervisorController:
             if do_ros_init:
                 rospy.init_node("webots_ros_supervisor", argv=['clock:=' + clock_topic])
             self.clock_publisher = rospy.Publisher(clock_topic, Clock, queue_size=1)
-            self.model_state_publisher = rospy.Publisher(model_topic, ModelStates, queue_size=1)
+            self.model_state_publisher = rospy.Publisher(model_topic, ModelStatesStamped, queue_size=1)
             self.reset_service = rospy.Service(base_ns + "reset", Empty, self.reset)
             self.initial_poses_service = rospy.Service(base_ns + "initial_pose", Empty, self.set_initial_poses)
             self.set_robot_position_service = rospy.Service(base_ns + "set_robot_position", SetRobotPose,
@@ -196,6 +197,8 @@ class SupervisorController:
         return self.get_robot_position(name), self.get_robot_orientation_quat(name)
 
     def publish_model_states(self):
+
+        full_msg = ModelStatesStamped()
         msg = ModelStates()
         for robot_name, robot_node in self.robot_nodes.items():
             position, orientation = self.get_robot_pose_quat(name=robot_name)
@@ -222,4 +225,6 @@ class SupervisorController:
         ball_pose.orientation = Quaternion()
         msg.name.append("ball")
         msg.pose.append(ball_pose)
-        self.model_state_publisher.publish(msg)
+        full_msg.ms = msg
+        full_msg.header.stamp = rospy.Time.from_seconds(self.time)
+        self.model_state_publisher.publish(full_msg)

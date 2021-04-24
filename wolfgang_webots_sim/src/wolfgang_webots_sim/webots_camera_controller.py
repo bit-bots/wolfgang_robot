@@ -97,6 +97,14 @@ class CameraController:
         self.ball_in_image = True
         self.uniform_camera_position = True
         self.i = 0
+        self.poses = {}
+        wolfgang_poses = None
+        with open("wolfgang_poses.yaml", "r") as f:
+            wolfgang_poses = yaml.load(f, Loader=yaml.Loader)
+
+        for r in self.robot_names[:3]:
+            self.poses[r] = wolfgang_poses
+
 
     def random_placement(self, size="kid"):
         # gleichverteilung über x und y, z: robot description
@@ -208,6 +216,17 @@ class CameraController:
             orientation[2] += np.random.normal(0, np.pi/2)
         else:
             orientation[2] = random.random() * math.pi * 2 - math.pi
+
+        if name in self.poses.keys():
+            for joint_name, initial_rot in self.poses[name]["initial_rot"].items():
+                rot_axis = self.poses[name]["axes"][joint_name]
+                rotation = math.radians(self.poses[name]["poses"][0][joint_name])
+                initial_rot_mat = transforms3d.axangles.axangle2mat(axis=initial_rot[:3], angle=initial_rot[3])
+                joint_rot_mat = transforms3d.axangles.axangle2mat(axis=rot_axis, angle=rotation)
+                combined_rot_mat = np.matmul(joint_rot_mat, initial_rot_mat)
+                axis, angle = transforms3d.axangles.mat2axangle(combined_rot_mat)
+                print(joint_name)
+                self.robot_nodes[name].getField(joint_name + "Rot").setSFRotation([*axis, angle])
 
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]

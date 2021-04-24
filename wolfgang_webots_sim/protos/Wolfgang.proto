@@ -17,6 +17,26 @@ PROTO Wolfgang [
   field  SFBool      synchronization TRUE        # Is `Robot.synchronization`.
   field  SFBool      selfCollision   FALSE       # Is `Robot.selfCollision`.
   field  SFFloat     cameraFOV       1.04
+  field  SFRotation  RShoulderPitchRot 0.000000 0.000000 -1.000000 3.141590
+  field  SFRotation  RShoulderRollRot 0.577350 -0.577352 -0.577350 2.094399
+  field  SFRotation  RElbowRot -0.577350 0.577352 -0.577350 2.094399
+  field  SFRotation  LShoulderPitchRot -0.000001 -1.000000 0.000001 3.141593
+  field  SFRotation  LShoulderRollRot -0.577350 -0.577352 0.577350 2.094399
+  field  SFRotation  LElbowRot -0.577350 -0.577352 0.577350 2.094399
+  field  SFRotation  RHipYawRot -1.000000 -0.000000 0.000000 1.570800
+  field  SFRotation  RHipRollRot -0.707105 0.000001 0.707108 3.141591
+  field  SFRotation  RHipPitchRot -0.577350 0.577350 0.577352 2.094399
+  field  SFRotation  RKneeRot 0.000000 -1.000000 -0.000000 0.261799
+  field  SFRotation  RAnklePitchRot -1.000000 0.000000 0.000000 1.570800
+  field  SFRotation  RAnkleRollRot 0.572979 0.572976 -0.585998 2.081475
+  field  SFRotation  LHipYawRot -1.000000 -0.000000 0.000000 1.570800
+  field  SFRotation  LHipRollRot 0.707105 0.000001 -0.707108 3.141591
+  field  SFRotation  LHipPitchRot 0.000000 -1.000000 0.000000 1.570800
+  field  SFRotation  LKneeRot 0.092693 0.704064 0.704061 2.956736
+  field  SFRotation  LAnklePitchRot -0.000001 -0.707108 0.707105 3.141591
+  field  SFRotation  LAnkleRollRot 0.577350 -0.577350 0.577352 2.094399
+  field  SFRotation  HeadPanRot -1.000000 0.000000 0.000000 3.141590
+  field  SFRotation  HeadTiltRot -1.000000 0.000000 -0.000000 1.570800
 ]
 {
   Robot {
@@ -334,7 +354,7 @@ PROTO Wolfgang [
         ]
         endPoint DEF r_shoulder Solid {
           translation -0.001500 -0.076500 0.203500
-          rotation 0.000000 0.000000 -1.000000 3.141590
+          rotation IS RShoulderPitchRot
           children [
             Transform {
               translation -0.025950 0.042000 0.000000
@@ -380,7 +400,7 @@ PROTO Wolfgang [
               ]
               endPoint DEF r_upper_arm Solid {
                 translation -0.016950 0.042000 0.000000
-                rotation 0.577350 -0.577352 -0.577350 2.094399
+                rotation IS RShoulderRollRot
                 children [
                   Transform {
                     translation 0.000000 0.000000 -0.023500
@@ -451,7 +471,7 @@ PROTO Wolfgang [
                     ]
                     endPoint DEF r_lower_arm Solid {
                       translation 0.024000 -0.144000 -0.023500
-                      rotation -0.577350 0.577352 -0.577350 2.094399
+                      rotation IS RElbowRot
                       children [
                         Transform {
                           translation 0.000000 -0.163682 -0.006500
@@ -786,7 +806,7 @@ PROTO Wolfgang [
         ]
         endPoint DEF l_shoulder Solid {
           translation -0.001500 0.076500 0.203500
-          rotation -0.000001 -1.000000 0.000001 3.141593
+          rotation IS LShoulderPitchRot
           children [
             Transform {
               translation -0.025950 0.042000 -0.000000
@@ -832,7 +852,7 @@ PROTO Wolfgang [
               ]
               endPoint DEF l_upper_arm Solid {
                 translation -0.016950 0.042000 -0.000000
-                rotation -0.577350 -0.577352 0.577350 2.094399
+                rotation IS LShoulderRollRot
                 children [
                   Transform {
                     translation 0.000000 0.000000 -0.023500
@@ -903,7 +923,7 @@ PROTO Wolfgang [
                     ]
                     endPoint DEF l_lower_arm Solid {
                       translation -0.024000 -0.144000 -0.023500
-                      rotation -0.577350 -0.577352 0.577350 2.094399
+                      rotation IS LElbowRot
                       children [
                         Transform {
                           translation 0.000000 -0.000000 -0.023500
@@ -1238,7 +1258,7 @@ PROTO Wolfgang [
         ]
         endPoint DEF r_hip_1 Solid {
           translation 0.000000 -0.055000 0.000000
-          rotation -1.000000 -0.000000 0.000000 1.570800
+          rotation IS RHipYawRot
           children [
             Transform {
               translation 0.000000 -0.000600 -0.018000
@@ -1269,7 +1289,7 @@ PROTO Wolfgang [
               ]
               endPoint DEF r_hip_2 Solid {
                 translation -0.046000 0.041400 0.000000
-                rotation -0.707105 0.000001 0.707108 3.141591
+                rotation IS RHipRollRot
                 children [
                   Transform {
                     translation 0.000000 0.000000 -0.026000
@@ -1332,7 +1352,7 @@ PROTO Wolfgang [
                     ]
                     endPoint DEF r_upper_leg Solid {
                       translation -0.026500 -0.000000 -0.069100
-                      rotation -0.577350 0.577350 0.577352 2.094399
+                      rotation IS RHipPitchRot
                       children [
                         Transform {
                           translation 0.018236 -0.022653 -0.130164
@@ -1426,7 +1446,7 @@ PROTO Wolfgang [
                           ]
                           endPoint DEF r_lower_leg Solid {
                             translation -0.003923 -0.051000 -0.169043
-                            rotation 0.000000 -1.000000 -0.000000 0.261799
+                            rotation IS RKneeRot
                             children [
                               Transform {
                                 translation 0.027970 0.068019 -0.154130
@@ -1513,7 +1533,7 @@ PROTO Wolfgang [
                                 ]
                                 endPoint DEF r_ankle Solid {
                                   translation 0.000000 0.050500 -0.170000
-                                  rotation -1.000000 0.000000 0.000000 1.570800
+                                  rotation IS RAnklePitchRot
                                   children [
                                     Transform {
                                       translation -0.026100 -0.021000 -0.040500
@@ -1576,7 +1596,7 @@ PROTO Wolfgang [
                                       ]
                                       endPoint DEF r_foot Solid {
                                         translation -0.069100 -0.000000 -0.026000
-                                        rotation 0.572979 0.572976 -0.585998 2.081475
+                                        rotation IS RAnkleRollRot
                                         children [
                                           Transform {
                                             translation -0.030000 0.006500 -0.034000
@@ -2313,7 +2333,7 @@ PROTO Wolfgang [
         ]
         endPoint DEF l_hip_1 Solid {
           translation 0.000000 0.055000 -0.000000
-          rotation -1.000000 -0.000000 0.000000 1.570800
+          rotation IS LHipYawRot
           children [
             Transform {
               translation 0.000000 -0.000600 -0.018000
@@ -2344,7 +2364,7 @@ PROTO Wolfgang [
               ]
               endPoint DEF l_hip_2 Solid {
                 translation -0.046000 0.041400 0.000000
-                rotation 0.707105 0.000001 -0.707108 3.141591
+                rotation IS LHipRollRot
                 children [
                   Transform {
                     translation 0.014500 0.007000 -0.043000
@@ -2407,7 +2427,7 @@ PROTO Wolfgang [
                     ]
                     endPoint DEF l_upper_leg Solid {
                       translation 0.026000 0.000000 -0.069100
-                      rotation 0.000000 -1.000000 0.000000 1.570800
+                      rotation IS LHipPitchRot
                       children [
                         Transform {
                           translation -0.018236 -0.130164 0.028347
@@ -2501,7 +2521,7 @@ PROTO Wolfgang [
                           ]
                           endPoint DEF l_lower_leg Solid {
                             translation 0.004356 -0.168793 0.049000
-                            rotation 0.092693 0.704064 0.704061 2.956736
+                            rotation IS LKneeRot
                             children [
                               Transform {
                                 translation 0.000000 0.003500 0.170000
@@ -2588,7 +2608,7 @@ PROTO Wolfgang [
                                 ]
                                 endPoint DEF l_ankle Solid {
                                   translation 0.000000 -0.050500 -0.170000
-                                  rotation -0.000001 -0.707108 0.707105 3.141591
+                                  rotation IS LAnklePitchRot
                                   children [
                                     Transform {
                                       translation 0.026100 0.007000 -0.040500
@@ -2651,7 +2671,7 @@ PROTO Wolfgang [
                                       ]
                                       endPoint DEF l_foot Solid {
                                         translation 0.069100 0.000000 -0.026000
-                                        rotation 0.577350 -0.577350 0.577352 2.094399
+                                        rotation IS LAnkleRollRot
                                         children [
                                           Transform {
                                             translation -0.060000 0.163500 -0.034000
@@ -3391,7 +3411,7 @@ PROTO Wolfgang [
         ]
         endPoint DEF neck Solid {
           translation -0.009500 0.000000 0.234500
-          rotation -1.000000 0.000000 0.000000 3.141590
+          rotation IS HeadPanRot
           children [
             Transform {
               translation 0.003500 0.000000 -0.009300
@@ -3430,7 +3450,7 @@ PROTO Wolfgang [
               ]
               endPoint DEF head Solid {
                 translation 0.036000 0.023500 -0.024000
-                rotation -1.000000 0.000000 -0.000000 1.570800
+                rotation IS HeadTiltRot
                 children [
                   Transform {
                     translation 0.043200 0.079500 -0.023500

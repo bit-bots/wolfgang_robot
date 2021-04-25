@@ -3,6 +3,7 @@ from controller import Supervisor
 import transforms3d
 import numpy as np
 import math
+import random
 
 class PosePlayController:
     def __init__(self, file):
@@ -18,8 +19,8 @@ class PosePlayController:
         input("Enter to start...")
         for n in range(len(p["poses"])):
             self.play_nth(n)
-            s.step(int(s.getBasicTimeStep()))
-            s.step(int(s.getBasicTimeStep()))
+            for i in range(5):
+                s.step(int(s.getBasicTimeStep())) # hopefully this will cause the webots window to update...
             i = input(f"{n}: {p['poses'][n]['motion']} pose")
             if i == "d":
                 to_delete.append(n)
@@ -65,4 +66,4 @@ class PosePlayController:
     def set_robot_position(self, pos, name="amy"):
         self.robot_nodes[name].getField("translation").setSFVec3f(list(pos))
 
-p = PosePlayController("capture_kick.yaml_new")
+p = PosePlayController("capture_kick.yaml")

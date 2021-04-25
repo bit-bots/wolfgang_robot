@@ -16,13 +16,16 @@ class Capture:
         ts.registerCallback(self.cb)
         #s = Robot()
         #timestep = int(s.getBasicTimeStep())
+        move_dict = {"w" : "walking", "k": "kicking", "f": "falling", "F": "fallen", "s": "standup", "r": "standing"}
         pose_dict = {}
         pose_dict["poses"] = []
         print("press enter to capture pose, press s to step once, d to step 10 times, f to step 100 q to quit: ")
         while (1):
             i = input("...: ")
-            if i == "":
+            # todo different keys to annotate different situations (fallen walk bla bla)
+            if i in move_dict.keys():
                 single_pose = {}
+                single_pose["motion"] = move_dict[i]
                 for i,name in enumerate(self.current_js.name):
                     single_pose[str(name)] = float(self.current_js.position[i])
                 single_pose["pose"] = {"position": {"x": float(self.current_pose.position.x),

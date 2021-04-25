@@ -46,6 +46,9 @@ L_INTERSECTIONS = [[-4.5 + LINE_WIDTH_HALF, -3 + LINE_WIDTH_HALF],
                    [2.5 + LINE_WIDTH_HALF, 2.5 - LINE_WIDTH_HALF],
                    ]
 
+POSE_CHOICES = ["walking", "kicking", "falling", "fallen", "standup", "standing"]
+POSE_PROBAB  = [0.5, 0.1, 0.05, 0.05, 0.1, 0.2]
+
 
 class CameraController:
     def __init__(self):
@@ -178,16 +181,16 @@ class CameraController:
         num_strikers_blue = 3  # random.randint(0, 3)
         num_defenders_red = 2 - num_strikers_red
         num_defenders_blue = 3 - num_strikers_blue
-        positions = {"RED1": [goalie_pos_red, goalie_rpy_red], "BLUE1": [goalie_pos_blue, goalie_rpy_blue]}
+        positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
         for i in range(num_strikers_red):
             name = "RED" + str(i + 2)
-            r = self.place_striker(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
-            positions[name] = r
+            r,p = self.place_striker(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
+            positions[name] = (r,p)
         for i in range(num_strikers_blue):
             name = "BLUE" + str(i + 2)
-            r = self.place_striker(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
+            r,p = self.place_striker(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
                                    positions)
-            positions[name] = r
+            positions[name] = (r,"standing")
 
         for i in range(num_defenders_red):
             self.place_defender("RED" + str(num_strikers_red + i + 2), "RED", robot_height_red, [0.0, 0.0, 0.0],
@@ -200,7 +203,6 @@ class CameraController:
 
     def place_striker(self, name, ball_pos, height, orientation, other_positions):
         robot_pos = Point(ball_pos.x, ball_pos.y, ball_pos.z)
-        # TODO collision check with other robots (lt < 0.2 m away or something like that)
         while True:
             preliminary_pos_x = robot_pos.x + np.random.normal(0, 2)
             preliminary_pos_y = robot_pos.x + np.random.normal(0, 2)
@@ -216,24 +218,38 @@ class CameraController:
             orientation[2] += np.random.normal(0, np.pi/2)
         else:
             orientation[2] = random.random() * math.pi * 2 - math.pi
-
+        pose_choice = "standing"
         if name in self.poses.keys():
+            pose_choice = np.random.choice(POSE_CHOICES, size=1, p=POSE_PROBAB)[0]
+            current_pose = None
+            while current_pose is None:
+                pick = random.randint(0, len(self.poses[name]["poses"]) - 1)
+                if self.poses[name]["poses"][pick]["motion"] == pose_choice:
+                    current_pose = self.poses[name]["poses"][pick]
+            # set joints
             for joint_name, initial_rot in self.poses[name]["initial_rot"].items():
                 rot_axis = self.poses[name]["axes"][joint_name]
-                rotation = math.radians(self.poses[name]["poses"][0][joint_name])
+                rotation = current_pose[joint_name]
+                # todo save to yaml what pose is used for which robot
                 initial_rot_mat = transforms3d.axangles.axangle2mat(axis=initial_rot[:3], angle=initial_rot[3])
                 joint_rot_mat = transforms3d.axangles.axangle2mat(axis=rot_axis, angle=rotation)
                 combined_rot_mat = np.matmul(joint_rot_mat, initial_rot_mat)
                 axis, angle = transforms3d.axangles.mat2axangle(combined_rot_mat)
-                print(joint_name)
                 self.robot_nodes[name].getField(joint_name + "Rot").setSFRotation([*axis, angle])
-
+            # set rpy
+            robot_pose_conf = current_pose["pose"]
+            robot_pos.z = robot_pose_conf["position"]["z"]
+            orientation_conf = [robot_pose_conf["orientation"]["w"], robot_pose_conf["orientation"]["x"],
+                           robot_pose_conf["orientation"]["y"], robot_pose_conf["orientation"]["z"]]
+            rpy = transforms3d.euler.quat2euler(orientation_conf)
+            orientation[0] = rpy[0]
+            orientation[1] = rpy[1]
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
-        return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation]
+        return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation], str(pose_choice)
 
     def position_collides(self, x, y, others, name):
         for k,o in others.items():
-            if math.sqrt((x-o[0][0]) ** 2 + (y - o[0][1]) ** 2) < 0.2:
+            if math.sqrt((x-o[0][0][0]) ** 2 + (y - o[0][0][1]) ** 2) < 0.2:
                 return True
         return False
 
@@ -344,11 +360,12 @@ class CameraController:
             found_horizontal_goalpost = False
             for a in current_annotation:
                 if a["type"] in robot_equivalent and a["in_image"]:
-                    current_pose = self.robot_poses[i][a["type"]]
+                    current_pose = self.robot_poses[i][a["type"]][0]
                     quat = transforms3d.euler.euler2quat(*current_pose[1])
                     pose_dict = {"position": {"x": float(current_pose[0][0]), "y": float(current_pose[0][1]), "z": 0},
                                  "orientation": {"x": float(quat[1]), "y": float(quat[2]), "z": float(quat[3]),
-                                                 "w": float(quat[0])}}
+                                                 "w": float(quat[0])},
+                                 "motion": self.robot_poses[i][a["type"]][1]}
                     [xmin, ymin] = np.min(a["vector"], axis=0)
                     [xmax, ymax] = np.max(a["vector"], axis=0)
                     vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]

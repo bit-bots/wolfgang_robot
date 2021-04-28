@@ -370,7 +370,7 @@ class CameraController:
                     [xmax, ymax] = np.max(a["vector"], axis=0)
                     vector = [[int(xmin), int(ymin)], [int(xmax), int(ymax)]]
                     new_annotations.append({"type": "robot", "in_image": True, "pose": pose_dict, "vector": vector,
-                                            "robot_number" : int(a["type"][-1])})
+                                            "robot_number" : int(a["type"][-1]), "color": "red" if "RED" in a["type"] else "blue"})
                     found_robot = True
 
                 elif a["type"] == "ball" and a["in_image"]:

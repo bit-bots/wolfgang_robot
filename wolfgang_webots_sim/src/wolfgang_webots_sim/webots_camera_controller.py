@@ -549,7 +549,7 @@ class CameraController:
                                                      quality=100)
         self.depth.saveImage(filename=os.path.join(self.depth_save_dir, img_name + "_depth.PNG"), quality=100)
         depth_array = self.depth.getRangeImageArray()
-        np.save(os.path.join(self.depth_save_dir, img_name + "_depth_raw"), depth_array, allow_pickle=False)
+        np.savez_compressed(os.path.join(self.depth_save_dir, img_name + "_depth_raw"), depth_array, allow_pickle=False)
         return annotations, seg_img
 
     def generatePolygonsFromSegmentation(self, img):

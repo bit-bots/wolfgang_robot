@@ -349,7 +349,7 @@ class CameraController:
                          "left_goalpost_enemy", "right_goalpost_enemy", ]
         hb_equivalent = ["top_bar_enemy", "top_bar_home"]
         gp_poses = [[-4.475, -1.3, 0], [-4.475, 1.3, 0], [4.475, -1.3, 0], [4.475, 1.3, 0]]
-        hb_poses = [[0, -4.5, 1.25], [0, -4.5, 1.25]]
+        hb_poses = [[4.475, 0, 1.25], [-4.475, 0, 1.25]]
         images = {}
         for i in range(len(self.filenames)):
             current_annotation = self.annotations[i]
@@ -561,12 +561,11 @@ class CameraController:
 
         # find the colors by saving segmentation image and look at the values in gimp
         # we don't automatically generate a line for the field, we only offer that in the segmentation image
-        colors = {"left_goalpost_home": (128, 25, 51), "top_bar_home": (128, 51, 51),
-                  "right_goalpost_home": (128, 51, 25),
+        colors = {"left_goalpost_home": (127, 25, 51), "top_bar_home": (127, 51, 51),"right_goalpost_home": (127, 51, 25),
                   "left_goalpost_enemy": (0, 25, 51), "top_bar_enemy": (0, 51, 51), "right_goalpost_enemy": (0, 51, 25),
                   "BLUE1": (25, 25, 255), "BLUE2": (51, 25, 255), "BLUE3": (25, 51, 255), "BLUE4": (51, 51, 255),
                   "RED1": (255, 25, 25), "RED2": (255, 51, 25), "RED3": (255, 25, 51), "RED4": (255, 51, 51),
-                  "ball": (128, 128, 128)}
+                  "ball": (127, 127, 127)}
 
 
         # cv2.imwrite("/tmp/foo.png", img)

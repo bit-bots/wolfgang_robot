@@ -548,15 +548,10 @@ class CameraController:
 
     def step(self):
         self.random_placement()
-        print(1)
         self.step_sim()
-        print(2)
         recog, seg_img = self.save_recognition()
-        print(3)
         self.annotations.append(recog)
-        print(4)
         self.intersections.append(self.check_intersections_in_image(seg_img))
-        print(5)
 
     def reset_robot_pose(self, pos, quat, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
@@ -624,26 +619,19 @@ class CameraController:
         img_stamp = f"{int(self.time * 1000):08d}"
         img_name = f"img_fake_cam_{self.i:06d}"
         self.i += 1
-        print(2.1)
         self.filenames.append((img_name + ".PNG"))
         self.camera = self.supervisor.getDevice("camera")
-        print("blubs")
         seg_img_raw = self.camera.getRecognitionSegmentationImageArray()
-        print("2.2.2.")
         seg_img = np.array(seg_img_raw, dtype=np.uint8)
-        print(2.12)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         seg_img = np.swapaxes(seg_img, 0, 1)
         annotations = self.generatePolygonsFromSegmentation(seg_img)
 
-        print(2.2)
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.seg_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
-        print(2.3)
         self.depth.saveImage(filename=os.path.join(self.depth_save_dir, img_name + "_depth.PNG"), quality=100)
         depth_array = self.depth.getRangeImageArray()
-        print(2.4)
         np.savez_compressed(os.path.join(self.depth_save_dir, img_name + "_depth_raw"), depth_array, allow_pickle=False)
         return annotations, seg_img
 

@@ -245,7 +245,7 @@ class CameraController:
         goalie_rpy_blue = [0.0, 0.0, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         _, goalie_pos_blue, goalie_rpy_blue = self.set_pose("BLUE1", goalie_pos_blue, goalie_rpy_blue)
         goalie_pos_blue = [goalie_pos_blue.x, goalie_pos_blue.y, goalie_pos_blue.z]
-        self.reset_robot_pose_rpy(goalie_rpy_blue, goalie_rpy_blue, name="BLUE1")
+        self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
         positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
         for i in range(2 if self.red_is_cam else 3):

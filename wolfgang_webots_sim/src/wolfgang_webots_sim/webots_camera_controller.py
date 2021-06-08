@@ -100,7 +100,7 @@ class CameraController:
         with open("wolfgang_poses.yaml", "r") as f:
             wolfgang_poses = yaml.load(f, Loader=yaml.Loader)
 
-        for r in self.robot_names[:3]:
+        for r in self.robot_names:
             self.poses[r] = wolfgang_poses
 
         self.robots = []

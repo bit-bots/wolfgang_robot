@@ -833,5 +833,5 @@ def generate_all_images(controller, num_per_individual_set):
     num_combinations = comb(len(controller.robots), 2, exact=True)
     for i, (team_a, team_b) in enumerate(permutations):
         print(f"Starting matchup {team_a} vs {team_b} which is {i}/{num_combinations}")
-        controller.generate_scene_and_images(team_a, team_a, num_per_individual_set)
+        controller.generate_scene_and_images(team_a, team_b, num_per_individual_set)
     print("Finished")

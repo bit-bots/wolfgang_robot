@@ -11,7 +11,7 @@ robots:
   - proto: "Bez"
     poses: ""
     height: 0.37
-  - proto: "GankenKun"
+  - proto: "RoboCup_GankenKun"
     poses: ""
     height: 0.44
   - proto: "RFCRobot2016"

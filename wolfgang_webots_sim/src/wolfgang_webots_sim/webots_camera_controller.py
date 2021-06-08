@@ -1,3 +1,5 @@
+import itertools
+
 from controller import Robot, Node, Supervisor, Field
 
 import os
@@ -8,6 +10,7 @@ import time
 
 from geometry_msgs.msg import Point, Pose
 from skimage.morphology import convex_hull_image
+from scipy.special import comb
 
 import transforms3d
 import numpy as np
@@ -823,3 +826,12 @@ class CameraController:
         return res > thresh
 
 c = CameraController()
+
+
+def generate_all_images(controller, num_per_individual_set):
+    permutations = itertools.permutations(range(len(controller.robots)), 2)
+    num_combinations = comb(len(controller.robots), 2, exact=True)
+    for i, (team_a, team_b) in enumerate(permutations):
+        print(f"Starting matchup {team_a} vs {team_b} which is {i}/{num_combinations}")
+        controller.generate_scene_and_images(team_a, team_a, num_per_individual_set)
+    print("Finished")

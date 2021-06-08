@@ -230,6 +230,7 @@ class CameraController:
                 goalie_y_red = goalie_y_red_prelim
         goalie_pos_red = [x_range[0] + 0.5, goalie_y_red, robot_height_red]
         goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
+        _, goalie_pos_red, goalie_rpy_red = self.set_pose("RED1", goalie_pos_red, goalie_rpy_red)
         self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
 
         robot_height_blue = self.robots[self.current_blue_robot]["height"]
@@ -240,6 +241,7 @@ class CameraController:
                 goalie_y_blue = goalie_y_blue_prelim
         goalie_pos_blue = [x_range[1] - 0.5, goalie_y_blue, robot_height_blue]
         goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
+        _, goalie_pos_blue, goalie_rpy_blue = self.set_pose("BLUE1", goalie_pos_blue, goalie_rpy_blue)
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
         positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
@@ -273,9 +275,14 @@ class CameraController:
             orientation[2] += np.random.normal(0, np.pi/2)
         else:
             orientation[2] = random.random() * math.pi * 2 - math.pi
+
+        pose_choice, robot_pos, orientation = self.set_pose(name, robot_pos, orientation)
+
+        self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
+        return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation], str(pose_choice)
+
+    def set_pose(self, name, robot_pos, orientation):
         pose_choice = "standing"
-
-
         if (name.startswith("RED") and self.current_red_robot == 0) or \
            (name.startswith("BLUE") and self.current_blue_robot == 0):
             # wolfgang goalie: walkready
@@ -307,9 +314,7 @@ class CameraController:
             rpy = transforms3d.euler.quat2euler(orientation_conf)
             orientation[0] = rpy[0]
             orientation[1] = rpy[1]
-
-        self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
-        return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation], str(pose_choice)
+        return pose_choice, robot_pos, orientation
 
     def position_collides(self, x, y, others, name):
         for k,o in others.items():

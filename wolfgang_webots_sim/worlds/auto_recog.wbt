@@ -1,0 +1,56 @@
+#VRML_SIM R2021b utf8
+WorldInfo {
+  info [
+    "Description: official soccer simulation for the 2021 Robocup Virtual Humanoid League (kid size)"
+    "Version 0.2"
+  ]
+  title "Robocup V-HL Kid"
+  basicTimeStep 8
+  physicsDisableTime 0.1
+  physicsDisableLinearThreshold 0.1
+  physicsDisableAngularThreshold 0.1
+  contactProperties [
+    ContactProperties {
+      material1 "grass"
+      coulombFriction [
+        0.5
+      ]
+      softCFM 0.03
+    }
+    ContactProperties {
+      material1 "grass"
+      material2 "robocup soccer ball"
+      coulombFriction [
+        0.5
+      ]
+      bounce 0.76
+      softCFM 0.05
+    }
+    ContactProperties {
+      material2 "robocup soccer ball"
+      bounce 0.76
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.13549224410040658 0.501405702260295 0.8545374032360995 2.6877140306869225
+  position 7.0342461926629 12.68652449335837 7.567902371553636
+}
+TexturedBackground {
+  texture "stadium_dry"
+}
+TexturedBackgroundLight {
+  texture "stadium_dry"
+}
+RobocupSoccerField {
+  translation 0 -0.06 0
+  size "kid"
+}
+DEF FakeCamera FakeCamera {
+  controller "<extern>"
+  supervisor TRUE
+  cameraFOV 1.377667195453942
+}
+DEF ball RobocupSoccerBall {
+  translation 0 0 0.08
+}

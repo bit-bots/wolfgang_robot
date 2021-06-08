@@ -95,6 +95,7 @@ class CameraController:
         self.uniform_camera_position = True
         self.i = 0
         self.poses = {}
+        self.red_is_cam = False
         wolfgang_poses = None
         with open("wolfgang_poses.yaml", "r") as f:
             wolfgang_poses = yaml.load(f, Loader=yaml.Loader)
@@ -114,10 +115,12 @@ class CameraController:
 
 
     def generate_scene_and_images(self, robot_one, robot_two, num_images_tw):
+
+        self.red_is_cam = True
         self.current_blue_robot = robot_one
         self.current_red_robot = robot_two
         print("Setting up world for robot one as red, robot two as blue and camera in red team")
-        self.setup_world(red_is_cam=True)
+        self.setup_world()
         print("in image far (1/16)")
         self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
         print("in image close (2/16)")
@@ -131,7 +134,7 @@ class CameraController:
         self.current_blue_robot = robot_two
         self.current_red_robot = robot_one
         print("Setting up world for robot one as blue, robot two as red and camera in red team")
-        self.setup_world(red_is_cam=True)
+        self.setup_world()
         print("in image far (5/16)")
         self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
         print("in image close (6/16)")
@@ -142,6 +145,7 @@ class CameraController:
         self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_not_in_image_close", False, False)
         self.remove_robots()
 
+        self.red_is_cam = False
         self.current_blue_robot = robot_one
         self.current_red_robot = robot_two
         print("Setting up world for robot one as red, robot two as blue and camera in blue team")
@@ -239,11 +243,11 @@ class CameraController:
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
         positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
-        for i in range(2):
+        for i in range(2 if self.red_is_cam else 3):
             name = "RED" + str(i + 2)
             r,p = self.place_field_player(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
             positions[name] = (r,p)
-        for i in range(2):
+        for i in range(3 if self.red_is_cam else 2):
             name = "BLUE" + str(i + 2)
             r,p = self.place_field_player(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
                                           positions)
@@ -367,10 +371,10 @@ class CameraController:
         for _ in range(7):
             children.removeMF(-1)
 
-    def setup_world(self, red_is_cam):
+    def setup_world(self):
         children = self.supervisor.getRoot().getField('children')
-        num_red_bots = 3 if red_is_cam else 4
-        num_blue_bots = 4 if red_is_cam else 3
+        num_red_bots = 3 if self.red_is_cam else 4
+        num_blue_bots = 4 if self.red_is_cam else 3
         red_recog_colors = ["[1 0.1 0.1]", "[1 0.1 0.2]", "[1 0.2 0.1]", "[1 0.2 0.2]"]
         blue_recog_colors = ["[0.1 0.1 1]", "[0.1 0.2 1]", "[0.2 0.1 1]", "[0.2 0.2 1]",]
         for i in range(num_red_bots):

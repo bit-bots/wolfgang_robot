@@ -49,6 +49,8 @@ L_INTERSECTIONS = [[-4.5 + LINE_WIDTH_HALF, -3 + LINE_WIDTH_HALF],
 POSE_CHOICES = ["walking", "kicking", "falling", "fallen", "standup", "standing"]
 POSE_PROBAB  = [0.5, 0.1, 0.05, 0.05, 0.1, 0.2]
 
+BALL_HEIGHT = 0.0786283
+
 
 class CameraController:
     def __init__(self):
@@ -62,18 +64,10 @@ class CameraController:
         self.timestep = int(self.supervisor.getBasicTimeStep())
 
         # resolve the node for corresponding name
-        self.robot_names = ["RED1", "RED2", "RED3", "BLUE1", "BLUE2", "BLUE3", "BLUE4", "FakeCamera"]
+        self.robot_names = ["RED1", "RED2", "RED3", "RED4", "BLUE1", "BLUE2", "BLUE3", "BLUE4", "FakeCamera"]
         self.robot_nodes = {}
         self.translation_fields = {}
         self.rotation_fields = {}
-
-        # check if None
-        for name in self.robot_names:
-            node = self.supervisor.getFromDef(name)
-            if node is not None:
-                self.robot_nodes[name] = node
-                self.translation_fields[name] = node.getField("translation")
-                self.rotation_fields[name] = node.getField("rotation")
 
         self.robot_node = self.supervisor.getSelf()
         self.camera = self.supervisor.getDevice("camera")
@@ -107,6 +101,74 @@ class CameraController:
 
         for r in self.robot_names[:3]:
             self.poses[r] = wolfgang_poses
+
+        self.robots = []
+        with open("setup_config.yaml") as f:
+            robos = yaml.load(f, Loader=yaml.Loader)
+
+        for r in robos["robots"]:
+            self.robots.append(r)
+
+        self.current_red_robot = 0
+        self.current_blue_robot = 0
+
+
+    def generate_scene_and_images(self, robot_one, robot_two, num_images_tw):
+        self.current_blue_robot = robot_one
+        self.current_red_robot = robot_two
+        print("Setting up world for robot one as red, robot two as blue and camera in red team")
+        self.setup_world(red_is_cam=True)
+        print("in image far (1/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
+        print("in image close (2/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_close", True, False)
+        print("not in image far (3/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", False, True)
+        print("not in image close (4/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_not_in_image_close", False, False)
+        self.remove_robots()
+
+        self.current_blue_robot = robot_two
+        self.current_red_robot = robot_one
+        print("Setting up world for robot one as blue, robot two as red and camera in red team")
+        self.setup_world(red_is_cam=True)
+        print("in image far (5/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
+        print("in image close (6/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_close", True, False)
+        print("not in image far (7/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", False, True)
+        print("not in image close (8/16)")
+        self.generate_n_images(num_images_tw, f"cam_red_{self.current_red_robot}_{self.current_blue_robot}_ball_not_in_image_close", False, False)
+        self.remove_robots()
+
+        self.current_blue_robot = robot_one
+        self.current_red_robot = robot_two
+        print("Setting up world for robot one as red, robot two as blue and camera in blue team")
+        self.setup_world(False)
+        print("in image far (9/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
+        print("in image close (10/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_close", True, False)
+        print("not in image far (11/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", False, True)
+        print("not in image close (12/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_not_in_image_close", False, False)
+        self.remove_robots()
+
+        self.current_blue_robot = robot_two
+        self.current_red_robot = robot_one
+        print("Setting up world for robot one as blue, robot two as red and camera in blue team")
+        self.setup_world(False)
+        print("in image far (13/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
+        print("in image close (14/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_close", True, False)
+        print("not in image far (15/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", False, True)
+        print("not in image close (16/16)")
+        self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_not_in_image_close", False, False)
+        self.remove_robots()
 
 
     def random_placement(self, size="kid"):
@@ -155,7 +217,7 @@ class CameraController:
         self.robot_node.getField("cameraFOV").setSFFloat(fov)
         self.fov.append(fov)
 
-        robot_height_red = 0.41
+        robot_height_red = self.robots[self.current_red_robot]["height"]
         # todo clip too far, resample instead
         goalie_y_red = None
         while goalie_y_red is None:
@@ -166,7 +228,7 @@ class CameraController:
         goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
 
-        robot_height_blue = 0.327
+        robot_height_blue = self.robots[self.current_blue_robot]["height"]
         goalie_y_blue = None
         while goalie_y_blue is None:
             goalie_y_blue_prelim = np.random.normal(loc=0, scale=0.5)
@@ -176,32 +238,21 @@ class CameraController:
         goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
 
-        num_strikers_red = 2  # random.randint(0, 2)
-        camera_is_striker = True  # bool(random.randint(0, 1))
-        num_strikers_blue = 3  # random.randint(0, 3)
-        num_defenders_red = 2 - num_strikers_red
-        num_defenders_blue = 3 - num_strikers_blue
         positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
-        for i in range(num_strikers_red):
+        for i in range(2):
             name = "RED" + str(i + 2)
-            r,p = self.place_striker(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
+            r,p = self.place_field_player(name, ball_pos, robot_height_red, [0.0, 0.03, 0.0], positions)
             positions[name] = (r,p)
-        for i in range(num_strikers_blue):
+        for i in range(2):
             name = "BLUE" + str(i + 2)
-            r,p = self.place_striker(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
-                                   positions)
+            r,p = self.place_field_player(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
+                                          positions)
             positions[name] = (r,"standing")
 
-        for i in range(num_defenders_red):
-            self.place_defender("RED" + str(num_strikers_red + i + 2), "RED", robot_height_red, [0.0, 0.0, 0.0],
-                                positions)
-        for i in range(num_defenders_blue):
-            self.place_defender("BLUE" + str(num_strikers_blue + i + 2), "BLUE", robot_height_blue,
-                                [0.0, DARWIN_PITCH, 0.0], positions)
         self.robot_poses.append(positions)
         self.place_camera(ball_pos, z_choice, positions, x_range, y_range, fov)
 
-    def place_striker(self, name, ball_pos, height, orientation, other_positions):
+    def place_field_player(self, name, ball_pos, height, orientation, other_positions):
         robot_pos = Point(ball_pos.x, ball_pos.y, ball_pos.z)
         while True:
             preliminary_pos_x = robot_pos.x + np.random.normal(0, 2)
@@ -219,6 +270,7 @@ class CameraController:
         else:
             orientation[2] = random.random() * math.pi * 2 - math.pi
         pose_choice = "standing"
+        """
         if name in self.poses.keys():
             pose_choice = np.random.choice(POSE_CHOICES, size=1, p=POSE_PROBAB)[0]
             current_pose = None
@@ -244,6 +296,7 @@ class CameraController:
             rpy = transforms3d.euler.quat2euler(orientation_conf)
             orientation[0] = rpy[0]
             orientation[1] = rpy[1]
+        """
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation], str(pose_choice)
 
@@ -254,8 +307,6 @@ class CameraController:
         return False
 
 
-    def place_defender(self, name, side, height, orientation, other_positions):
-        print(f"placing {name} as a defender on side {side}")
 
     def place_camera(self, ball_pos, height, other_positions, x_range, y_range, fov):
         if self.cam_looks_at_ball:
@@ -311,6 +362,39 @@ class CameraController:
         else:
             print("not implemented")
 
+    def remove_robots(self):
+        children = self.supervisor.getRoot().getField("children")
+        for _ in range(7):
+            children.removeMF(-1)
+
+    def setup_world(self, red_is_cam):
+        children = self.supervisor.getRoot().getField('children')
+        num_red_bots = 3 if red_is_cam else 4
+        num_blue_bots = 4 if red_is_cam else 3
+        red_recog_colors = ["[1 0.1 0.1]", "[1 0.1 0.2]", "[1 0.2 0.1]", "[1 0.2 0.2]"]
+        blue_recog_colors = ["[0.1 0.1 1]", "[0.1 0.2 1]", "[0.2 0.1 1]", "[0.2 0.2 1]",]
+        for i in range(num_red_bots):
+            children.importMFNodeFromString(-1, f'DEF RED{i+1} {self.robots[self.current_red_robot]["proto"]} ' +
+                                            f'{{ translation {0.5*i} 0 0.5 ' +
+                                            f'name "red player {i+1}" ' +
+                                            f'recogColors {red_recog_colors[i]} }}')
+        for i in range(num_blue_bots):
+            children.importMFNodeFromString(-1, f'DEF BLUE{i+1} {self.robots[self.current_blue_robot]["proto"]} ' +
+                                            f'{{ translation {0.5*i} 1 0.5 ' +
+                                            f'name "blue player {i+1}" ' +
+                                            f'recogColors {blue_recog_colors[i]} }}')
+        self.supervisor.step(self.timestep)
+        self.robot_nodes = {}
+        self.translation_fields = {}
+        self.rotation_fields = {}
+        # check if None
+        for name in self.robot_names:
+            node = self.supervisor.getFromDef(name)
+            if node is not None:
+                self.robot_nodes[name] = node
+                self.translation_fields[name] = node.getField("translation")
+                self.rotation_fields[name] = node.getField("rotation")
+
     def generate_n_images(self, n, folder="img", ball_in_image=True, uniform_camera=True):
         self.ball_in_image = ball_in_image
         self.uniform_camera_position = uniform_camera
@@ -344,7 +428,7 @@ class CameraController:
         f.close()
 
     def generate_annotations(self):
-        robot_equivalent = ["RED1", "RED2", "RED3", "BLUE1", "BLUE2", "BLUE3", "BLUE4"]
+        robot_equivalent = ["RED1", "RED2", "RED3", "RED4", "BLUE1", "BLUE2", "BLUE3", "BLUE4"]
         gp_equivalent = ["left_goalpost_home", "right_goalpost_home",
                          "left_goalpost_enemy", "right_goalpost_enemy", ]
         hb_equivalent = ["top_bar_enemy", "top_bar_home"]
@@ -464,10 +548,15 @@ class CameraController:
 
     def step(self):
         self.random_placement()
+        print(1)
         self.step_sim()
+        print(2)
         recog, seg_img = self.save_recognition()
+        print(3)
         self.annotations.append(recog)
+        print(4)
         self.intersections.append(self.check_intersections_in_image(seg_img))
+        print(5)
 
     def reset_robot_pose(self, pos, quat, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
@@ -488,7 +577,7 @@ class CameraController:
                                      req.robot_name)
 
     def reset_ball(self, req=None):
-        self.ball.getField("translation").setSFVec3f([0, 0, 0.0772])
+        self.ball.getField("translation").setSFVec3f([0, 0, BALL_HEIGHT])
         self.ball.getField("rotation").setSFRotation([0, 0, 1, 0])
         self.ball.resetPhysics()
 
@@ -496,7 +585,7 @@ class CameraController:
         if req is None:
             self.ball.getField("translation").setSFVec3f([position.x, position.y, position.z])
         else:
-            self.ball.getField("translation").setSFVec3f([req.p.x, req.p.y, 0.08])
+            self.ball.getField("translation").setSFVec3f([req.p.x, req.p.y, BALL_HEIGHT])
         if orientation == "rand":
             u = random.random()
             v = random.random()
@@ -535,20 +624,26 @@ class CameraController:
         img_stamp = f"{int(self.time * 1000):08d}"
         img_name = f"img_fake_cam_{self.i:06d}"
         self.i += 1
-
+        print(2.1)
         self.filenames.append((img_name + ".PNG"))
+        self.camera = self.supervisor.getDevice("camera")
+        print("blubs")
         seg_img_raw = self.camera.getRecognitionSegmentationImageArray()
+        print("2.2.2.")
         seg_img = np.array(seg_img_raw, dtype=np.uint8)
+        print(2.12)
         # We need to swap axes so it's 1920x1080 instead of 1080x1920
         seg_img = np.swapaxes(seg_img, 0, 1)
         annotations = self.generatePolygonsFromSegmentation(seg_img)
 
-
+        print(2.2)
         self.camera.saveImage(filename=os.path.join(self.img_save_dir, img_name + ".PNG"), quality=100)
         self.camera.saveRecognitionSegmentationImage(filename=os.path.join(self.seg_save_dir, img_name + "_seg.PNG"),
                                                      quality=100)
+        print(2.3)
         self.depth.saveImage(filename=os.path.join(self.depth_save_dir, img_name + "_depth.PNG"), quality=100)
         depth_array = self.depth.getRangeImageArray()
+        print(2.4)
         np.savez_compressed(os.path.join(self.depth_save_dir, img_name + "_depth_raw"), depth_array, allow_pickle=False)
         return annotations, seg_img
 
@@ -717,3 +812,5 @@ class CameraController:
         thresh = min(math.atan(1/dist) ** 2 / math.pi/2 * (range *2) ** 2 * 5, 150)
         res = np.sum(true_values)
         return res > thresh
+
+c = CameraController()

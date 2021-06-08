@@ -15,7 +15,6 @@ import cv2
 import yaml
 
 G = 9.81
-DARWIN_PITCH = 0.225
 LINE_WIDTH = 0.05
 LINE_WIDTH_HALF = LINE_WIDTH/2
 T_INTERSECTIONS = [[-4.5 + LINE_WIDTH_HALF,  1.5 - LINE_WIDTH_HALF], # check
@@ -229,9 +228,10 @@ class CameraController:
             if -1.4 < goalie_y_red_prelim < 1.4:
                 goalie_y_red = goalie_y_red_prelim
         goalie_pos_red = [x_range[0] + 0.5, goalie_y_red, robot_height_red]
+        goalie_pos_red = Point(*goalie_pos_red)
         goalie_rpy_red = [0.0, 0, np.random.normal(loc=0.0, scale=0.3)]
         _, goalie_pos_red, goalie_rpy_red = self.set_pose("RED1", goalie_pos_red, goalie_rpy_red)
-        self.reset_robot_pose_rpy(goalie_pos_red, goalie_rpy_red, name="RED1")
+        self.reset_robot_pose_rpy([goalie_pos_red.x, goalie_pos_red.y, goalie_pos_red.z], goalie_rpy_red, name="RED1")
 
         robot_height_blue = self.robots[self.current_blue_robot]["height"]
         goalie_y_blue = None
@@ -240,9 +240,10 @@ class CameraController:
             if -1.4 < goalie_y_blue_prelim < 1.4:
                 goalie_y_blue = goalie_y_blue_prelim
         goalie_pos_blue = [x_range[1] - 0.5, goalie_y_blue, robot_height_blue]
-        goalie_rpy_blue = [0.0, DARWIN_PITCH, math.pi + np.random.normal(loc=0.0, scale=0.3)]
+        goalie_pos_blue = Point(*goalie_pos_blue)
+        goalie_rpy_blue = [0.0, 0.0, math.pi + np.random.normal(loc=0.0, scale=0.3)]
         _, goalie_pos_blue, goalie_rpy_blue = self.set_pose("BLUE1", goalie_pos_blue, goalie_rpy_blue)
-        self.reset_robot_pose_rpy(goalie_pos_blue, goalie_rpy_blue, name="BLUE1")
+        self.reset_robot_pose_rpy([goalie_pos_blue.x, goalie_pos_blue.y, goalie_pos_blue.z], goalie_rpy_blue, name="BLUE1")
 
         positions = {"RED1": ([goalie_pos_red, goalie_rpy_red], "standing"), "BLUE1": ([goalie_pos_blue, goalie_rpy_blue], "standing")}
         for i in range(2 if self.red_is_cam else 3):
@@ -251,7 +252,7 @@ class CameraController:
             positions[name] = (r,p)
         for i in range(3 if self.red_is_cam else 2):
             name = "BLUE" + str(i + 2)
-            r,p = self.place_field_player(name, ball_pos, robot_height_blue, [0.0, DARWIN_PITCH, 0.0],
+            r,p = self.place_field_player(name, ball_pos, robot_height_blue, [0.0, 0.0, 0.0],
                                           positions)
             positions[name] = (r,"standing")
 

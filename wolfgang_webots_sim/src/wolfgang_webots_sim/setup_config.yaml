@@ -4,13 +4,16 @@ robots:
     height: 0.45
   - proto: "RobocupRobot"
     poses: ""
-    height: 0.3
+    height: 0.25
   - proto: "Prometheus"
     poses: ""
-    height: 0.4
+    height: 0.45
   - proto: "Bez"
     poses: ""
-    height: 0.4
+    height: 0.37
   - proto: "GankenKun"
     poses: ""
-    height: 0.4
+    height: 0.44
+  - proto: "RFCRobot2016"
+    poses: ""
+    height: 0.44

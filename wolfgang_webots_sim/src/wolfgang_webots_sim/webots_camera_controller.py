@@ -149,7 +149,7 @@ class CameraController:
         self.current_blue_robot = robot_one
         self.current_red_robot = robot_two
         print("Setting up world for robot one as red, robot two as blue and camera in blue team")
-        self.setup_world(False)
+        self.setup_world()
         print("in image far (9/16)")
         self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
         print("in image close (10/16)")
@@ -163,7 +163,7 @@ class CameraController:
         self.current_blue_robot = robot_two
         self.current_red_robot = robot_one
         print("Setting up world for robot one as blue, robot two as red and camera in blue team")
-        self.setup_world(False)
+        self.setup_world()
         print("in image far (13/16)")
         self.generate_n_images(num_images_tw, f"cam_blue_{self.current_red_robot}_{self.current_blue_robot}_ball_in_image_far", True, True)
         print("in image close (14/16)")

@@ -274,9 +274,17 @@ class CameraController:
         else:
             orientation[2] = random.random() * math.pi * 2 - math.pi
         pose_choice = "standing"
-        """
-        if name in self.poses.keys():
-            pose_choice = np.random.choice(POSE_CHOICES, size=1, p=POSE_PROBAB)[0]
+
+
+        if (name.startswith("RED") and self.current_red_robot == 0) or \
+           (name.startswith("BLUE") and self.current_blue_robot == 0):
+            # wolfgang goalie: walkready
+            if name.endswith("1"):
+                pose_choice = "standing"
+            # other wolfgangs
+            else:
+                pose_choice = np.random.choice(POSE_CHOICES, size=1, p=POSE_PROBAB)[0]
+
             current_pose = None
             while current_pose is None:
                 pick = random.randint(0, len(self.poses[name]["poses"]) - 1)
@@ -286,7 +294,6 @@ class CameraController:
             for joint_name, initial_rot in self.poses[name]["initial_rot"].items():
                 rot_axis = self.poses[name]["axes"][joint_name]
                 rotation = current_pose[joint_name]
-                # todo save to yaml what pose is used for which robot
                 initial_rot_mat = transforms3d.axangles.axangle2mat(axis=initial_rot[:3], angle=initial_rot[3])
                 joint_rot_mat = transforms3d.axangles.axangle2mat(axis=rot_axis, angle=rotation)
                 combined_rot_mat = np.matmul(joint_rot_mat, initial_rot_mat)
@@ -300,7 +307,7 @@ class CameraController:
             rpy = transforms3d.euler.quat2euler(orientation_conf)
             orientation[0] = rpy[0]
             orientation[1] = rpy[1]
-        """
+
         self.reset_robot_pose_rpy([robot_pos.x, robot_pos.y, robot_pos.z], orientation, name)
         return [[robot_pos.x, robot_pos.y, robot_pos.z], orientation], str(pose_choice)
 

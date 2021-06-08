@@ -1,0 +1,16 @@
+robots:
+  - proto: "Wolfgang"
+    poses: "wolfgang_poses.yaml"
+    height: 0.45
+  - proto: "RobocupRobot"
+    poses: ""
+    height: 0.3
+  - proto: "Prometheus"
+    poses: ""
+    height: 0.4
+  - proto: "Bez"
+    poses: ""
+    height: 0.4
+  - proto: "GankenKun"
+    poses: ""
+    height: 0.4

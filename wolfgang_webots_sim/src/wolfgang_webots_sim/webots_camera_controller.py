@@ -829,9 +829,15 @@ c = CameraController()
 
 
 def generate_all_images(controller, num_per_individual_set):
-    permutations = itertools.permutations(range(len(controller.robots)), 2)
+    combinations = itertools.combinations(range(len(controller.robots)), 2)
     num_combinations = comb(len(controller.robots), 2, exact=True)
-    for i, (team_a, team_b) in enumerate(permutations):
+    for i, (team_a, team_b) in enumerate(combinations):
         print(f"Starting matchup {team_a} vs {team_b} which is {i}/{num_combinations}")
         controller.generate_scene_and_images(team_a, team_b, num_per_individual_set)
     print("Finished")
+
+def generate_remaining(controller):
+    remaining = [(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5)]
+    for i, (team_a, team_b) in enumerate(remaining):
+        print(f"Starting matchup {team_a} vs {team_b} which is {i+5+1}/{15}")
+        controller.generate_scene_and_images(team_a, team_b, 100)

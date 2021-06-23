@@ -5,10 +5,12 @@ PROTO RobotAppearance [
 PBRAppearance {
   baseColorMap ImageTexture {
     url [
-      "textures/robot.png"
+      "textures/robot.jpg"
     ]
   }
   metalness 0
   roughness 0.3
+  IBLStrength 0
+  emissiveIntensity 0.5
 }
 }

@@ -14,7 +14,7 @@ PROTO DummyObstacle [
         rotation 1 0 0 1.57
         children [
           Shape {
-            appearance CarbonFiberAppearance {}
+            appearance RobotAppearance {}
             geometry Cylinder {
               height 0.8
               radius 0.15

@@ -14,16 +14,7 @@ PROTO DummyObstacle [
         rotation 1 0 0 1.57
         children [
           Shape {
-            appearance PBRAppearance {
-              %{ if fields.color.value == "red" then }%
-                baseColor 1 0 0
-              %{ elseif fields.color.value == "blue" then }%
-                baseColor 0 0 1
-              %{ else }%
-                baseColor 0 0 0
-              %{ end }%
-              metalness 0.2
-            }
+            appearance CarbonFiberAppearance {}
             geometry Cylinder {
               height 0.8
               radius 0.15

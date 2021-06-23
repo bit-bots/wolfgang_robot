@@ -8,6 +8,7 @@ PROTO DummyObstacle [
 {
   Solid {
     translation IS translation
+    roation IS rotation
     children [
       Transform {
         translation 0 0 0.4

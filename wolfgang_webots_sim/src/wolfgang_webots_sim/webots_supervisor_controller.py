@@ -83,6 +83,10 @@ class SupervisorController:
         self.world_info = self.supervisor.getFromDef("world_info")
         self.ball = self.supervisor.getFromDef("ball")
 
+    def reset_robot_init(self, name="amy"):
+        self.robot_nodes[name].loadState('__init__')
+        self.robot_nodes[name].resetPhysics()
+
     def step_sim(self):
         self.time += self.timestep / 1000
         self.supervisor.step(self.timestep)

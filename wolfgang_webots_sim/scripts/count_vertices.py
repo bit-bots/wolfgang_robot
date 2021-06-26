@@ -190,7 +190,9 @@ try:
     robot_node = spawn_robot()
     robot = build_dict_node(robot_node)
     meshes = get_meshes(("SFNode", robot))
-    num_vert = np.sum(meshes)
+    num_vert = 0
+    for m in meshes:
+        num_vert += len(m)
     print(f"There are {num_vert} in the IndexFaceSets of the {MODEL_NAME}")
     despawn_robot()
 except Exception:

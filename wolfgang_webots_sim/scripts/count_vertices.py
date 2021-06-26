@@ -18,18 +18,12 @@ import traceback
 import transforms3d
 import math
 import numpy as np
-import trimesh.viewer
-import trimesh.creation
-import trimesh.boolean
-import json
 import time
 import os
 
-# Giving a classical name to avoid robot invalid proto when spawned without
-# color or id
 ROBOT_NAME = "RED_PLAYER_1"
+JOINT_TYPES = ["HingeJoint", "HingeJointWithBacklash", "Hinge2Joint", "Hinge2JointWithBacklash"]
 
-# Values initialized at the beginning of script
 MODEL_NAME = None
 ROBOT_PATH = None
 ROBOT_DIR = None
@@ -162,8 +156,8 @@ def mesh_to_indexed_face_set(mesh):
             "coord": ("SFNode", {"__type": "Coordinate", "point": ("MFVec3f", coordinates)}),
             "coordIndex": ("MFInt32", coordIndex)}
 
-def get_physics_nodes(node, transform_list=[],):
-    """Return a list of tuples (mass, joint_and_tf, mass_name)"""
+def get_meshes(node, transform_list=[],):
+    """Return a list of tuples (mesh, joint_and_tf, ??)"""
     physics_nodes = []
     if node[0] == "SFNode":
         translation = node[1].get("translation")
@@ -211,21 +205,20 @@ def get_physics_nodes(node, transform_list=[],):
 
 
 s = Supervisor()
-controller_start = time.time()
 try:
     for required_variable in ["ROBOT_NAME", "ROBOT_PATH"]:
         if required_variable not in os.environ:
             raise RuntimeError(f"Environment variable {required_variable} is missing")
+    if "EXPORT_MF" in os.environ:
+        EXPORT_MF = bool(os.environ["EXPORT_MF"])
+        print(f"export mf : {EXPORT_MF}")
     MODEL_NAME = os.environ["ROBOT_NAME"]
     ROBOT_PATH = os.environ["ROBOT_PATH"]
     ROBOT_DIR = os.path.dirname(ROBOT_PATH)
 
-    before_spawning = time.time()
     robot_node = spawn_robot()
-    spawn_time = time.time() - before_spawning
-    if robot_node is None:
-        raise RuntimeError(f"Failed to spawn robot {MODEL_NAME}")
     robot = build_dict_node(robot_node)
+    print(robot)
 except Exception:
     print(f"Failed execution of model verifier with error:\n{traceback.format_exc()}\n")
 

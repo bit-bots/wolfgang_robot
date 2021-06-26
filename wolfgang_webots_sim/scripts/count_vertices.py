@@ -158,52 +158,21 @@ def mesh_to_indexed_face_set(mesh):
             "coord": ("SFNode", {"__type": "Coordinate", "point": ("MFVec3f", coordinates)}),
             "coordIndex": ("MFInt32", coordIndex)}
 
-def get_meshes(node, transform_list=[],):
+def get_meshes(node):
     """Return a list of tuples (mesh, joint_and_tf, ??)"""
-    physics_nodes = []
+    coords = []
     if node[0] == "SFNode":
-        translation = node[1].get("translation")
-        rotation = node[1].get("rotation")
-        if translation is not None:
-            transform_list.append((translation[1], rotation[1]))
-
-        if node[1].get("physics") is not None:
-            physics = node[1]["physics"][1]
-            if physics != {}:  # empty dict if null
-                com = physics["centerOfMass"][1]
-                if len(com) == 0:
-                    name = node[1].get("name")
-                    if name is None:
-                        warning("Empty center of mass in unnamed node\n")
-                    else:
-                        warning(f"Empty center of mass in node {name}\n")
-                else:
-                    new_tf_list = transform_list[:]
-                    new_tf_list.append((com[0], [0, 0, 1, 0]))
-                    physics_nodes.append((physics["mass"][1], new_tf_list[:], node[1]["name"]))
-        for mass_name in ['gearMass', 'gearMass2']:
-            mass_node = node[1].get(mass_name)
-            if mass_node is not None:
-                physics_nodes.append((mass_node[1], transform_list[:], node[1]["name"]))
-        node_type = node[1].get("__type")
-        if node_type in JOINT_TYPES:
-            motor_name = None
-            for device in node[1]["device"][1]:
-                if device["__type"] == "RotationalMotor":
-                    motor_name = device["name"][1]
-
-            transform_list.append((node_type,
-                                   node[1]["jointParameters"][1]["anchor"][1],
-                                   node[1]["jointParameters"][1]["axis"][1],
-                                   node[1]["position"][1],
-                                   motor_name))
+        # already a coordinate
+        if node[1].get("__type") == "Coordinate" is not None:
+            coord = node[1]["point"][1]
+            coords.append(coord)
+        # go to next solids through all fields that are nodes
         for k, v in node[1].items():
-            physics_nodes.extend(get_physics_nodes(v, transform_list[:]))
+            coords.extend(get_meshes(v))
     elif node[0] == "MFNode":
         for child_node in node[1]:
-            physics_nodes.extend(get_physics_nodes(("SFNode", child_node), transform_list[:]))
-
-    return physics_nodes
+            coords.extend(get_meshes(("SFNode", child_node)))
+    return coords
 
 
 s = Supervisor()
@@ -221,10 +190,10 @@ try:
     robot_node = spawn_robot()
     robot = build_dict_node(robot_node)
     print(robot)
+    meshes = get_meshes(robot)
+    num_vert = np.sum(meshes)
+    print(f"There are {num_vert} in the IndexFaceSets of the {MODEL_NAME}")
     despawn_robot()
 except Exception:
     print(f"Failed execution of model verifier with error:\n{traceback.format_exc()}\n")
 
-
-# todo visual model complexity (count vertices) (optional)
-# todo collision model complexity (count primitives) (optional)

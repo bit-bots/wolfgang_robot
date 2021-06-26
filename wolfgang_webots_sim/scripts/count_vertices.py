@@ -37,6 +37,8 @@ def spawn_robot():
     s.getRoot().getField('children').importMFNodeFromString(-1, string)
     return s.getFromDef(ROBOT_NAME)
 
+def despawn_robot():
+    s.getRoot().getField('children').removeMF(-1, )
 
 def get_node_desc(node):
     # TODO ideally the node path should be provided but it's unclear if that can still be accessed from the dictionary
@@ -219,6 +221,7 @@ try:
     robot_node = spawn_robot()
     robot = build_dict_node(robot_node)
     print(robot)
+    despawn_robot()
 except Exception:
     print(f"Failed execution of model verifier with error:\n{traceback.format_exc()}\n")
 

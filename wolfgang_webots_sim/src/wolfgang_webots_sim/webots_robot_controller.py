@@ -203,7 +203,8 @@ class RobotController:
         self.publish_joint_states()
         if self.camera_active and self.camera_counter == 0:
             self.publish_camera()
-        self.publish_pressure()
+        if self.pressure_sensors is not None:
+            self.publish_pressure()
         if self.recognize:
             self.save_recognition()
         self.camera_counter = (self.camera_counter + 1) % CAMERA_DIVIDER

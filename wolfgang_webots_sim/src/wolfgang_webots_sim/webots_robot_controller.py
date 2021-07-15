@@ -42,6 +42,7 @@ class RobotController:
         self.switch_coordinate_system = True
         self.is_wolfgang = False
         self.pressure_sensors = None
+        print(robot)
         if robot == 'wolfgang':
             self.is_wolfgang = True
             self.motor_names = ["RShoulderPitch [shoulder]", "LShoulderPitch [shoulder]", "RShoulderRoll",
@@ -73,6 +74,18 @@ class RobotController:
                                          "LElbow", "RHipYaw", "LHipYaw", "RHipRoll", "LHipRoll", "RHipPitch",
                                          "LHipPitch", "RKnee", "LKnee", "RAnklePitch", "LAnklePitch", "RAnkleRoll",
                                          "LAnkleRoll", "HeadPan", "HeadTilt"]
+            self.sensor_suffix = "S"
+            accel_name = "Accelerometer"
+            gyro_name = "Gyro"
+            camera_name = "Camera"
+        elif robot in ('op2', 'robotis_op2'):
+            self.motor_names = ["ShoulderR", "ShoulderL", "ArmUpperR", "ArmUpperL", "ArmLowerR", "ArmLowerL",
+                                "PelvYR", "PelvYL", "PelvR", "PelvL", "LegUpperR", "LegUpperL", "LegLowerR",
+                                "LegLowerL", "AnkleR", "AnkleL", "FootR", "FootL", "Neck", "Head"]
+            self.external_motor_names = ["r_sho_pitch", "l_sho_pitch", "r_sho_roll", "l_sho_roll", "RElbow",
+                                         "LElbow", "r_hip_yaw", "LHipYaw", "r_hip_roll", "l_hip_roll", "r_hip_pitch",
+                                         "l_hip_pitch", "r_knee", "l_knee", "r_ank_pitch", "l_ank_pitch", "RAnkleRoll",
+                                         "l_ank_roll", "head_pan", "head_tilt"]
             self.sensor_suffix = "S"
             accel_name = "Accelerometer"
             gyro_name = "Gyro"
@@ -133,6 +146,7 @@ class RobotController:
             if not os.path.exists(self.img_save_dir):
                 os.makedirs(self.img_save_dir)
 
+        self.imu_frame = "imu_frame"
         if self.ros_active:
             if base_ns == "":
                 clock_topic = "/clock"
@@ -203,7 +217,8 @@ class RobotController:
         self.publish_joint_states()
         if self.camera_active and self.camera_counter == 0:
             self.publish_camera()
-        self.publish_pressure()
+        if self.pressure_sensors is not None:
+            self.publish_pressure()
         if self.recognize:
             self.save_recognition()
         self.camera_counter = (self.camera_counter + 1) % CAMERA_DIVIDER

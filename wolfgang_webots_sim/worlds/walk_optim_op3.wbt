@@ -5,28 +5,6 @@ DEF world_info WorldInfo {
   physicsDisableTime 0.1
   physicsDisableLinearThreshold 0.1
   physicsDisableAngularThreshold 0.1
-  contactProperties [
-    ContactProperties {
-      material1 "grass"
-      coulombFriction [
-        0.5
-      ]
-      softCFM 0.03
-    }
-    ContactProperties {
-      material1 "grass"
-      material2 "robocup soccer ball"
-      coulombFriction [
-        0.5
-      ]
-      bounce 0.76
-      softCFM 0.05
-    }
-    ContactProperties {
-      material2 "robocup soccer ball"
-      bounce 0.76
-    }
-  ]
 }
 Viewpoint {
   orientation 0.5822646357855299 -0.5251883903055194 -0.6206005547869271 1.9346482193122416
@@ -40,7 +18,6 @@ TexturedBackgroundLight {
 }
 Floor {
   rotation 1 0 0 1.57
-  contactMaterial "grass"
   size 100 100
   tileSize 2 2
 }

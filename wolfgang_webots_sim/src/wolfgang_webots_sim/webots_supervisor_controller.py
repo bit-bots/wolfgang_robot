@@ -163,10 +163,12 @@ class SupervisorController:
     def set_self_collision(self, active, name="amy"):
         self.robot_nodes[name].getField("selfCollision").setSFBool(active)
 
-    def reset_robot_pose(self, pos, quat, name="amy"):
+    def reset_robot_pose(self, pos, quat, reset_joints=False, name="amy"):
         self.set_robot_pose_quat(pos, quat, name)
         if name in self.robot_nodes:
             self.robot_nodes[name].resetPhysics()
+        if reset_joints:
+            self.reset_robot_init(name)
 
     def reset_robot_pose_rpy(self, pos, rpy, name="amy"):
         self.set_robot_pose_rpy(pos, rpy, name)
@@ -193,7 +195,7 @@ class SupervisorController:
     def robot_pose_callback(self, req=None):
         self.reset_robot_pose([req.pose.position.x, req.pose.position.y, req.pose.position.z],
                               [req.pose.orientation.x, req.pose.orientation.y, req.pose.orientation.z,
-                               req.pose.orientation.w], req.object_name)
+                               req.pose.orientation.w], name=req.object_name)
         return SetObjectPoseResponse()
 
     def reset_ball(self, req=None):

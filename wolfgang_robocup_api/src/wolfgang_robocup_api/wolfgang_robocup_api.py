@@ -83,7 +83,6 @@ class WolfgangRobocupApi():
             time.sleep(1) #dont use ros time since it is maybe not available
 
         self.first_run = True
-        self.published_camera_info = False
 
         self.joint_command_mutex = Lock()
 
@@ -119,7 +118,7 @@ class WolfgangRobocupApi():
         self.pub_clock = rospy.Publisher(rospy.get_param('~clock_topic'), Clock, queue_size=1)
         self.pub_server_time_clock = rospy.Publisher(rospy.get_param('~server_time_clock_topic'), Clock, queue_size=1)
         self.pub_camera = rospy.Publisher(rospy.get_param('~camera_topic'), Image, queue_size=1)
-        self.pub_camera_info = rospy.Publisher(rospy.get_param('~camera_info_topic'), CameraInfo, queue_size=1, latch=True)
+        self.pub_camera_info = rospy.Publisher(rospy.get_param('~camera_info_topic'), CameraInfo, queue_size=1)
         self.pub_imu = rospy.Publisher(rospy.get_param('~imu_topic'), Imu, queue_size=1)
         self.pub_head_imu = rospy.Publisher(rospy.get_param('~imu_head_topic'), Imu, queue_size=1)
         self.pub_pressure_left = rospy.Publisher(rospy.get_param('~foot_pressure_left_topic'), FootPressure, queue_size=1)
@@ -298,9 +297,7 @@ class WolfgangRobocupApi():
                 quality = camera.quality  # 1 = raw image, 100 = no compression, 0 = high compression
                 image = camera.image  # RAW or JPEG encoded data (note: JPEG is not yet implemented)
 
-                if not self.published_camera_info:  # Publish CameraInfo once, it will be latched
-                    self.publish_camera_info(height, width)
-                    self.published_camera_info = True
+                self.publish_camera_info(height, width)
 
                 img_msg = Image()
                 img_msg.header.stamp = self.stamp

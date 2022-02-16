@@ -179,31 +179,13 @@ class RobotController:
 
             self.pub_imu_head = rospy.Publisher(base_ns + "imu_head/data", Imu, queue_size=1)
             self.pub_cam = rospy.Publisher(base_ns + "camera/image_proc", Image, queue_size=1)
-            self.pub_cam_info = rospy.Publisher(base_ns + "camera/camera_info", CameraInfo, queue_size=1, latch=True)
+            self.pub_cam_info = rospy.Publisher(base_ns + "camera/camera_info", CameraInfo, queue_size=1)
 
             self.pub_pres_left = rospy.Publisher(base_ns + "foot_pressure_left/raw", FootPressure, queue_size=1)
             self.pub_pres_right = rospy.Publisher(base_ns + "foot_pressure_right/raw", FootPressure, queue_size=1)
             self.cop_l_pub_ = rospy.Publisher(base_ns + "cop_l", PointStamped, queue_size=1)
             self.cop_r_pub_ = rospy.Publisher(base_ns + "cop_r", PointStamped, queue_size=1)
             rospy.Subscriber(base_ns + "DynamixelController/command", JointCommand, self.command_cb)
-
-            # publish camera info once, it will be latched
-            self.cam_info = CameraInfo()
-            self.cam_info.header.stamp = rospy.Time.from_seconds(self.time)
-            self.cam_info.header.frame_id = self.camera_optical_frame
-            self.cam_info.height = self.camera.getHeight()
-            self.cam_info.width = self.camera.getWidth()
-            f_y = self.mat_from_fov_and_resolution(
-                self.h_fov_to_v_fov(self.camera.getFov(), self.cam_info.height, self.cam_info.width),
-                self.cam_info.height)
-            f_x = self.mat_from_fov_and_resolution(self.camera.getFov(), self.cam_info.width)
-            self.cam_info.K = [f_x, 0, self.cam_info.width / 2,
-                               0, f_y, self.cam_info.height / 2,
-                               0, 0, 1]
-            self.cam_info.P = [f_x, 0, self.cam_info.width / 2, 0,
-                               0, f_y, self.cam_info.height / 2, 0,
-                               0, 0, 1, 0]
-            self.pub_cam_info.publish(self.cam_info)
 
         if robot == "op3":
             # start pose
@@ -235,6 +217,7 @@ class RobotController:
         self.publish_joint_states()
         if self.camera_active and self.camera_counter == 0:
             self.publish_camera()
+            self.publish_camera_info()
         self.publish_pressure()
         if self.recognize:
             self.save_recognition()
@@ -379,6 +362,24 @@ class RobotController:
         img = self.camera.getImage()
         img_msg.data = img
         self.pub_cam.publish(img_msg)
+
+    def publish_camera_info(self):
+        self.cam_info = CameraInfo()
+        self.cam_info.header.stamp = rospy.Time.from_seconds(self.time)
+        self.cam_info.header.frame_id = self.camera_optical_frame
+        self.cam_info.height = self.camera.getHeight()
+        self.cam_info.width = self.camera.getWidth()
+        f_y = self.mat_from_fov_and_resolution(
+            self.h_fov_to_v_fov(self.camera.getFov(), self.cam_info.height, self.cam_info.width),
+            self.cam_info.height)
+        f_x = self.mat_from_fov_and_resolution(self.camera.getFov(), self.cam_info.width)
+        self.cam_info.K = [f_x, 0, self.cam_info.width / 2,
+                            0, f_y, self.cam_info.height / 2,
+                            0, 0, 1]
+        self.cam_info.P = [f_x, 0, self.cam_info.width / 2, 0,
+                            0, f_y, self.cam_info.height / 2, 0,
+                            0, 0, 1, 0]
+        self.pub_cam_info.publish(self.cam_info)
 
     def save_recognition(self):
         if self.time - self.last_img_saved < 1.0:

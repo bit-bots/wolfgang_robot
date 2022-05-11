@@ -62,12 +62,13 @@ class RobotController:
                                          "LElbow", "RHipYaw", "LHipYaw", "RHipRoll", "LHipRoll", "RHipPitch",
                                          "LHipPitch", "RKnee", "LKnee", "RAnklePitch", "LAnklePitch", "RAnkleRoll",
                                          "LAnkleRoll", "HeadPan", "HeadTilt"]
-            self.initial_joint_positions = {"LAnklePitch": -30, "LAnkleRoll": 0, "LHipPitch": 30, "LHipRoll": 0,
-                                            "LHipYaw": 0, "LKnee": 60, "RAnklePitch": 30, "RAnkleRoll": 0,
-                                            "RHipPitch": -30, "RHipRoll": 0, "RHipYaw": 0, "RKnee": -60,
-                                            "LShoulderPitch": 75, "LShoulderRoll": 0, "LElbow": 36,
-                                            "RShoulderPitch": -75, "RShoulderRoll": 0, "RElbow": -36, "HeadPan": 0,
-                                            "HeadTilt": 0}
+            self.initial_joint_positions =  {'RShoulderPitch': -74.8828121150545, 'LShoulderPitch': 74.9707027396027, 'RShoulderRoll': 0.0,
+                                             'LShoulderRoll': 0.0, 'RElbow': -35.94726544020809, 'LElbow': 36.03515606475627,
+                                             'RHipYaw': 0.26367187364455813, 'LHipYaw': -0.17578124909637208, 'RHipRoll': -1.6699218664155349,
+                                             'LHipRoll': 1.845703115511907, 'RHipPitch': -32.871093581021576, 'LHipPitch': 33.04687483011795,
+                                             'RKnee': -71.98242150496436, 'LKnee': 72.07031212951254, 'RAnklePitch': 31.816406086443347,
+                                             'LAnklePitch': -31.640624837346977, 'RAnkleRoll': -2.9003906100901395, 'LAnkleRoll': 1.845703115511907,
+                                             'HeadPan': 0.0, 'HeadTilt': 0.0}
             self.sensor_suffix = "_sensor"
             accel_name = "imu accelerometer"
             gyro_name = "imu gyro"

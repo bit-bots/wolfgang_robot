@@ -9,7 +9,7 @@ PROTO WolfgangOptimization [
   field  SFString    name            "red player 1"  # Is `Robot.name`.
   field  MFString    controllerArgs  []          # Is `Robot.controllerArgs`.
   field  SFString    customData      ""
-  field  SFBool      selfCollision   TRUE        # Is `Robot.selfCollision`.
+  field  SFBool      selfCollision   FALSE        # Is `Robot.selfCollision`.
   field  SFBool      supervisor      FALSE       # Is `Robot.supervisor`.
   field  SFString    controller      "player"      # Is `Robot.controller`.
   field  SFBool      enableBoundingObject TRUE      # Is `Robot.enableBoundingObject`.

@@ -16,6 +16,7 @@ PROTO Wolfgang [
   field  SFBool      selfCollision   FALSE          # Is `Robot.selfCollision`.
   field  SFBool      enableBoundingObject TRUE      # Is `Robot.enableBoundingObject`.
   field  SFBool      walkingRelevantBoundingBoxesOnly FALSE
+  field  SFBool      simpleFoot FALSE
   field  SFBool      enablePhysics   TRUE           # Is `Robot.enablePhysics`.
   field  SFBool      enableFootSensors TRUE         # Is `Robot.enableFootSensors`.
   field  SFFloat     transparency    0              # Is `Robot.transparency`
@@ -2136,7 +2137,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "rlb"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject DEF CLEAT_CAPSULE Transform {
                                               translation 0.000000 0.000000 0.005000
                                               rotation 1.000000 -0.000000 0.000000 1.570796
@@ -2186,7 +2187,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "rlf"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -2227,7 +2228,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "rrf"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -2268,7 +2269,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "rrb"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -2285,7 +2286,7 @@ PROTO Wolfgang [
                                           }
                                         ]
                                         name "r_foot [foot]"
-                                        %{if fields.enableBoundingObject.value then}%
+                                        %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                         boundingObject Group {
                                           children [
                                             Transform {
@@ -2323,6 +2324,17 @@ PROTO Wolfgang [
                                                   size 0.046 0.004 0.04425610000000001
                                                 }
                                               ]
+                                            }
+                                          ]
+                                        }
+                                        %{ end }%
+                                        %{ if fields.simpleFoot.value then}%
+                                        boundingObject Transform {
+                                          translation 0.0145000 0.08500 -0.034
+                                          rotation -0.000000 -0.000000 -1.000000 1.570800
+                                          children [
+                                            Box {
+                                              size 0.198 0.106000 0.0320
                                             }
                                           ]
                                         }
@@ -3624,7 +3636,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "llb"
-                                            %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -3665,7 +3677,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "llf"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -3706,7 +3718,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "lrf"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -3747,7 +3759,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "lrb"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -3764,7 +3776,7 @@ PROTO Wolfgang [
                                           }
                                         ]
                                         name "l_foot [foot]"
-                                        %{if fields.enableBoundingObject.value then}%
+                                        %{if fields.enableBoundingObject.value and not fields.simpleFoot.value then}%
                                         boundingObject Group {
                                           children [
                                             Transform {
@@ -3806,6 +3818,17 @@ PROTO Wolfgang [
                                               ]
                                             }
 
+                                          ]
+                                        }
+                                        %{ end }%
+                                        %{if fields.simpleFoot.value then}%
+                                        boundingObject Transform {
+                                          translation -0.0145000 0.08500 -0.034
+                                          rotation 0.000000 0.000000 -1.000000 1.570800
+                                          children [
+                                            Box {
+                                               size 0.198000 0.106000 0.0320
+                                            }
                                           ]
                                         }
                                         %{ end }%

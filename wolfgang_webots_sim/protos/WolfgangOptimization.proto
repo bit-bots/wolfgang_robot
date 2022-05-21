@@ -18,6 +18,7 @@ PROTO WolfgangOptimization [
   field  SFFloat     transparency    0              # Is `Robot.transparency`
   field  MFNode      externalCamera NULL
   field  SFBool      walkingRelevantBoundingBoxesOnly TRUE
+  field  SFBool      simpleFoot TRUE
 ]
 {
   Wolfgang {
@@ -35,5 +36,6 @@ PROTO WolfgangOptimization [
     enableFootSensors IS enableFootSensors
     externalCamera IS externalCamera
     walkingRelevantBoundingBoxesOnly IS walkingRelevantBoundingBoxesOnly
+    simpleFoot IS simpleFoot
   }
 }

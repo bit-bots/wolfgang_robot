@@ -15,6 +15,7 @@ PROTO Wolfgang [
   field  SFBool      synchronization TRUE           # Is `Robot.synchronization`.
   field  SFBool      selfCollision   FALSE          # Is `Robot.selfCollision`.
   field  SFBool      enableBoundingObject TRUE      # Is `Robot.enableBoundingObject`.
+  field  SFBool      walkingRelevantBoundingBoxesOnly FALSE
   field  SFBool      enablePhysics   TRUE           # Is `Robot.enablePhysics`.
   field  SFBool      enableFootSensors TRUE         # Is `Robot.enableFootSensors`.
   field  SFFloat     transparency    0              # Is `Robot.transparency`
@@ -695,7 +696,7 @@ PROTO Wolfgang [
                         }
                       ]
                       name "r_lower_arm [arm]"
-                      %{if fields.enableBoundingObject.value then}%
+                      %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                       boundingObject Group {
                         children [
                           Transform {
@@ -857,7 +858,7 @@ PROTO Wolfgang [
                   }
                 ]
                 name "r_upper_arm [arm]"
-                %{if fields.enableBoundingObject.value then}%
+                %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                 boundingObject Group {
                   children [
                     Transform {
@@ -972,7 +973,7 @@ PROTO Wolfgang [
             }
           ]
           name "r_shoulder"
-          %{if fields.enableBoundingObject.value then}%
+          %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
           boundingObject Group {
             children [
               Transform {
@@ -1264,7 +1265,7 @@ PROTO Wolfgang [
                         }
                       ]
                       name "l_lower_arm [arm]"
-                      %{if fields.enableBoundingObject.value then}%
+                      %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                       boundingObject Group {
                         children [
                           Transform {
@@ -1426,7 +1427,7 @@ PROTO Wolfgang [
                   }
                 ]
                 name "l_upper_arm [arm]"
-                %{if fields.enableBoundingObject.value then}%
+                %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                 boundingObject Group {
                   children [
                     Transform {
@@ -1541,7 +1542,7 @@ PROTO Wolfgang [
             }
           ]
           name "l_shoulder"
-          %{if fields.enableBoundingObject.value then}%
+          %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
           boundingObject Group {
             children [
               Transform {
@@ -2341,7 +2342,7 @@ PROTO Wolfgang [
                                     }
                                   ]
                                   name "r_ankle"
-                                  %{if fields.enableBoundingObject.value then}%
+                                  %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                                   boundingObject Group {
                                     children [
                                       Transform {
@@ -2416,7 +2417,7 @@ PROTO Wolfgang [
                               }
                             ]
                             name "r_lower_leg"
-                            %{if fields.enableBoundingObject.value then}%
+                            %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                             boundingObject Group {
                               children [
                                 Transform {
@@ -2603,7 +2604,7 @@ PROTO Wolfgang [
                         }
                       ]
                       name "r_upper_leg"
-                      %{if fields.enableBoundingObject.value then}%
+                      %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                       boundingObject Group {
                         children [
                           Transform {
@@ -2964,7 +2965,7 @@ PROTO Wolfgang [
                   }
                 ]
                 name "r_hip_2"
-                %{if fields.enableBoundingObject.value then}%
+                %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                 boundingObject Group {
                   children [
                     Transform {
@@ -3039,7 +3040,7 @@ PROTO Wolfgang [
             }
           ]
           name "r_hip_1"
-          %{if fields.enableBoundingObject.value then}%
+          %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
           boundingObject Group {
             children [
               Transform {
@@ -3623,7 +3624,7 @@ PROTO Wolfgang [
                                               }
                                             ]
                                             name "llb"
-                                            %{if fields.enableBoundingObject.value then}%
+                                            %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                                             boundingObject USE CLEAT_CAPSULE
                                             %{ end }%
                                             %{if fields.enablePhysics.value then}%
@@ -3823,7 +3824,7 @@ PROTO Wolfgang [
                                     }
                                   ]
                                   name "l_ankle"
-                                  %{if fields.enableBoundingObject.value then}%
+                                  %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                                   boundingObject Group {
                                     children [
                                       Transform {
@@ -3898,7 +3899,7 @@ PROTO Wolfgang [
                               }
                             ]
                             name "l_lower_leg"
-                            %{if fields.enableBoundingObject.value then}%
+                            %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                             boundingObject Group {
                               children [
                                 Transform {
@@ -4085,7 +4086,7 @@ PROTO Wolfgang [
                         }
                       ]
                       name "l_upper_leg"
-                      %{if fields.enableBoundingObject.value then}%
+                      %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                       boundingObject Group {
                         children [
                           Transform {
@@ -4446,7 +4447,7 @@ PROTO Wolfgang [
                   }
                 ]
                 name "l_hip_2"
-                %{if fields.enableBoundingObject.value then}%
+                %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                 boundingObject Group {
                   children [
                     Transform {
@@ -4521,7 +4522,7 @@ PROTO Wolfgang [
             }
           ]
           name "l_hip_1"
-          %{if fields.enableBoundingObject.value then}%
+          %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
           boundingObject Group {
             children [
               Transform {
@@ -4801,7 +4802,7 @@ PROTO Wolfgang [
                   }
                 ]
                 name "head"
-                %{if fields.enableBoundingObject.value then}%
+                %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
                 boundingObject Group {
                   children [
                     Transform {
@@ -4935,7 +4936,7 @@ PROTO Wolfgang [
             }
           ]
           name "neck"
-          %{if fields.enableBoundingObject.value then}%
+          %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
           boundingObject Group {
             children [
               Transform {
@@ -4974,7 +4975,7 @@ PROTO Wolfgang [
       }
     ]
     name IS name
-    %{if fields.enableBoundingObject.value then}%
+    %{if fields.enableBoundingObject.value and not fields.walkingRelevantBoundingBoxesOnly.value then}%
     boundingObject Group {
       children [
         Transform {

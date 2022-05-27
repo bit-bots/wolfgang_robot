@@ -28,8 +28,8 @@ DEF world_info WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.45658728910137775 -0.4595977849295614 -0.7617728818479269 1.8423577767920507
-  position -4.534927597914112 -0.8916478606638369 2.539719527279048
+  orientation 0.7588638370272416 -0.25927299315952335 -0.5974137526625862 1.0326286467918322
+  position -0.7346648682939801 -1.077277767318153 1.3751690174126752
 }
 TexturedBackground {
   texture "stadium_dry"
@@ -38,7 +38,7 @@ TexturedBackgroundLight {
   texture "stadium_dry"
 }
 DEF wolfgang WolfgangOptimization {
-  translation 0.0 0.0 0.3906227396834596
+  translation 0 0 0.3906227396834596
   rotation 0.11772839080006811 0.12336480787137453 -0.9853533123598284 0.8103333964878978
   name "wolfgang"
   supervisor TRUE
@@ -46,16 +46,15 @@ DEF wolfgang WolfgangOptimization {
   externalCamera [
     DEF free_camera_tf Transform {
       children [
-          Camera {
-            translation 0 0 0
-            rotation 0 1 0 1.571
-            name "free_camera"
-            fieldOfView 1.04
-            width 800
-            height 600
-          }
+        Camera {
+          rotation 0 1 0 1.571
+          name "free_camera"
+          fieldOfView 1.04
+          width 800
+          height 600
+        }
       ]
-    }    
+    }
   ]
 }
 Floor {
@@ -65,7 +64,7 @@ Floor {
   tileSize 2 2
 }
 DEF goal_pose Solid {
-  translation 0.24927821775755943 0.024165673226902662 0.2
+  translation 0.249278 0.0241657 0
   rotation 0 0 -1 0.6760568016144105
   children [
     Transform {
@@ -86,4 +85,28 @@ DEF goal_pose Solid {
       ]
     }
   ]
+}
+DEF robot_pose Solid {
+  translation 0.249278 0.0241657 0
+  rotation 0 0 -1 0.6760568016144105
+  children [
+    Transform {
+      translation 0.15 0 0
+      rotation 0 0 1 -1.57079632679
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0.8 0
+            }
+          }
+          geometry Cone {
+            bottomRadius 0.05
+            height 0.3
+          }
+        }
+      ]
+    }
+  ]
+  name "solid(1)"
 }

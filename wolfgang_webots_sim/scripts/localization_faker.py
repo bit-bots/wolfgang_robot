@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.duration import Duration
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import tf2_ros
 from gazebo_msgs.msg import ModelStates
@@ -17,7 +18,7 @@ class LocalizationFaker(Node):
         self.declare_parameter('multi_robot', False)
         self.multi_robot = self.get_parameter('multi_robot').value
 
-        self.create_subscription(ModelStates, "/model_states", self.model_state_to_tf, 10)
+        self.create_subscription(ModelStates, "/model_states", self.model_state_to_tf, 1)
         self.tf_buffer = tf2_ros.Buffer(cache_time=Duration(seconds=10.0))
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.br = tf2_ros.TransformBroadcaster(self)
@@ -35,7 +36,7 @@ class LocalizationFaker(Node):
                 robot_in_odom = self.tf_buffer.lookup_transform((name + "/") if self.multi_robot else "" + "odom",
                                                                 (name + "/") if self.multi_robot else "" + "base_link",
                                                                 t.header.stamp,
-                                                                timeout=Duration(seconds=0.1))
+                                                                timeout=Duration(seconds=0.3))
             except tf2_ros.LookupException as ex:
                 self.get_logger().warn(self.get_name() + ": " + str(ex), throttle_duration_sec=5.0)
                 return
@@ -75,6 +76,8 @@ class LocalizationFaker(Node):
 if __name__ == "__main__":
     rclpy.init(args=None)
     node = LocalizationFaker()
-    rclpy.spin(node)
+    ex = MultiThreadedExecutor(num_threads=4)
+    ex.add_node(node)
+    ex.spin()
     node.destroy_node()
     rclpy.shutdown()

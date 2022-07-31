@@ -21,7 +21,7 @@ class LocalizationFaker(Node):
 
     def model_state_to_tf(self, model_state_msg):
         t = TransformStamped()
-        t.header.stamp = self.get_clock().now()
+        t.header.stamp = self.get_clock().now().to_msg()
         for i, name in enumerate(model_state_msg.name):
             t.header.frame_id = name + "/map"
             t.child_frame_id = name + "/odom"

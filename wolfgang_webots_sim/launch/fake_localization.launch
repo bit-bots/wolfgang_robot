@@ -9,6 +9,20 @@
         <node pkg="tf2_ros" exec="static_transform_publisher" name="donna_map" args="0 0 0 0 0 0 1 map donna/map" />
         <node pkg="tf2_ros" exec="static_transform_publisher" name="melody_map" args="0 0 0 0 0 0 1 map melody/map" />
     </group>
+    <!-- load the map for rviz-->
+    <node name="field_map_server" pkg="nav2_map_server" exec="map_server" output="screen">
+        <param name="frame_id" value="map" />
+        <param name="topic_name" value="field/map"/>
+        <param name="use_sim_time" value="true"/>
+        <param name="yaml_filename" value="$(find-pkg-share bitbots_localization)/config/fields/webots/map_server.yaml" />
+    </node>
+
+    <!-- life cycle manager for map server -->
+    <node name="lifecycle_manager_navigation" pkg="nav2_lifecycle_manager" exec="lifecycle_manager" output="screen">
+        <param name="autostart" value="true"/>
+        <param name="use_sim_time" value="true"/>
+        <param name="node_names" value="[field_map_server]" />
+    </node>
 
     <node pkg="wolfgang_webots_sim" exec="localization_faker.py" name="localization_faker">
         <param name="multi_robot" value="$(var multi_robot)"/>

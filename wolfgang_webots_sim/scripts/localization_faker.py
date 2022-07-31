@@ -14,6 +14,9 @@ class LocalizationFaker(Node):
 
     def __init__(self):
         super().__init__('localization_faker')
+        self.declare_parameter('multi_robot')
+        self.multi_robot = self.get_parameter('my_str').value
+
         self.create_subscription(ModelStates, "/model_states", self.model_state_to_tf, 10)
         self.tf_buffer = tf2_ros.Buffer(cache_time=Duration(seconds=10.0))
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -23,11 +26,14 @@ class LocalizationFaker(Node):
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         for i, name in enumerate(model_state_msg.name):
+            if not self.multi_robot:
+                if name != "amy":
+                    continue
             t.header.frame_id = name + "/map"
             t.child_frame_id = name + "/odom"
             try:
-                robot_in_odom = self.tf_buffer.lookup_transform(name + "/odom",
-                                                                name + "/base_link",
+                robot_in_odom = self.tf_buffer.lookup_transform((name + "/") if self.multi_robot else "" + "odom",
+                                                                (name + "/") if self.multi_robot else "" + "/" + "base_link",
                                                                 t.header.stamp,
                                                                 timeout=Duration(seconds=0.1))
             except tf2_ros.LookupException as ex:

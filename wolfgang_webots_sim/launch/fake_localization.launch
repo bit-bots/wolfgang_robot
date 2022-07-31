@@ -12,5 +12,6 @@
 
     <node pkg="wolfgang_webots_sim" exec="localization_faker.py" name="localization_faker">
         <param name="multi_robot" value="$(var multi_robot)"/>
+        <param name="use_sim_time" value="true"/>
     </node>
 </launch>

@@ -33,7 +33,7 @@ class LocalizationFaker(Node):
             t.child_frame_id = name + "/odom"
             try:
                 robot_in_odom = self.tf_buffer.lookup_transform((name + "/") if self.multi_robot else "" + "odom",
-                                                                (name + "/") if self.multi_robot else "" + "/" + "base_link",
+                                                                (name + "/") if self.multi_robot else "" + "base_link",
                                                                 t.header.stamp,
                                                                 timeout=Duration(seconds=0.1))
             except tf2_ros.LookupException as ex:

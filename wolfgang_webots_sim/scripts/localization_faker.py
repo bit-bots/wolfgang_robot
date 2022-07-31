@@ -14,7 +14,7 @@ class LocalizationFaker(Node):
 
     def __init__(self):
         super().__init__('localization_faker')
-        self.declare_parameter('multi_robot')
+        self.declare_parameter('multi_robot', False)
         self.multi_robot = self.get_parameter('my_str').value
 
         self.create_subscription(ModelStates, "/model_states", self.model_state_to_tf, 10)

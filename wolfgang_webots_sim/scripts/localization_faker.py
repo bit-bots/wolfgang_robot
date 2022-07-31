@@ -15,7 +15,7 @@ class LocalizationFaker(Node):
     def __init__(self):
         super().__init__('localization_faker')
         self.declare_parameter('multi_robot', False)
-        self.multi_robot = self.get_parameter('my_str').value
+        self.multi_robot = self.get_parameter('multi_robot').value
 
         self.create_subscription(ModelStates, "/model_states", self.model_state_to_tf, 10)
         self.tf_buffer = tf2_ros.Buffer(cache_time=Duration(seconds=10.0))

@@ -17,6 +17,7 @@ PROTO Wolfgang [
   field  SFBool      enableBoundingObject TRUE      # Is `Robot.enableBoundingObject`.
   field  SFBool      enablePhysics   TRUE           # Is `Robot.enablePhysics`.
   field  SFBool      enableFootSensors TRUE         # Is `Robot.enableFootSensors`.
+  field  SFBool      simplifyFootCollision FALSE    # Is `Robot.enableFootSensors`.
   field  SFFloat     transparency    0              # Is `Robot.transparency`
   field  SFFloat     cameraFOV       1.04
   field  SFInt32     cameraWidth     800
@@ -2282,6 +2283,7 @@ PROTO Wolfgang [
                                         ]
                                         name "r_foot [foot]"
                                         %{if fields.enableBoundingObject.value then}%
+                                        %{if not fields.simplifyFootCollision.value then}%
                                         boundingObject Group {
                                           children [
                                             Transform {
@@ -2322,6 +2324,7 @@ PROTO Wolfgang [
                                             }
                                           ]
                                         }
+                                        %{ end }%
                                         %{ end }%
                                         %{if fields.enablePhysics.value then}%
                                           physics Physics {
@@ -3757,6 +3760,7 @@ PROTO Wolfgang [
                                         ]
                                         name "l_foot [foot]"
                                         %{if fields.enableBoundingObject.value then}%
+                                        %{if not fields.simplifyFootCollision.value then}%
                                         boundingObject Group {
                                           children [
                                             Transform {
@@ -3800,6 +3804,7 @@ PROTO Wolfgang [
 
                                           ]
                                         }
+                                        %{ end }%
                                         %{ end }%
                                         %{if fields.enablePhysics.value then}%
                                           physics Physics {

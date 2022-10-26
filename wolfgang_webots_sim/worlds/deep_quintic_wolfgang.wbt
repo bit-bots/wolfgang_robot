@@ -45,6 +45,7 @@ DEF lernbot WolfgangOptimization {
   name "lernbot"
   controller "<extern>"
   supervisor TRUE
+  simplifyFootCollision TRUE
   externalCamera [     
     Camera {
       translation 0 -1.5 0  

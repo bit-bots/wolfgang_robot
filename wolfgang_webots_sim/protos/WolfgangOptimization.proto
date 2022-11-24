@@ -15,6 +15,7 @@ PROTO WolfgangOptimization [
   field  SFBool      enableBoundingObject TRUE      # Is `Robot.enableBoundingObject`.
   field  SFBool      enablePhysics   TRUE           # Is `Robot.enablePhysics`.
   field  SFBool      enableFootSensors TRUE         # Is `Robot.enableFootSensors`.
+  field  SFBool      simplifyFootCollision FALSE    # Is `Robot.enableFootSensors`.
   field  SFFloat     transparency    0              # Is `Robot.transparency`
   field  MFNode      externalCamera NULL
 ]
@@ -32,6 +33,7 @@ PROTO WolfgangOptimization [
     enablePhysics IS enablePhysics
     transparency IS transparency
     enableFootSensors IS enableFootSensors
+    simplifyFootCollision IS simplifyFootCollision
     externalCamera IS externalCamera
   }
 }

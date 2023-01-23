@@ -121,6 +121,7 @@ class ROSInterface():
         efforts = []
         for name in self.joint_state_msg.name:
             joint = self.simulation.joints[self.robot_index][name]
+            joint.update()
             position, velocity, forces, applied_torque = joint.get_state()
             positions.append(position)
             velocities.append(velocity)
@@ -135,7 +136,7 @@ class ROSInterface():
     def publish_joints(self):
         self.joint_publisher.publish(self.get_joint_state_msg())
 
-    def get_imu_msg(self):
+    def get_imu_msg(self):        
         position, orientation = self.simulation.get_robot_pose()
         self.imu_msg.orientation.x = orientation[0]
         self.imu_msg.orientation.y = orientation[1]

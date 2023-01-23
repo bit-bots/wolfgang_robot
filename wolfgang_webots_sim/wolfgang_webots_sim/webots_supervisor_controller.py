@@ -267,7 +267,7 @@ class SupervisorController:
         if name in self.translation_fields:
             return self.translation_fields[name].getSFVec3f()
 
-    def get_robot_orientation_axangles(self, name="amy"):
+    def get_robot_orientation_axangles(self, name="amy"):        
         if name in self.rotation_fields:
             return self.rotation_fields[name].getSFRotation()
 

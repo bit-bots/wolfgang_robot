@@ -1263,8 +1263,8 @@
       </geometry>
     </collision>
   </link>
-  <joint name="right_knee_pitch" type="revolute">
-    <parent link="right_upper_leg"/>
+  <joint name="RKnee" type="revolute">
+    <parent link="r_upper_leg"/>
     <child link="right_lower_leg"/>
     <axis xyz="1 0 0"/>
     <limit effort="10" lower="-0.3" upper="2.5" velocity="5.76"/>
@@ -1308,7 +1308,7 @@
       </geometry>
     </collision>
   </link>
-  <joint name="right_ankle_pitch" type="revolute">
+  <joint name="RAnklePitch" type="revolute">
     <parent link="right_lower_leg"/>
     <child link="right_ankle"/>
     <axis xyz="-1 -0.000002 0"/>
@@ -1329,7 +1329,7 @@
       </geometry>
     </collision>
   </link>
-  <joint name="right_ankle_roll" type="revolute">
+  <joint name="RAnkleRoll" type="revolute">
     <parent link="right_ankle"/>
     <child link="right_foot [foot]"/>
     <axis xyz="0.000002 -1 0.000002"/>
@@ -1720,8 +1720,8 @@
       </geometry>
     </collision>
   </link>
-  <joint name="left_knee_pitch" type="revolute">
-    <parent link="left_upper_leg"/>
+  <joint name="LKnee" type="revolute">
+    <parent link="l_upper_leg"/>
     <child link="left_lower_leg"/>
     <axis xyz="1 0 0"/>
     <limit effort="10" lower="-0.3" upper="2.5" velocity="5.76"/>
@@ -1765,7 +1765,7 @@
       </geometry>
     </collision>
   </link>
-  <joint name="left_ankle_pitch" type="revolute">
+  <joint name="LAnklePitch" type="revolute">
     <parent link="left_lower_leg"/>
     <child link="left_ankle"/>
     <axis xyz="-1 -0.000002 0"/>
@@ -1786,7 +1786,7 @@
       </geometry>
     </collision>
   </link>
-  <joint name="left_ankle_roll" type="revolute">
+  <joint name="LAnkleRoll" type="revolute">
     <parent link="left_ankle"/>
     <child link="left_foot [foot]"/>
     <axis xyz="0.000002 -1 0.000002"/>
@@ -2248,6 +2248,57 @@
     <limit effort="7.3" lower="-2.35619" upper="2.35619" velocity="8.17"/>
     <dynamics damping="0.65" friction="1.73"/>
   </joint>
+  <joint name="LHipPitch" type="revolute">
+    <origin rpy="2.67116e-16 -1.5708 0.0" xyz="0.026 6.93889e-18 -0.0691"/>
+    <axis xyz="7.95491e-17 -3.00167e-16 -1.0"/>
+    <parent link="l_hip_2"/>
+    <child link="l_upper_leg"/>
+    <limit effort="10" lower="-1.91986" upper="2.0944" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+  <joint name="LHipRoll" type="revolute">
+    <origin rpy="3.14159 1.5708 0.0" xyz="-0.046 0.0414 6.93889e-18"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <parent link="l_hip_1"/>
+    <child link="l_hip_2"/>
+    <limit effort="10" lower="-1.5708" upper="1.5708" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+  <joint name="LHipYaw" type="revolute">
+    <origin rpy="-1.5708 -0.0 0.0" xyz="1.82493e-15 0.055 -4.22839e-18"/>
+    <axis xyz="-0.0 1.0 -0.0"/>
+    <parent link="torso"/>
+    <child link="l_hip_1"/>
+    <limit effort="10" lower="-1.5708" upper="1.5708" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+  <joint name="RHipPitch" type="revolute">
+    <origin rpy="-1.5708 1.5708 0.0" xyz="-0.0265 -9.71445e-17 -0.0691"/>
+    <axis xyz="-0.0 1.0 -0.0"/>
+    <parent link="r_hip_2"/>
+    <child link="r_upper_leg"/>
+    <limit effort="10" lower="-2.0944" upper="1.91986" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+  <joint name="RHipRoll" type="revolute">
+    <origin rpy="-3.14159 1.5708 0.0" xyz="-0.046 0.0414 6.93889e-18"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <parent link="r_hip_1"/>
+    <child link="r_hip_2"/>
+    <limit effort="10" lower="-1.5708" upper="1.5708" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+  <joint name="RHipYaw" type="revolute">
+    <origin rpy="-1.5708 -0.0 0.0" xyz="7.99361e-15 -0.055 4.68375e-17"/>
+    <axis xyz="-0.0 1.0 -0.0"/>
+    <parent link="torso"/>
+    <child link="r_hip_1"/>
+    <limit effort="10" lower="-1.5708" upper="1.5708" velocity="5.76"/>
+    <dynamics damping="1.23" friction="2.55"/>
+  </joint>
+
+
+
   <transmission name="HeadPanTransmission">
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="HeadPan">

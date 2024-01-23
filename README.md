@@ -1,4 +1,7 @@
 # Wolfgang-OP
+
+## Archived ⚠️ This repository has been moved [here](https://github.com/bit-bots/bitbots_meta)!
+
 This repository contains all software directly related to the Wolfgang-OP robot.
 If you are interested in this robot, please also look at the following links.
 
